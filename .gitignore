@@ -9,6 +9,8 @@ frontend-vue/node_modules/
 .env.*
 
 
+application.properties
+
 logs/
 *.log
 npm-debug.log*
