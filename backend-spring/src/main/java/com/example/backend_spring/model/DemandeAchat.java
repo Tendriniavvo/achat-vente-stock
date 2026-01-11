@@ -32,7 +32,7 @@ public class DemandeAchat {
     @Column(name = "historique_validations", columnDefinition = "TEXT")
     private String historiqueValidations;
 
-    @OneToMany(mappedBy = "demandeAchat", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "demandeAchat", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneDemandeAchat> lignes = new ArrayList<>();
 
     // Constructeurs

@@ -32,12 +32,49 @@
               <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
               <span class="hide-menu">Gestion</span>
             </li>
+            
+            <!-- Achats avec dropdown -->
             <li class="sidebar-item">
-              <router-link class="sidebar-link" to="/achats" aria-expanded="false">
+              <a class="sidebar-link has-arrow" :class="{ active: isAchatsRoute() }" href="javascript:void(0)" :aria-expanded="achatsMenuOpen" @click="toggleAchatsMenu">
                 <span><i class="ti ti-shopping-cart"></i></span>
                 <span class="hide-menu">Achats</span>
-              </router-link>
+              </a>
+              <ul class="collapse first-level" :class="{ show: achatsMenuOpen }">
+                <li class="sidebar-item">
+                  <router-link to="/achats" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Demandes d'Achat</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/achats/create" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Nouvelle Demande</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/fournisseurs" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Fournisseurs</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/commandes-achat" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Commandes d'Achat</span>
+                  </router-link>
+                </li>
+              </ul>
             </li>
+            
             <li class="sidebar-item">
               <router-link class="sidebar-link" to="/ventes" aria-expanded="false">
                 <span><i class="ti ti-coin"></i></span>
@@ -144,11 +181,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 const user = ref(null);
+const achatsMenuOpen = ref(false);
+
+// Vérifier si on est sur une page d'achats
+const isAchatsRoute = () => {
+  return route.path.startsWith('/achats') || 
+         route.path.startsWith('/fournisseurs') || 
+         route.path.startsWith('/commandes-achat');
+};
 
 onMounted(() => {
   // Récupérer les informations de l'utilisateur depuis localStorage
@@ -159,11 +205,23 @@ onMounted(() => {
     // Si pas d'utilisateur connecté, rediriger vers login
     router.push('/login');
   }
+  
+  // Ouvrir le menu Achats si on est sur une page d'achats
+  achatsMenuOpen.value = isAchatsRoute();
+});
+
+// Observer les changements de route
+watch(() => route.path, () => {
+  achatsMenuOpen.value = isAchatsRoute();
 });
 
 const logout = () => {
   localStorage.removeItem('user');
   router.push('/login');
+};
+
+const toggleAchatsMenu = () => {
+  achatsMenuOpen.value = !achatsMenuOpen.value;
 };
 </script>
 
@@ -171,5 +229,67 @@ const logout = () => {
 .container-fluid.content-wrapper {
   padding-left: 15px !important;
   padding-right: 15px !important;
+}
+
+.sidebar-item .has-arrow::after {
+  content: '\f107';
+  font-family: 'tabler-icons';
+  position: absolute;
+  right: 15px;
+  transition: transform 0.3s;
+}
+
+.sidebar-item .has-arrow[aria-expanded="true"]::after {
+  transform: rotate(180deg);
+}
+
+.sidebar-item .collapse {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.sidebar-item .collapse.show {
+  max-height: 500px;
+  transition: max-height 0.3s ease-in;
+}
+
+.sidebar-item .first-level .sidebar-item {
+  padding-left: 20px;
+}
+
+.sidebar-item .first-level .sidebar-link {
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-item .first-level .sidebar-link .round-16 {
+  min-width: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.sidebar-item .first-level .sidebar-link i {
+  font-size: 8px;
+}
+
+.sidebar-link.active {
+  background-color: #5d87ff;
+  color: white !important;
+}
+
+.sidebar-link.active i {
+  color: white !important;
+}
+
+.sidebar-link.router-link-active {
+  background-color: #5d87ff;
+  color: white !important;
+}
+
+.sidebar-link.router-link-active i {
+  color: white !important;
 }
 </style>

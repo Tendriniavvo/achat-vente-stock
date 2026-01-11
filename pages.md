@@ -2,7 +2,7 @@
 
 ## 1. Page Connexion / Accueil
 
-* [ ] 
+* [ ]
 
 - **S'authentifier à l'application** : Connexion sécurisée avec identifiants
 - **Accéder au tableau de bord selon le rôle** : Redirection automatique selon les permissions
@@ -94,7 +94,7 @@
 
 - **Consulter les DA en attente** : Liste des demandes à traiter
 - **Valider une DA** : Approbation de la demande
-- **Rejeter une DA avec motif** : Refus motivé
+- **Rejeter une DA avec motif : Refus motivé**
 - **Appliquer des règles de seuils** : Validation automatique/manuelle
 - **Consulter l'historique des validations** : Traçabilité des décisions
 
