@@ -125,17 +125,17 @@
             <div class="achat-kpi-left" style="border-left-color:#f97316">
               <div class="achat-kpi-icon" style="background:rgba(249,115,22,0.12);color:#f97316">
                 <i class="ti ti-file-text"></i>
-                <span v-if="achatKpis.demandesAttente.valeur > 0" class="achat-kpi-dot"></span>
+                <span v-if="(achatKpis?.demandesAttente?.valeur ?? 0) > 0" class="achat-kpi-dot"></span>
               </div>
             </div>
             <div class="achat-kpi-content">
               <div class="d-flex align-items-start justify-content-between gap-2">
                 <div class="achat-kpi-label">Demandes d'achat en attente</div>
-                <span v-if="achatKpis.demandesAttente.joursMax > 5" class="badge text-bg-warning">Urgent</span>
+                <span v-if="(achatKpis?.demandesAttente?.joursMax ?? 0) > 5" class="badge text-bg-warning">Urgent</span>
               </div>
-              <div class="achat-kpi-value">{{ achatKpis.demandesAttente.valeur }}</div>
+              <div class="achat-kpi-value">{{ achatKpis?.demandesAttente?.valeur ?? 0 }}</div>
               <div class="d-flex align-items-center justify-content-between gap-2">
-                <div class="achat-kpi-desc">{{ achatKpis.demandesAttente.tendance }}</div>
+                <div class="achat-kpi-desc">{{ achatKpis?.demandesAttente?.tendance ?? '-' }}</div>
                 <div class="achat-kpi-trend text-warning">
                   <i class="ti ti-arrow-up-right"></i>
                 </div>
@@ -154,12 +154,12 @@
             </div>
             <div class="achat-kpi-content">
               <div class="achat-kpi-label">Bons de commande ce mois</div>
-              <div class="achat-kpi-value">{{ achatKpis.bcMois.valeur }}</div>
+              <div class="achat-kpi-value">{{ achatKpis?.bcMois?.valeur ?? 0 }}</div>
               <div class="d-flex align-items-center justify-content-between gap-2">
-                <div class="achat-kpi-desc">{{ achatKpis.bcMois.montant }}</div>
+                <div class="achat-kpi-desc">{{ achatKpis?.bcMois?.montant ?? '-' }}</div>
                 <div class="achat-kpi-trend text-success">
                   <i class="ti ti-trending-up"></i>
-                  <span class="achat-kpi-trend-text">{{ achatKpis.bcMois.comparaison }}</span>
+                  <span class="achat-kpi-trend-text">{{ achatKpis?.bcMois?.comparaison ?? '-' }}</span>
                 </div>
               </div>
               <div class="achat-kpi-hint">Cliquer pour voir détails</div>
@@ -172,16 +172,16 @@
             <div class="achat-kpi-left" style="border-left-color:#8b5cf6">
               <div class="achat-kpi-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6">
                 <i class="ti ti-package"></i>
-                <span v-if="achatKpis.receptionsAttente.retards > 0" class="achat-kpi-badge">{{ achatKpis.receptionsAttente.retards }}</span>
+                <span v-if="(achatKpis?.receptionsAttente?.retards ?? 0) > 0" class="achat-kpi-badge">{{ achatKpis?.receptionsAttente?.retards ?? 0 }}</span>
               </div>
             </div>
             <div class="achat-kpi-content">
               <div class="achat-kpi-label">Réceptions en attente</div>
-              <div class="achat-kpi-value">{{ achatKpis.receptionsAttente.valeur }}</div>
+              <div class="achat-kpi-value">{{ achatKpis?.receptionsAttente?.valeur ?? 0 }}</div>
               <div class="d-flex align-items-center justify-content-between gap-2">
-                <div class="achat-kpi-desc">{{ achatKpis.receptionsAttente.description }}</div>
-                <div class="achat-kpi-trend" :class="achatKpis.receptionsAttente.retards > 0 ? 'text-danger' : 'text-muted'">
-                  <i class="ti" :class="achatKpis.receptionsAttente.retards > 0 ? 'ti-alert-triangle' : 'ti-check'"></i>
+                <div class="achat-kpi-desc">{{ achatKpis?.receptionsAttente?.description ?? '-' }}</div>
+                <div class="achat-kpi-trend" :class="(achatKpis?.receptionsAttente?.retards ?? 0) > 0 ? 'text-danger' : 'text-muted'">
+                  <i class="ti" :class="(achatKpis?.receptionsAttente?.retards ?? 0) > 0 ? 'ti-alert-triangle' : 'ti-check'"></i>
                 </div>
               </div>
               <div class="achat-kpi-hint">Cliquer pour voir détails</div>
@@ -199,17 +199,17 @@
             <div class="achat-kpi-content">
               <div class="d-flex align-items-start justify-content-between gap-2">
                 <div class="achat-kpi-label">Taux de conformité</div>
-                <span class="badge" :class="conformiteBadgeClass">{{ achatKpis.conformite.valeur }}%</span>
+                <span class="badge" :class="conformiteBadgeClass">{{ achatKpis?.conformite?.valeur ?? 0 }}%</span>
               </div>
               <div class="d-flex align-items-center gap-3">
-                <div class="achat-gauge" :style="{ '--pct': achatKpis.conformite.valeur, '--gauge': conformiteColor }" aria-label="Gauge conformité" role="img">
+                <div class="achat-gauge" :style="{ '--pct': achatKpis?.conformite?.valeur ?? 0, '--gauge': conformiteColor }" aria-label="Gauge conformité" role="img">
                   <div class="achat-gauge-inner">
-                    <div class="achat-gauge-value">{{ achatKpis.conformite.valeur }}%</div>
+                    <div class="achat-gauge-value">{{ achatKpis?.conformite?.valeur ?? 0 }}%</div>
                     <div class="achat-gauge-sub">Conforme</div>
                   </div>
                 </div>
                 <div class="flex-grow-1">
-                  <div class="achat-kpi-desc">{{ achatKpis.conformite.tendance }}</div>
+                  <div class="achat-kpi-desc">{{ achatKpis?.conformite?.tendance ?? '-' }}</div>
                   <div class="achat-kpi-hint">Cliquer pour voir détails</div>
                 </div>
               </div>
@@ -227,24 +227,24 @@
                   <div class="fw-semibold">Demandes d'achat par statut</div>
                   <div class="text-muted small">Répartition actuelle</div>
                 </div>
-                <span v-if="achatCharts.daStatut.soumise > 5" class="badge text-bg-warning">{{ achatCharts.daStatut.soumise }} en attente</span>
+                <span v-if="(achatCharts?.daStatut?.soumise ?? 0) > 5" class="badge text-bg-warning">{{ achatCharts?.daStatut?.soumise ?? 0 }} en attente</span>
               </div>
               <div class="d-flex flex-column align-items-center mt-3">
                 <div class="achat-donut" aria-label="Donut demandes achat" role="img">
                   <div class="achat-donut-center">
-                    <div class="achat-donut-total">{{ achatCharts.daStatut.total }}</div>
+                    <div class="achat-donut-total">{{ achatDaTotal }}</div>
                     <div class="text-muted small">Total</div>
                   </div>
                 </div>
                 <div class="achat-legend mt-3 w-100">
-                  <div class="achat-legend-row" v-for="item in achatCharts.daStatut.items" :key="item.label">
+                  <div class="achat-legend-row" v-for="item in achatDaItems" :key="item.label">
                     <span class="achat-dot" :style="{ background: item.color }" aria-hidden="true"></span>
                     <span class="flex-grow-1">{{ item.label }}</span>
                     <span class="fw-semibold">{{ item.value }}</span>
                   </div>
                 </div>
-                <div v-if="achatCharts.daStatut.soumise > 5" class="alert alert-warning w-100 mt-3 mb-0" role="status">
-                  <strong>Attention</strong> : {{ achatCharts.daStatut.soumise }} DA en attente de validation
+                <div v-if="(achatCharts?.daStatut?.soumise ?? 0) > 5" class="alert alert-warning w-100 mt-3 mb-0" role="status">
+                  <strong>Attention</strong> : {{ achatCharts?.daStatut?.soumise ?? 0 }} DA en attente de validation
                 </div>
               </div>
             </div>
@@ -259,11 +259,11 @@
                   <div class="fw-semibold">Évolution des commandes</div>
                   <div class="text-muted small">6 derniers mois</div>
                 </div>
-                <span class="badge text-bg-light">Moyenne: {{ achatCharts.commandes.moyenne }}</span>
+                <span class="badge text-bg-light">Moyenne: {{ achatCharts?.commandes?.moyenne ?? '-' }}</span>
               </div>
               <div class="achat-area mt-3" aria-label="Zone évolution commandes" role="img">
                 <div class="achat-area-grid">
-                  <div class="achat-area-bar" v-for="m in achatCharts.commandes.mois" :key="m.label" :style="{ '--h': m.nb, '--h2': m.montantK }">
+                  <div class="achat-area-bar" v-for="m in (achatCharts?.commandes?.mois ?? [])" :key="m.label" :style="{ '--h': m.nb, '--h2': m.montantK }">
                     <div class="achat-area-tooltip">
                       <div class="fw-semibold">{{ m.label }}</div>
                       <div class="small text-muted">{{ m.nb }} commandes</div>
@@ -287,18 +287,18 @@
                   <div class="fw-semibold">Conformité réceptions</div>
                   <div class="text-muted small">Qualité & écarts</div>
                 </div>
-                <span class="badge" :class="conformiteBadgeClass">{{ achatCharts.conformite.gauge }}%</span>
+                <span class="badge" :class="conformiteBadgeClass">{{ achatCharts?.conformite?.gauge ?? 0 }}%</span>
               </div>
               <div class="d-flex flex-column align-items-center mt-3">
-                <div class="achat-gauge achat-gauge--semi" :style="{ '--pct': achatCharts.conformite.gauge, '--gauge': conformiteColor }" aria-label="Gauge semi-circulaire" role="img">
+                <div class="achat-gauge achat-gauge--semi" :style="{ '--pct': achatCharts?.conformite?.gauge ?? 0, '--gauge': conformiteColor }" aria-label="Gauge semi-circulaire" role="img">
                   <div class="achat-gauge-inner">
-                    <div class="achat-gauge-value">{{ achatCharts.conformite.gauge }}%</div>
+                    <div class="achat-gauge-value">{{ achatCharts?.conformite?.gauge ?? 0 }}%</div>
                     <div class="achat-gauge-sub">Conforme</div>
                   </div>
                 </div>
                 <div class="w-100 mt-3">
                   <div class="achat-mini-bars">
-                    <div class="achat-mini-bar" v-for="b in achatCharts.conformite.bars" :key="b.label">
+                    <div class="achat-mini-bar" v-for="b in (achatCharts?.conformite?.bars ?? [])" :key="b.label">
                       <div class="d-flex align-items-center justify-content-between">
                         <span class="small">{{ b.label }}</span>
                         <span class="small fw-semibold">{{ b.value }}%</span>
@@ -309,7 +309,7 @@
                     </div>
                   </div>
                 </div>
-                <div v-if="achatCharts.conformite.gauge < 80" class="alert alert-danger w-100 mt-3 mb-0" role="status">
+                <div v-if="(achatCharts?.conformite?.gauge ?? 0) < 80" class="alert alert-danger w-100 mt-3 mb-0" role="status">
                   <strong>Alerte</strong> : conformité inférieure à 80%
                 </div>
               </div>
@@ -328,7 +328,7 @@
                 <span class="badge text-bg-light">{{ periodeLabel }}</span>
               </div>
               <div class="mt-3 achat-suppliers">
-                <div class="achat-supplier-row" v-for="(s, idx) in achatCharts.topFournisseurs" :key="s.nom">
+                <div class="achat-supplier-row" v-for="(s, idx) in (achatCharts?.topFournisseurs ?? [])" :key="s.nom">
                   <div class="d-flex align-items-center gap-3">
                     <div class="achat-avatar" :style="{ background: s.avatarColor }" aria-hidden="true">{{ s.initiales }}</div>
                     <div class="flex-grow-1">
@@ -357,10 +357,10 @@
                   <div class="fw-semibold">Délais de livraison</div>
                   <div class="text-muted small">En avance / À temps / En retard</div>
                 </div>
-                <div class="achat-kpi-big">{{ achatCharts.delais.kpiOnTime }}%</div>
+                <div class="achat-kpi-big">{{ achatCharts?.delais?.kpiOnTime ?? 0 }}%</div>
               </div>
               <div class="mt-3">
-                <div class="achat-stacked" v-for="row in achatCharts.delais.rows" :key="row.label">
+                <div class="achat-stacked" v-for="row in (achatCharts?.delais?.rows ?? [])" :key="row.label">
                   <div class="small text-muted mb-1">{{ row.label }}</div>
                   <div class="achat-stacked-bar" role="img" aria-label="Barre empilée délais">
                     <div class="achat-stacked-seg" :style="{ width: row.avance + '%', background: '#10b981' }">{{ row.avance }}%</div>
@@ -384,7 +384,7 @@
                 </div>
               </div>
               <div class="achat-funnel mt-3" aria-label="Entonnoir pipeline achats" role="img">
-                <div class="achat-funnel-step" v-for="(st, i) in achatCharts.pipeline" :key="st.label" :style="{ '--w': st.pct, '--c': st.color }">
+                <div class="achat-funnel-step" v-for="(st, i) in (achatCharts?.pipeline ?? [])" :key="st.label" :style="{ '--w': st.pct, '--c': st.color }">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="small fw-semibold">{{ i + 1 }}. {{ st.label }}</div>
                     <div class="small">{{ st.value }}</div>
@@ -392,7 +392,7 @@
                   <div class="achat-funnel-bar"></div>
                 </div>
               </div>
-              <div class="text-muted small mt-2">Conversion globale: {{ achatCharts.pipeline[achatCharts.pipeline.length - 1].pct }}%</div>
+              <div class="text-muted small mt-2">Conversion globale: {{ (achatCharts?.pipeline?.[(achatCharts?.pipeline?.length ?? 1) - 1]?.pct ?? 0) }}%</div>
             </div>
           </div>
         </div>
@@ -410,7 +410,7 @@
                 <i class="ti ti-alert-triangle fs-2" aria-hidden="true"></i>
               </div>
               <div class="mt-3 achat-alert-list">
-                <div class="achat-alert-item" v-for="it in achatActions.urgentes" :key="it.label" role="button" tabindex="0" @click="onActionClick(it.key)" @keydown.enter="onActionClick(it.key)">
+                <div class="achat-alert-item" v-for="it in (achatActions?.urgentes ?? [])" :key="it.label" role="button" tabindex="0" @click="onActionClick(it.key)" @keydown.enter="onActionClick(it.key)">
                   <div class="d-flex align-items-center justify-content-between gap-2">
                     <div class="d-flex align-items-center gap-2">
                       <input class="form-check-input" type="checkbox" :aria-label="'Marquer ' + it.label" />
@@ -436,7 +436,7 @@
                 <i class="ti ti-chart-bar fs-2 text-primary" aria-hidden="true"></i>
               </div>
               <div class="mt-3">
-                <div class="mb-3" v-for="a in achatActions.activite" :key="a.label">
+                <div class="mb-3" v-for="a in (achatActions?.activite ?? [])" :key="a.label">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="fw-semibold">{{ a.label }}</div>
                     <div class="text-muted small">{{ a.done }}/{{ a.total }}</div>
@@ -447,7 +447,7 @@
                 </div>
               </div>
               <div class="achat-activity-mini" aria-label="Mini activité horaire" role="img">
-                <div class="achat-activity-bar" v-for="(h, idx) in achatActions.horaire" :key="idx" :style="{ height: h + '%' }"></div>
+                <div class="achat-activity-bar" v-for="(h, idx) in (achatActions?.horaire ?? [])" :key="idx" :style="{ height: h + '%' }"></div>
               </div>
             </div>
           </div>
@@ -464,7 +464,7 @@
                 <i class="ti ti-trending-up fs-2 text-success" aria-hidden="true"></i>
               </div>
               <div class="row g-3 mt-1">
-                <div class="col-6" v-for="m in achatActions.performance" :key="m.label">
+                <div class="col-6" v-for="m in (achatActions?.performance ?? [])" :key="m.label">
                   <div class="achat-metric">
                     <div class="d-flex align-items-center gap-2">
                       <span class="achat-metric-icon" :style="{ background: m.bg, color: m.color }" aria-hidden="true">
@@ -503,7 +503,7 @@
             <div class="achat-insights-box">
               <div class="fw-semibold text-white">Points d'attention</div>
               <div class="mt-2 achat-insights-list">
-                <div class="achat-insight" v-for="p in achatInsights.attention" :key="p">
+                <div class="achat-insight" v-for="p in (achatInsights?.attention ?? [])" :key="p">
                   <i class="ti ti-alert-circle text-warning" aria-hidden="true"></i>
                   <span class="text-white">{{ p }}</span>
                 </div>
@@ -514,7 +514,7 @@
             <div class="achat-insights-box">
               <div class="fw-semibold text-white">Recommandations</div>
               <div class="mt-2 achat-insights-list">
-                <div class="achat-insight" v-for="r in achatInsights.reco" :key="r">
+                <div class="achat-insight" v-for="r in (achatInsights?.reco ?? [])" :key="r">
                   <i class="ti ti-check text-success" aria-hidden="true"></i>
                   <span class="text-white">{{ r }}</span>
                 </div>
@@ -533,7 +533,7 @@
 <script setup>
 import MainLayout from '@/layouts/MainLayout.vue';
 import axios from 'axios';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const loading = ref(true);
 const error = ref(null);
@@ -566,112 +566,34 @@ const periode = ref('mois');
 const refreshing = ref(false);
 const lastUpdated = ref(new Date());
 
-const achatKpis = ref({
-  demandesAttente: { valeur: 8, tendance: "3 nouvelles aujourd'hui", joursMax: 6 },
-  bcMois: { valeur: 42, montant: "€ 245K", comparaison: "+12%" },
-  receptionsAttente: { valeur: 15, description: "12 planifiées cette semaine", retards: 2 },
-  conformite: { valeur: 85, tendance: "-3% ce mois" },
+const achatsLoading = ref(false);
+const achatsError = ref(null);
+const achatsDashboard = ref(null);
+
+const achatKpis = computed(() => achatsDashboard.value?.achatKpis ?? null);
+const achatCharts = computed(() => achatsDashboard.value?.achatCharts ?? null);
+const achatActions = computed(() => achatsDashboard.value?.achatActions ?? null);
+const achatInsights = computed(() => achatsDashboard.value?.achatInsights ?? null);
+
+const achatDaTotal = computed(() => {
+  const da = achatCharts.value?.daStatut;
+  if (!da) return 0;
+  return (da.brouillon ?? 0) + (da.soumise ?? 0) + (da.validee ?? 0) + (da.rejetee ?? 0);
 });
 
-const achatCharts = ref({
-  daStatut: {
-    brouillon: 12,
-    soumise: 8,
-    validee: 25,
-    rejetee: 3,
-    get total() {
-      return this.brouillon + this.soumise + this.validee + this.rejetee;
-    },
-    get items() {
-      return [
-        { label: 'Brouillon', value: this.brouillon, color: '#94a3b8' },
-        { label: 'Soumise', value: this.soumise, color: '#fbbf24' },
-        { label: 'Validée', value: this.validee, color: '#10b981' },
-        { label: 'Rejetée', value: this.rejetee, color: '#ef4444' },
-      ];
-    },
-  },
-  commandes: {
-    moyenne: '53 commandes',
-    mois: [
-      { label: 'Août', nb: 42, montantK: 180 },
-      { label: 'Sep', nb: 51, montantK: 205 },
-      { label: 'Oct', nb: 58, montantK: 260 },
-      { label: 'Nov', nb: 49, montantK: 230 },
-      { label: 'Déc', nb: 61, montantK: 275 },
-      { label: 'Jan', nb: 57, montantK: 245 },
-    ],
-  },
-  conformite: {
-    gauge: 85,
-    bars: [
-      { label: 'Conforme', value: 85, color: '#10b981' },
-      { label: 'Écarts mineurs', value: 12, color: '#fbbf24' },
-      { label: 'Écarts majeurs', value: 3, color: '#ef4444' },
-    ],
-  },
-  topFournisseurs: [
-    { nom: 'Fournisseur A', initiales: 'FA', avatarColor: 'linear-gradient(135deg, #8b5cf6, #ec4899)', montantK: 78, nbCommandes: 14, pct: 100 },
-    { nom: 'Fournisseur B', initiales: 'FB', avatarColor: 'linear-gradient(135deg, #3b82f6, #10b981)', montantK: 62, nbCommandes: 11, pct: 80 },
-    { nom: 'Fournisseur C', initiales: 'FC', avatarColor: 'linear-gradient(135deg, #f97316, #ef4444)', montantK: 45, nbCommandes: 9, pct: 58 },
-    { nom: 'Fournisseur D', initiales: 'FD', avatarColor: 'linear-gradient(135deg, #06b6d4, #3b82f6)', montantK: 38, nbCommandes: 7, pct: 49 },
-    { nom: 'Fournisseur E', initiales: 'FE', avatarColor: 'linear-gradient(135deg, #22c55e, #10b981)', montantK: 22, nbCommandes: 5, pct: 28 },
-  ],
-  delais: {
-    kpiOnTime: 87,
-    rows: [
-      { label: 'Semaine', avance: 10, atemps: 87, retard: 3 },
-      { label: 'Mois', avance: 8, atemps: 79, retard: 13 },
-    ],
-  },
-  pipeline: [
-    { label: 'Demandes créées', value: 48, pct: 100, color: 'linear-gradient(90deg, #3b82f6, #60a5fa)' },
-    { label: 'Demandes validées', value: 38, pct: 79, color: 'linear-gradient(90deg, #3b82f6, #10b981)' },
-    { label: 'BC émis', value: 32, pct: 67, color: 'linear-gradient(90deg, #10b981, #22c55e)' },
-    { label: 'Réceptions', value: 28, pct: 58, color: 'linear-gradient(90deg, #22c55e, #a3e635)' },
-    { label: 'Factures payées', value: 25, pct: 52, color: 'linear-gradient(90deg, #a3e635, #fbbf24)' },
-  ],
-});
-
-const achatActions = ref({
-  urgentes: [
-    { key: 'da', label: '8 DA en attente >3 jours', badge: 'URGENT', badgeClass: 'text-bg-danger' },
-    { key: 'bc', label: '5 BC en retard de livraison', badge: 'RETARD', badgeClass: 'text-bg-warning' },
-    { key: 'factures', label: '3 factures bloquées', badge: 'BLOQUÉ', badgeClass: 'text-bg-danger' },
-    { key: 'ecarts', label: '2 écarts majeurs à traiter', badge: 'À FAIRE', badgeClass: 'text-bg-warning' },
-  ],
-  activite: [
-    { label: 'Réceptions planifiées', done: 8, total: 12, color: '#3b82f6' },
-    { label: 'BC à envoyer', done: 2, total: 6, color: '#8b5cf6' },
-    { label: 'DA créées', done: 4, total: 4, color: '#10b981' },
-    { label: 'Factures validées', done: 9, total: 15, color: '#f97316' },
-  ],
-  horaire: [12, 20, 35, 60, 40, 25, 55, 70, 45, 30, 22, 15],
-  performance: [
-    { label: 'Taux respect délais', value: '87%', icon: 'ti-trending-up', bg: 'rgba(59,130,246,0.12)', color: '#3b82f6', delta: '+2% vs obj', deltaClass: 'text-success' },
-    { label: 'Taux conformité', value: '85%', icon: 'ti-circle-check', bg: 'rgba(16,185,129,0.12)', color: '#10b981', delta: '-5% vs obj', deltaClass: 'text-warning' },
-    { label: 'Délai moyen paiement', value: '32j', icon: 'ti-clock', bg: 'rgba(249,115,22,0.12)', color: '#f97316', delta: '+1j vs obj', deltaClass: 'text-warning' },
-    { label: 'Fournisseurs actifs', value: '45', icon: 'ti-users', bg: 'rgba(139,92,246,0.12)', color: '#8b5cf6', delta: '+3 ce mois', deltaClass: 'text-success' },
-  ],
-});
-
-const achatInsights = ref({
-  attention: [
-    "8 demandes en attente depuis >3 jours → Risque de rupture",
-    "Conformité en baisse de 3% → Auditer Fournisseur B",
-    "5 commandes en retard → Relancer livraisons",
-    "245K€ de factures en attente → Impact trésorerie",
-  ],
-  reco: [
-    "Valider les 8 DA prioritaires avant vendredi",
-    "Négocier délais avec Fournisseur D (3 retards)",
-    "Prévoir +15% de commandes le mois prochain (tendance)",
-    "Objectif conformité 90% : former équipe réception",
-  ],
+const achatDaItems = computed(() => {
+  const da = achatCharts.value?.daStatut;
+  if (!da) return [];
+  return [
+    { label: 'Brouillon', value: da.brouillon ?? 0, color: '#94a3b8' },
+    { label: 'Soumise', value: da.soumise ?? 0, color: '#fbbf24' },
+    { label: 'Validée', value: da.validee ?? 0, color: '#10b981' },
+    { label: 'Rejetée', value: da.rejetee ?? 0, color: '#ef4444' },
+  ];
 });
 
 const conformiteColor = computed(() => {
-  const v = achatKpis.value.conformite.valeur;
+  const v = achatKpis.value?.conformite?.valeur ?? 0;
   if (v > 80) return '#10b981';
   if (v >= 60) return '#f97316';
   return '#ef4444';
@@ -684,7 +606,7 @@ const conformiteBg = computed(() => {
 });
 
 const conformiteBadgeClass = computed(() => {
-  const v = achatKpis.value.conformite.valeur;
+  const v = achatKpis.value?.conformite?.valeur ?? 0;
   if (v > 80) return 'text-bg-success';
   if (v >= 60) return 'text-bg-warning';
   return 'text-bg-danger';
@@ -701,11 +623,24 @@ const lastUpdatedLabel = computed(() => {
   return lastUpdated.value.toLocaleString();
 });
 
+const loadAchats = async () => {
+  achatsError.value = null;
+  try {
+    achatsLoading.value = true;
+    const { data } = await axios.get('/api/dashboard/achats', { params: { periode: periode.value } });
+    achatsDashboard.value = data;
+    lastUpdated.value = new Date();
+  } catch (e) {
+    achatsError.value = "Impossible de charger le module Achats";
+  } finally {
+    achatsLoading.value = false;
+  }
+};
+
 const refreshAchats = async () => {
   try {
     refreshing.value = true;
-    await new Promise((r) => setTimeout(r, 700));
-    lastUpdated.value = new Date();
+    await loadAchats();
   } finally {
     refreshing.value = false;
   }
@@ -723,11 +658,16 @@ onMounted(async () => {
   try {
     const { data } = await axios.get('/api/dashboard/kpis');
     kpis.value = data;
+    await loadAchats();
   } catch (e) {
     error.value = "Impossible de charger les KPIs";
   } finally {
     loading.value = false;
   }
+});
+
+watch(periode, async () => {
+  await loadAchats();
 });
 </script>
 
