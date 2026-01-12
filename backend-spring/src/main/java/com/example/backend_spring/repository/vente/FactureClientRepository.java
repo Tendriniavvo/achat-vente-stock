@@ -19,6 +19,8 @@ public interface FactureClientRepository extends JpaRepository<FactureClient, In
 
     List<FactureClient> findByStatut(String statut);
 
+    long countByStatut(String statut);
+
     @Query("SELECT f FROM FactureClient f WHERE f.dateFacture BETWEEN :dateDebut AND :dateFin")
     List<FactureClient> findByDateFactureBetween(LocalDateTime dateDebut, LocalDateTime dateFin);
 
