@@ -19,6 +19,8 @@ public interface FactureFournisseurRepository extends JpaRepository<FactureFourn
 
     List<FactureFournisseur> findByStatut(String statut);
 
+    long countByStatut(String statut);
+
     @Query("SELECT f FROM FactureFournisseur f WHERE f.dateFacture BETWEEN :dateDebut AND :dateFin")
     List<FactureFournisseur> findByDateFactureBetween(LocalDateTime dateDebut, LocalDateTime dateFin);
 

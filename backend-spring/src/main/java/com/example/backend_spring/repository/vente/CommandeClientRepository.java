@@ -24,4 +24,7 @@ public interface CommandeClientRepository extends JpaRepository<CommandeClient, 
 
     @Query("SELECT c FROM CommandeClient c WHERE c.dateLivraisonPrevue < :date AND c.statut NOT IN ('livree', 'annulee')")
     List<CommandeClient> findCommandesEnRetard(LocalDateTime date);
+
+    @Query("SELECT COUNT(c) FROM CommandeClient c WHERE c.statut NOT IN ('livree', 'annulee')")
+    long countEnCours();
 }

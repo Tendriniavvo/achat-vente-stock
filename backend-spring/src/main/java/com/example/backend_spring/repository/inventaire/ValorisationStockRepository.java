@@ -8,11 +8,14 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ValorisationStockRepository extends JpaRepository<ValorisationStock, Integer> {
 
     List<ValorisationStock> findByDepot(Depot depot);
+
+    Optional<ValorisationStock> findTopByOrderByDateValorisationDesc();
 
     @Query("SELECT v FROM ValorisationStock v WHERE v.dateValorisation BETWEEN :dateDebut AND :dateFin")
     List<ValorisationStock> findByDateValorisationBetween(LocalDateTime dateDebut, LocalDateTime dateFin);

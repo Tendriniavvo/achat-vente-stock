@@ -24,4 +24,7 @@ public interface BonCommandeFournisseurRepository extends JpaRepository<BonComma
 
     @Query("SELECT b FROM BonCommandeFournisseur b WHERE b.dateLivraisonPrevue < :date AND b.statut NOT IN ('recu', 'annule')")
     List<BonCommandeFournisseur> findCommandesEnRetard(LocalDateTime date);
+
+    @Query("SELECT COUNT(b) FROM BonCommandeFournisseur b WHERE b.statut NOT IN ('recu', 'annule')")
+    long countEnCours();
 }

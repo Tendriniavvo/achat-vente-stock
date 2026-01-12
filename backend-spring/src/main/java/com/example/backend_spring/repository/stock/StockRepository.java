@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -24,4 +26,10 @@ public interface StockRepository extends JpaRepository<Stock, Integer> {
 
     @Query("SELECT s FROM Stock s WHERE s.quantite > s.article.stockMax")
     List<Stock> findStocksEnSurstock();
+
+    @Query("SELECT COALESCE(SUM(s.valeur), 0) FROM Stock s")
+    BigDecimal sumValeurTotale();
+
+    @Query("SELECT COALESCE(AVG(s.quantite), 0) FROM Stock s")
+    double avgQuantite();
 }

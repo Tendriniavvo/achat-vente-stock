@@ -25,6 +25,8 @@ public interface MouvementStockRepository extends JpaRepository<MouvementStock, 
     @Query("SELECT m FROM MouvementStock m WHERE m.dateMouvement BETWEEN :dateDebut AND :dateFin")
     List<MouvementStock> findByDateMouvementBetween(LocalDateTime dateDebut, LocalDateTime dateFin);
 
+    long countByDateMouvementBetween(LocalDateTime dateDebut, LocalDateTime dateFin);
+
     @Query("SELECT m FROM MouvementStock m WHERE m.article = :article AND m.dateMouvement BETWEEN :dateDebut AND :dateFin ORDER BY m.dateMouvement DESC")
     List<MouvementStock> findHistoriqueArticle(Article article, LocalDateTime dateDebut, LocalDateTime dateFin);
 }
