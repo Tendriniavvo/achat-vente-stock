@@ -172,7 +172,7 @@
       </header>
       <!--  Header End -->
       
-      <div class="container-fluid content-wrapper" style="padding-left: 15px !important; padding-right: 15px !important;">
+      <div style="padding-left: 15px !important; padding-right: 15px !important;">
         <!-- Slot pour le contenu de la page -->
         <slot />
       </div>
