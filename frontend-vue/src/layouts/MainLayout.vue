@@ -201,7 +201,7 @@
       </header>
       <!--  Header End -->
       
-      <div style="padding-left: 15px !important; padding-right: 15px !important;">
+      <div style="padding-left: 15px !important; padding-right: 15px !important; padding-top: 80px !important;">
         <!-- Slot pour le contenu de la page -->
         <slot />
       </div>
