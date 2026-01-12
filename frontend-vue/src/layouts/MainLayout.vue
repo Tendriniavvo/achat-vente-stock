@@ -81,12 +81,41 @@
                 <span class="hide-menu">Ventes</span>
               </router-link>
             </li>
+            
+            <!-- Stock avec dropdown -->
             <li class="sidebar-item">
-              <router-link class="sidebar-link" to="/stock" aria-expanded="false">
+              <a class="sidebar-link has-arrow" :class="{ active: isStockRoute() }" href="javascript:void(0)" :aria-expanded="stockMenuOpen" @click="toggleStockMenu">
                 <span><i class="ti ti-package"></i></span>
                 <span class="hide-menu">Stock</span>
-              </router-link>
+              </a>
+              <ul class="collapse first-level" :class="{ show: stockMenuOpen }">
+                <li class="sidebar-item">
+                  <router-link to="/stock" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Vue d'ensemble</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/depots" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Dépôts</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/emplacements" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Emplacements</span>
+                  </router-link>
+                </li>
+              </ul>
             </li>
+            
             <li class="sidebar-item">
               <router-link class="sidebar-link" to="/inventaire" aria-expanded="false">
                 <span><i class="ti ti-clipboard-list"></i></span>
@@ -188,12 +217,20 @@ const router = useRouter();
 const route = useRoute();
 const user = ref(null);
 const achatsMenuOpen = ref(false);
+const stockMenuOpen = ref(false);
 
 // Vérifier si on est sur une page d'achats
 const isAchatsRoute = () => {
   return route.path.startsWith('/achats') || 
          route.path.startsWith('/fournisseurs') || 
          route.path.startsWith('/commandes-achat');
+};
+
+// Vérifier si on est sur une page de stock
+const isStockRoute = () => {
+  return route.path.startsWith('/stock') || 
+         route.path.startsWith('/depots') ||
+         route.path.startsWith('/emplacements');
 };
 
 onMounted(() => {
@@ -208,11 +245,14 @@ onMounted(() => {
   
   // Ouvrir le menu Achats si on est sur une page d'achats
   achatsMenuOpen.value = isAchatsRoute();
+  // Ouvrir le menu Stock si on est sur une page de stock
+  stockMenuOpen.value = isStockRoute();
 });
 
 // Observer les changements de route
 watch(() => route.path, () => {
   achatsMenuOpen.value = isAchatsRoute();
+  stockMenuOpen.value = isStockRoute();
 });
 
 const logout = () => {
@@ -222,6 +262,10 @@ const logout = () => {
 
 const toggleAchatsMenu = () => {
   achatsMenuOpen.value = !achatsMenuOpen.value;
+};
+
+const toggleStockMenu = () => {
+  stockMenuOpen.value = !stockMenuOpen.value;
 };
 </script>
 

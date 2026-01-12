@@ -66,6 +66,46 @@ const router = createRouter({
       component: () => import('../views/Dashboard.vue') // Temporaire
     },
     {
+      path: '/depots',
+      name: 'depots',
+      component: () => import('../views/depots/Depots.vue')
+    },
+    {
+      path: '/depots/create',
+      name: 'depots-create',
+      component: () => import('../views/depots/CreateDepot.vue')
+    },
+    {
+      path: '/depots/:id',
+      name: 'depots-details',
+      component: () => import('../views/depots/DetailsDepot.vue')
+    },
+    {
+      path: '/depots/:id/edit',
+      name: 'depots-edit',
+      component: () => import('../views/depots/EditDepot.vue')
+    },
+    {
+      path: '/emplacements',
+      name: 'emplacements',
+      component: () => import('../views/emplacements/Emplacements.vue')
+    },
+    {
+      path: '/emplacements/create',
+      name: 'emplacements-create',
+      component: () => import('../views/emplacements/CreateEmplacement.vue')
+    },
+    {
+      path: '/emplacements/:id',
+      name: 'emplacements-details',
+      component: () => import('../views/emplacements/DetailsEmplacement.vue')
+    },
+    {
+      path: '/emplacements/:id/edit',
+      name: 'emplacements-edit',
+      component: () => import('../views/emplacements/EditEmplacement.vue')
+    },
+    {
       path: '/inventaire',
       name: 'inventaire',
       component: () => import('../views/Dashboard.vue') // Temporaire

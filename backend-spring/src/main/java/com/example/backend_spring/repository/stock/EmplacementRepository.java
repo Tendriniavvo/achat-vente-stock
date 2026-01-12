@@ -14,4 +14,11 @@ public interface EmplacementRepository extends JpaRepository<Emplacement, Intege
     List<Emplacement> findByDepot(Depot depot);
 
     Optional<Emplacement> findByDepotAndCode(Depot depot, String code);
+
+    // Méthodes pour le service
+    List<Emplacement> findByDepotId(Integer depotId);
+
+    List<Emplacement> findByCodeContainingIgnoreCase(String code);
+
+    List<Emplacement> findByDepotIdAndCodeContainingIgnoreCase(Integer depotId, String code);
 }
