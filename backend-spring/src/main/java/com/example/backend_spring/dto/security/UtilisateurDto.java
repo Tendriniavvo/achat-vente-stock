@@ -5,6 +5,8 @@ public class UtilisateurDto {
     private String nom;
     private String prenom;
     private String email;
+    private Integer departementId;
+    private String departementNom;
 
     // Constructeurs
     public UtilisateurDto() {
@@ -15,6 +17,16 @@ public class UtilisateurDto {
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
+    }
+
+    public UtilisateurDto(Integer id, String nom, String prenom, String email, Integer departementId,
+            String departementNom) {
+        this.id = id;
+        this.nom = nom;
+        this.prenom = prenom;
+        this.email = email;
+        this.departementId = departementId;
+        this.departementNom = departementNom;
     }
 
     // Getters et Setters
@@ -48,5 +60,21 @@ public class UtilisateurDto {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public Integer getDepartementId() {
+        return departementId;
+    }
+
+    public void setDepartementId(Integer departementId) {
+        this.departementId = departementId;
+    }
+
+    public String getDepartementNom() {
+        return departementNom;
+    }
+
+    public void setDepartementNom(String departementNom) {
+        this.departementNom = departementNom;
     }
 }

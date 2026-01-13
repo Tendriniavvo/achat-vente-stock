@@ -25,6 +25,10 @@ public class Utilisateur {
     @Column(name = "mot_de_passe", nullable = false)
     private String motDePasse;
 
+    @ManyToOne
+    @JoinColumn(name = "departement_id")
+    private Departement departement;
+
     @Column(nullable = false)
     private Boolean actif = true;
 
@@ -120,5 +124,13 @@ public class Utilisateur {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public Departement getDepartement() {
+        return departement;
+    }
+
+    public void setDepartement(Departement departement) {
+        this.departement = departement;
     }
 }

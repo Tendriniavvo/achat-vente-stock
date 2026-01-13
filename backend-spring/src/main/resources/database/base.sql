@@ -1,10 +1,19 @@
 
+CREATE TABLE departements (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    nom VARCHAR(100) NOT NULL,
+    description TEXT,
+    actif BOOLEAN DEFAULT TRUE
+);
+
 CREATE TABLE utilisateurs (
     id SERIAL PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     mot_de_passe VARCHAR(255) NOT NULL, -- Hashé
+    departement_id INTEGER REFERENCES departements(id),
     actif BOOLEAN DEFAULT TRUE,
     date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     date_derniere_connexion TIMESTAMP

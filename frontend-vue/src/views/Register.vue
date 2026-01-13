@@ -39,6 +39,15 @@
                       </option>
                     </select>
                   </div>
+                  <div class="mb-3">
+                    <label for="departement" class="form-label">Département</label>
+                    <select class="form-select" id="departement" v-model="selectedDepartement">
+                      <option value="">Aucun département</option>
+                      <option v-for="dept in departements" :key="dept.id" :value="dept.id">
+                        {{ dept.nom }} ({{ dept.code }})
+                      </option>
+                    </select>
+                  </div>
                   <div class="mb-4">
                     <label for="password" class="form-label">Mot de passe</label>
                     <input type="password" class="form-control" id="password" v-model="password" required>
@@ -72,6 +81,8 @@ const email = ref('');
 const password = ref('');
 const roles = ref([]);
 const selectedRole = ref('');
+const departements = ref([]);
+const selectedDepartement = ref('');
 const errorMessage = ref('');
 const successMessage = ref('');
 const isLoading = ref(false);
@@ -92,8 +103,24 @@ const loadRoles = async () => {
   }
 };
 
+// Charger les départements disponibles
+const loadDepartements = async () => {
+  try {
+    const response = await fetch('http://localhost:8080/api/departements?actif=true');
+    if (response.ok) {
+      departements.value = await response.json();
+      console.log('Départements chargés:', departements.value);
+    } else {
+      console.error('Erreur lors du chargement des départements:', response.status);
+    }
+  } catch (error) {
+    console.error('Erreur lors du chargement des départements:', error);
+  }
+};
+
 onMounted(() => {
   loadRoles();
+  loadDepartements();
 });
 
 const handleRegister = async () => {
@@ -119,7 +146,8 @@ const handleRegister = async () => {
         prenom: prenom.value,
         email: email.value,
         motDePasse: password.value,
-        roleIds: [selectedRole.value]
+        roleIds: [selectedRole.value],
+        departementId: selectedDepartement.value || null
       })
     });
     

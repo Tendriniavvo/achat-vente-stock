@@ -43,7 +43,22 @@ const router = createRouter({
     {
       path: '/utilisateurs',
       name: 'utilisateurs',
-      component: () => import('../views/Dashboard.vue') // Temporaire, à remplacer plus tard
+      component: () => import('../views/utilisateurs/Utilisateurs.vue')
+    },
+    {
+      path: '/utilisateurs/create',
+      name: 'utilisateurs-create',
+      component: () => import('../views/utilisateurs/CreateUtilisateur.vue')
+    },
+    {
+      path: '/utilisateurs/:id',
+      name: 'utilisateurs-details',
+      component: () => import('../views/utilisateurs/DetailsUtilisateur.vue')
+    },
+    {
+      path: '/utilisateurs/:id/edit',
+      name: 'utilisateurs-edit',
+      component: () => import('../views/utilisateurs/EditUtilisateur.vue')
     },
     {
       path: '/fournisseurs',

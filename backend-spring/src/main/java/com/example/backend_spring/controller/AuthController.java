@@ -3,8 +3,10 @@ package com.example.backend_spring.controller;
 import com.example.backend_spring.dto.AuthResponse;
 import com.example.backend_spring.dto.LoginRequest;
 import com.example.backend_spring.dto.RegisterRequest;
+import com.example.backend_spring.model.Departement;
 import com.example.backend_spring.model.Role;
 import com.example.backend_spring.model.Utilisateur;
+import com.example.backend_spring.repository.DepartementRepository;
 import com.example.backend_spring.service.security.RoleService;
 import com.example.backend_spring.service.security.UtilisateurService;
 import org.springframework.http.HttpStatus;
@@ -22,10 +24,13 @@ public class AuthController {
 
     private final UtilisateurService utilisateurService;
     private final RoleService roleService;
+    private final DepartementRepository departementRepository;
 
-    public AuthController(UtilisateurService utilisateurService, RoleService roleService) {
+    public AuthController(UtilisateurService utilisateurService, RoleService roleService,
+            DepartementRepository departementRepository) {
         this.utilisateurService = utilisateurService;
         this.roleService = roleService;
+        this.departementRepository = departementRepository;
     }
 
     @PostMapping("/login")
@@ -84,7 +89,14 @@ public class AuthController {
             utilisateur.setMotDePasse(request.getMotDePasse());
             utilisateur.setActif(true);
             utilisateur.setDateCreation(LocalDateTime.now());
-            
+
+            // Ajouter le département si spécifié
+            if (request.getDepartementId() != null) {
+                Departement departement = departementRepository.findById(request.getDepartementId())
+                        .orElseThrow(() -> new RuntimeException("Département introuvable"));
+                utilisateur.setDepartement(departement);
+            }
+
             // Ajouter les rôles sélectionnés
             if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
                 Set<Role> roles = new HashSet<>();

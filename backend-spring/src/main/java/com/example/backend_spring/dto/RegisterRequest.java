@@ -8,16 +8,19 @@ public class RegisterRequest {
     private String email;
     private String motDePasse;
     private List<Integer> roleIds;
+    private Integer departementId;
 
     public RegisterRequest() {
     }
 
-    public RegisterRequest(String nom, String prenom, String email, String motDePasse, List<Integer> roleIds) {
+    public RegisterRequest(String nom, String prenom, String email, String motDePasse, List<Integer> roleIds,
+            Integer departementId) {
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
         this.motDePasse = motDePasse;
         this.roleIds = roleIds;
+        this.departementId = departementId;
     }
 
     public String getNom() {
@@ -58,5 +61,13 @@ public class RegisterRequest {
 
     public void setRoleIds(List<Integer> roleIds) {
         this.roleIds = roleIds;
+    }
+
+    public Integer getDepartementId() {
+        return departementId;
+    }
+
+    public void setDepartementId(Integer departementId) {
+        this.departementId = departementId;
     }
 }

@@ -36,10 +36,17 @@ public class UtilisateurService {
     }
 
     private UtilisateurDto toDto(Utilisateur utilisateur) {
-        return new UtilisateurDto(
+        UtilisateurDto dto = new UtilisateurDto(
                 utilisateur.getId(),
                 utilisateur.getNom(),
                 utilisateur.getPrenom(),
                 utilisateur.getEmail());
+
+        if (utilisateur.getDepartement() != null) {
+            dto.setDepartementId(utilisateur.getDepartement().getId());
+            dto.setDepartementNom(utilisateur.getDepartement().getNom());
+        }
+
+        return dto;
     }
 }
