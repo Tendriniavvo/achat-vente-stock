@@ -8,13 +8,13 @@ ACHAT :
 misy service na departement manao DA 
 rehefa vita ny demande ilay service -> service achat -> atao copie aloha ny magazinier (sody efa misy anaty stock ny zavatra angatahan vidina ) 
 raha tsia de mangataka proforma any amin fournisseur (au moins 3 ) -> rehefa azo le proforma dia atao ny triage de proforma -> aveo presentena any
-amin fiance hitenena oe misy hikasana hividy zvtra de ity ny valeur -> rehefa approuvé ny finance de lasa BC ny service achat (manomboka eto no declenché ny ACHAT )
+amin finance hitenena oe misy hikasana hividy zvtra de ity ny valeur -> rehefa approuvé ny finance de lasa BC ny service achat (manomboka eto no declenché ny ACHAT )
 -> rehefa etablie ny BC de signen signataire ao amin societe -> rehefa lasa any amin fournisseur ny BC de miandry entana -> manao livraison ny fournisseur
 de mahazo bon de livraison ( bon de reception tonga miaraka amin entan no manankery ao amin societe ) -> reception facture -> payement 
 resumé : DA-> checking stock -> fiannce -> etablissement BC -> reception marchandise -> reception facture -> payement 
 
 
-VENTE : 
+VENTE :
 mahazo demande proforma ->checker ao amin stock oe misy ve le zavatra ->  mamoka proforma(valide dans 10j ou 5j) -> miandry BC 
 -> tonga ny BC -> preparer entana -> mandefa bon de livraison -> mandefa facture  
 
