@@ -128,7 +128,7 @@ public class DemandeAchatService {
             throw new RuntimeException("Impossible de soumettre une demande sans articles");
         }
 
-        demande.setStatut("en attente");
+        demande.setStatut("soumise");
         // Ajouter dans l'historique
         String historique = demande.getHistoriqueValidations() == null ? "" : demande.getHistoriqueValidations();
         historique += String.format("[%s] Soumise pour validation\n", java.time.LocalDateTime.now());
@@ -143,14 +143,14 @@ public class DemandeAchatService {
         DemandeAchat demande = demandeAchatRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande d'achat non trouvée"));
 
-        if (!"en attente".equals(demande.getStatut())) {
-            throw new RuntimeException("Seules les demandes en attente peuvent être approuvées");
+        if (!"soumise".equals(demande.getStatut())) {
+            throw new RuntimeException("Seules les demandes soumises peuvent être approuvées");
         }
 
         Utilisateur validateur = utilisateurRepository.findById(validateurId)
                 .orElseThrow(() -> new RuntimeException("Validateur non trouvé"));
 
-        demande.setStatut("approuvé");
+        demande.setStatut("validee");
         String historique = demande.getHistoriqueValidations() == null ? "" : demande.getHistoriqueValidations();
         historique += String.format("[%s] Approuvée par %s %s\n",
                 java.time.LocalDateTime.now(),
@@ -167,14 +167,14 @@ public class DemandeAchatService {
         DemandeAchat demande = demandeAchatRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande d'achat non trouvée"));
 
-        if (!"en attente".equals(demande.getStatut())) {
-            throw new RuntimeException("Seules les demandes en attente peuvent être rejetées");
+        if (!"soumise".equals(demande.getStatut())) {
+            throw new RuntimeException("Seules les demandes soumises peuvent être rejetées");
         }
 
         Utilisateur validateur = utilisateurRepository.findById(validateurId)
                 .orElseThrow(() -> new RuntimeException("Validateur non trouvé"));
 
-        demande.setStatut("rejeté");
+        demande.setStatut("rejetee");
         String historique = demande.getHistoriqueValidations() == null ? "" : demande.getHistoriqueValidations();
         historique += String.format("[%s] Rejetée par %s %s - Motif: %s\n",
                 java.time.LocalDateTime.now(),
@@ -192,11 +192,11 @@ public class DemandeAchatService {
         DemandeAchat demande = demandeAchatRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande d'achat non trouvée"));
 
-        if ("approuvé".equals(demande.getStatut()) || "approuve".equals(demande.getStatut())) {
-            throw new RuntimeException("Impossible d'annuler une demande approuvée");
+        if ("validee".equals(demande.getStatut())) {
+            throw new RuntimeException("Impossible d'annuler une demande validée");
         }
 
-        demande.setStatut("annulé");
+        demande.setStatut("annulee");
         String historique = demande.getHistoriqueValidations() == null ? "" : demande.getHistoriqueValidations();
         historique += String.format("[%s] Annulée\n", java.time.LocalDateTime.now());
         demande.setHistoriqueValidations(historique);
@@ -209,7 +209,7 @@ public class DemandeAchatService {
         DemandeAchat demande = demandeAchatRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Demande d'achat non trouvée"));
 
-        if (!"brouillon".equals(demande.getStatut()) && !"annulé".equals(demande.getStatut())) {
+        if (!"brouillon".equals(demande.getStatut()) && !"annulee".equals(demande.getStatut())) {
             throw new RuntimeException("Seules les demandes en brouillon ou annulées peuvent être supprimées");
         }
 
