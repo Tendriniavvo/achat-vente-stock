@@ -6,7 +6,7 @@ import com.example.backend_spring.dto.RegisterRequest;
 import com.example.backend_spring.model.Departement;
 import com.example.backend_spring.model.Role;
 import com.example.backend_spring.model.Utilisateur;
-import com.example.backend_spring.repository.DepartementRepository;
+import com.example.backend_spring.repository.security.DepartementRepository;
 import com.example.backend_spring.service.security.RoleService;
 import com.example.backend_spring.service.security.UtilisateurService;
 import org.springframework.http.HttpStatus;
