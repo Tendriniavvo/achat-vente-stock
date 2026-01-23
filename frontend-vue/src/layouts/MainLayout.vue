@@ -6,7 +6,7 @@
     <aside class="left-sidebar">
       <div>
         <div class="brand-logo d-flex align-items-center justify-content-between">
-          <router-link to="/" class="text-nowrap logo-img">
+          <router-link to="/dashboard" class="text-nowrap logo-img">
             <img src="@/assets/images/logos/dark-logo.svg" width="180" alt="" />
           </router-link>
           <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
@@ -22,7 +22,7 @@
               <span class="hide-menu">Accueil</span>
             </li>
             <li class="sidebar-item">
-              <router-link class="sidebar-link" to="/" aria-expanded="false">
+              <router-link class="sidebar-link" to="/dashboard" aria-expanded="false">
                 <span><i class="ti ti-layout-dashboard"></i></span>
                 <span class="hide-menu">Dashboard</span>
               </router-link>
@@ -185,11 +185,20 @@
                   <div class="message-body">
                     <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
                       <i class="ti ti-user fs-6"></i>
-                      <p class="mb-0 fs-3">{{ user?.nom }} {{ user?.prenom }}</p>
+                      <p class="mb-0 fs-3">{{ currentUser?.nom }} {{ currentUser?.prenom }}</p>
                     </a>
                     <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
                       <i class="ti ti-mail fs-6"></i>
-                      <p class="mb-0 fs-3">{{ user?.email }}</p>
+                      <p class="mb-0 fs-3">{{ currentUser?.email }}</p>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
+                      <i class="ti ti-building fs-6"></i>
+                      <p class="mb-0 fs-3"><strong>Dépt:</strong> {{ userDepartement }}</p>
+                    </a>
+                    <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
+                      <i class="ti ti-shield fs-6"></i>
+                      <p class="mb-0 fs-3"><strong>Rôle:</strong> {{ userRoles }}</p>
                     </a>
                     <a href="#" @click.prevent="logout" class="btn btn-outline-primary mx-3 mt-2 d-block">Déconnexion</a>
                   </div>
@@ -210,14 +219,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
-const user = ref(null);
+const authData = ref(null);
 const achatsMenuOpen = ref(false);
 const stockMenuOpen = ref(false);
+
+// Accéder à l'objet utilisateur imbriqué dans l'AuthResponse
+const currentUser = computed(() => authData.value?.user || null);
+
+// Formater les rôles pour l'affichage
+const userRoles = computed(() => {
+  const roles = currentUser.value?.roles;
+  if (!roles || roles.length === 0) return 'Aucun rôle';
+  return roles.map(r => r.nom).join(', ');
+});
+
+// Récupérer le nom du département
+const userDepartement = computed(() => {
+  return currentUser.value?.departement?.nom || 'N/A';
+});
 
 // Vérifier si on est sur une page d'achats
 const isAchatsRoute = () => {
@@ -234,10 +258,10 @@ const isStockRoute = () => {
 };
 
 onMounted(() => {
-  // Récupérer les informations de l'utilisateur depuis localStorage
+  // Récupérer les informations d'authentification depuis localStorage
   const userData = localStorage.getItem('user');
   if (userData) {
-    user.value = JSON.parse(userData);
+    authData.value = JSON.parse(userData);
   } else {
     // Si pas d'utilisateur connecté, rediriger vers login
     router.push('/login');

@@ -44,7 +44,7 @@
                     <select class="form-select" id="departement" v-model="selectedDepartement">
                       <option value="">Aucun département</option>
                       <option v-for="dept in departements" :key="dept.id" :value="dept.id">
-                        {{ dept.nom }} ({{ dept.code }})
+                        (ID: {{ dept.id }}) {{ dept.nom }} ({{ dept.code }})
                       </option>
                     </select>
                   </div>
@@ -73,6 +73,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 
 const router = useRouter();
 const nom = ref('');
@@ -90,29 +91,18 @@ const isLoading = ref(false);
 // Charger les rôles disponibles
 const loadRoles = async () => {
   try {
-    const response = await fetch('http://localhost:8080/api/roles');
-    if (response.ok) {
-      roles.value = await response.json();
-      console.log('Rôles chargés:', roles.value);
-    } else {
-      console.error('Erreur lors du chargement des rôles:', response.status);
-    }
+    const response = await axios.get('http://localhost:8080/api/roles');
+    roles.value = response.data;
   } catch (error) {
     console.error('Erreur lors du chargement des rôles:', error);
-    errorMessage.value = 'Impossible de charger les rôles. Vérifiez que le serveur est démarré.';
   }
 };
 
 // Charger les départements disponibles
 const loadDepartements = async () => {
   try {
-    const response = await fetch('http://localhost:8080/api/departements?actif=true');
-    if (response.ok) {
-      departements.value = await response.json();
-      console.log('Départements chargés:', departements.value);
-    } else {
-      console.error('Erreur lors du chargement des départements:', response.status);
-    }
+    const response = await axios.get('http://localhost:8080/api/departements');
+    departements.value = response.data;
   } catch (error) {
     console.error('Erreur lors du chargement des départements:', error);
   }
@@ -126,45 +116,33 @@ onMounted(() => {
 const handleRegister = async () => {
   errorMessage.value = '';
   successMessage.value = '';
-  
-  // Validation: un rôle doit être sélectionné
-  if (!selectedRole.value) {
-    errorMessage.value = 'Veuillez sélectionner un rôle';
-    return;
-  }
-  
   isLoading.value = true;
   
   try {
-    const response = await fetch('http://localhost:8080/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        nom: nom.value,
-        prenom: prenom.value,
-        email: email.value,
-        motDePasse: password.value,
-        roleIds: [selectedRole.value],
-        departementId: selectedDepartement.value || null
-      })
-    });
+    const user = {
+      nom: nom.value,
+      prenom: prenom.value,
+      email: email.value,
+      motDePasse: password.value,
+      roleIds: (selectedRole.value !== null && selectedRole.value !== '') ? [parseInt(selectedRole.value)] : [],
+      departementId: (selectedDepartement.value !== null && selectedDepartement.value !== '') ? parseInt(selectedDepartement.value) : null
+    };
     
-    const data = await response.json();
+    console.log('Données d\'inscription envoyées:', user);
     
-    if (data.success) {
-      successMessage.value = data.message;
-      // Redirection vers le login après 2 secondes
+    const response = await axios.post('http://localhost:8080/api/auth/register', user);
+    
+    if (response.data && response.data.user) {
+      successMessage.value = 'Inscription réussie ! Redirection vers la page de connexion...';
       setTimeout(() => {
         router.push('/login');
       }, 2000);
     } else {
-      errorMessage.value = data.message;
+      errorMessage.value = 'Erreur lors de l\'inscription';
     }
   } catch (error) {
     console.error('Erreur d\'inscription:', error);
-    errorMessage.value = 'Erreur de connexion au serveur';
+    errorMessage.value = error.response?.data || 'Erreur lors de l\'inscription';
   } finally {
     isLoading.value = false;
   }

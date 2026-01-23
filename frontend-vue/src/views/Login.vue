@@ -53,6 +53,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 
 const router = useRouter();
 const email = ref('');
@@ -66,31 +67,20 @@ const handleLogin = async () => {
   isLoading.value = true;
   
   try {
-    const response = await fetch('http://localhost:8080/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email.value,
-        motDePasse: password.value,
-        rememberMe: rememberMe.value
-      })
+    const response = await axios.post('http://localhost:8080/api/auth/login', {
+      email: email.value,
+      motDePasse: password.value
     });
     
-    const data = await response.json();
-    
-    if (data.success) {
-      // Stocker les informations de l'utilisateur
-      localStorage.setItem('user', JSON.stringify(data));
-      // Redirection vers le dashboard
-      router.push('/');
+    if (response.data && response.data.token) {
+      localStorage.setItem('user', JSON.stringify(response.data));
+      router.push('/dashboard');
     } else {
-      errorMessage.value = data.message;
+      errorMessage.value = 'Erreur lors de la connexion';
     }
   } catch (error) {
     console.error('Erreur de connexion:', error);
-    errorMessage.value = 'Erreur de connexion au serveur';
+    errorMessage.value = error.response?.data || 'Erreur de connexion au serveur';
   } finally {
     isLoading.value = false;
   }

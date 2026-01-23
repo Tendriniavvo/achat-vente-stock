@@ -423,20 +423,4 @@ CREATE INDEX idx_articles_code ON articles(code);
 CREATE INDEX idx_mouvements_date ON mouvements_stock(date_mouvement);
 CREATE INDEX idx_stocks_article ON stocks(article_id);
 
--- Triggers exemple (pour mise à jour stock après mouvement)
-CREATE OR REPLACE FUNCTION update_stock() RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.type = 'entree' THEN
-        UPDATE stocks SET quantite = quantite + NEW.quantite WHERE article_id = NEW.article_id AND depot_id = NEW.depot_id;
-    ELSIF NEW.type = 'sortie' THEN
-        UPDATE stocks SET quantite = quantite - NEW.quantite WHERE article_id = NEW.article_id AND depot_id = NEW.depot_id;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trig_mouvement_stock
-AFTER INSERT ON mouvements_stock
-FOR EACH ROW EXECUTE PROCEDURE update_stock();
-
 -- Fin du script
