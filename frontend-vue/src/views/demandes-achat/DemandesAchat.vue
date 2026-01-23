@@ -21,7 +21,10 @@
               >
                 <option value="tous">Tous</option>
                 <option value="brouillon">Brouillon</option>
-                <option value="en attente">En attente</option>
+                <option value="en attente">En attente N1 (Chef)</option>
+                <option value="attente_finance">En attente N2 (Finance)</option>
+                <option value="fonds_confirmés">Fonds confirmés (Finance)</option>
+                <option value="attente_admin">En attente N3 (Admin)</option>
                 <option value="approuvé">Approuvé</option>
                 <option value="rejeté">Rejeté</option>
                 <option value="annulé">Annulé</option>
@@ -56,6 +59,7 @@
                   <th>Référence</th>
                   <th>Demandeur</th>
                   <th>Date</th>
+                  <th>Total</th>
                   <th>Statut</th>
                   <th>Articles</th>
                   <th>Actions</th>
@@ -66,8 +70,9 @@
                   <td>
                     <strong>{{ demande.reference }}</strong>
                   </td>
-                  <td>{{ demande.demandeurPrenom }} {{ demande.demandeurNom }}</td>
+                  <td>{{ demande.demandeur?.prenom }} {{ demande.demandeur?.nom }}</td>
                   <td>{{ formatDate(demande.dateCreation) }}</td>
+                  <td class="fw-bold">{{ formatCurrency(calculerTotal(demande)) }}</td>
                   <td>
                     <span :class="getStatutClass(demande.statut)">
                       {{ demande.statut }}
@@ -99,7 +104,15 @@
                       <i class="ti ti-send"></i>
                     </button>
                     <button 
-                      v-if="demande.statut === 'en attente'"
+                      v-if="canVerifyFonds(demande)"
+                      class="btn btn-sm btn-info me-1" 
+                      title="Vérifier les fonds"
+                      @click="verifierFonds(demande.id)"
+                    >
+                      <i class="ti ti-coin"></i>
+                    </button>
+                    <button 
+                      v-if="canApprove(demande)"
                       class="btn btn-sm btn-success me-1" 
                       title="Approuver"
                       @click="approuver(demande.id)"
@@ -107,7 +120,7 @@
                       <i class="ti ti-check"></i>
                     </button>
                     <button 
-                      v-if="demande.statut === 'en attente'"
+                      v-if="canApprove(demande)"
                       class="btn btn-sm btn-danger me-1" 
                       title="Rejeter"
                       data-bs-toggle="modal" 
@@ -219,7 +232,7 @@ export default {
       this.errorMessage = '';
       
       try {
-        const response = await fetch('http://localhost:8080/api/demandes-achat');
+        const response = await fetch('/api/demandes-achat');
         if (response.ok) {
           this.demandes = await response.json();
         } else {
@@ -243,6 +256,94 @@ export default {
         minute: '2-digit'
       }).format(date);
     },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: 'MGA',
+        minimumFractionDigits: 0
+      }).format(value);
+    },
+    calculerTotal(demande) {
+      if (!demande.lignes) return 0;
+      return demande.lignes.reduce((total, ligne) => {
+        return total + (ligne.prixEstime * ligne.quantite);
+      }, 0);
+    },
+    hasRole(roleNom) {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return false;
+      const authData = JSON.parse(userStr);
+      const user = authData.user || authData;
+      if (!user.roles) return false;
+      return user.roles.some(r => r.nom.toUpperCase() === roleNom.toUpperCase());
+    },
+    canVerifyFonds(demande) {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return false;
+      const authData = JSON.parse(userStr);
+      const user = authData.user || authData;
+
+      const statut = demande.statut?.toLowerCase();
+      // La vérification des fonds est pour Finance ou Admin quand le statut est attente_finance
+      return (statut === 'attente_finance') && (this.hasRole('FINANCE') || this.hasRole('ADMIN'));
+    },
+    async verifierFonds(id) {
+      if (!confirm('Voulez-vous vérifier la disponibilité des fonds ?')) return;
+      try {
+        const response = await fetch(`/api/demandes-achat/${id}/verifier-fonds`, {
+          method: 'POST'
+        });
+        if (response.ok) {
+          alert('Disponibilité des fonds confirmée');
+          this.loadDemandes();
+        } else {
+          const errorMsg = await response.text();
+          alert('Erreur: ' + (errorMsg || 'Fonds insuffisants'));
+          this.loadDemandes();
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur de connexion au serveur');
+      }
+    },
+    canApprove(demande) {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return false;
+      const authData = JSON.parse(userStr);
+      const user = authData.user || authData;
+      
+      // Un demandeur ne peut pas approuver sa propre DA (Séparation des tâches)
+      if (demande.demandeur && demande.demandeur.id === user.id) {
+        return false;
+      }
+
+      const statut = demande.statut?.toLowerCase();
+
+      // N1: Chef de département approuve les DA "en attente"
+      if (statut === 'en attente') {
+        // L'ABAC (même département) est vérifié par le backend, 
+        // ici on affiche le bouton si l'utilisateur est CHEF ou ADMIN
+        return this.hasRole('CHEF') || this.hasRole('ADMIN');
+      }
+
+      // N2: Finance approuve les DA "fonds_confirmés" (après vérification)
+      if (statut === 'fonds_confirmés' || statut === 'fonds_confirmes') {
+        return this.hasRole('FINANCE') || this.hasRole('ADMIN');
+      }
+
+      // Si le statut est "attente_finance", Finance doit d'abord vérifier les fonds
+      // donc canApprove retourne false ici pour forcer l'action "Vérifier les fonds"
+      if (statut === 'attente_finance') {
+        return false;
+      }
+
+      // N3: Admin approuve les DA "attente_admin"
+      if (statut === 'attente_admin') {
+        return this.hasRole('ADMIN');
+      }
+
+      return false;
+    },
     getStatutClass(statut) {
       const statutLower = statut?.toLowerCase();
       switch (statutLower) {
@@ -250,12 +351,22 @@ export default {
           return 'badge bg-secondary';
         case 'en attente':
           return 'badge bg-warning';
+        case 'attente_finance':
+          return 'badge bg-primary';
+        case 'attente_admin':
+          return 'badge bg-indigo';
+        case 'fonds_confirmés':
+        case 'fonds_confirmes':
+          return 'badge bg-info';
         case 'approuvé':
         case 'approuve':
           return 'badge bg-success';
         case 'rejeté':
         case 'rejete':
           return 'badge bg-danger';
+        case 'transformé':
+        case 'transforme':
+          return 'badge bg-primary';
         default:
           return 'badge bg-info';
       }
@@ -272,7 +383,7 @@ export default {
       }
 
       try {
-        const response = await fetch(`http://localhost:8080/api/demandes-achat/${id}/soumettre`, {
+        const response = await fetch(`/api/demandes-achat/${id}/soumettre`, {
           method: 'POST'
         });
 
@@ -293,8 +404,15 @@ export default {
       }
 
       try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        const response = await fetch(`http://localhost:8080/api/demandes-achat/${id}/approuver`, {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          alert('Utilisateur non connecté');
+          return;
+        }
+        const authData = JSON.parse(userStr);
+        const user = authData.user || authData;
+        
+        const response = await fetch(`/api/demandes-achat/${id}/approuver`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -305,10 +423,23 @@ export default {
         });
 
         if (response.ok) {
-          alert('Demande approuvée avec succès');
+          const updatedDemande = await response.json();
+          const newStatus = updatedDemande.statut;
+          let message = 'Demande approuvée avec succès';
+          
+          if (newStatus === 'attente_finance') {
+            message = 'Approbation N1 réussie. En attente de la Finance.';
+          } else if (newStatus === 'attente_admin') {
+            message = 'Approbation N2 réussie. En attente de l\'Administration.';
+          } else if (newStatus === 'approuvé' || newStatus === 'approuve') {
+            message = 'Demande approuvée définitivement.';
+          }
+          
+          alert(message);
           this.loadDemandes();
         } else {
-          alert('Erreur lors de l\'approbation');
+          const errorMsg = await response.text();
+          alert('Erreur lors de l\'approbation : ' + errorMsg);
         }
       } catch (error) {
         console.error('Erreur:', error);
@@ -328,7 +459,7 @@ export default {
 
       try {
         const user = JSON.parse(localStorage.getItem('user'));
-        const response = await fetch(`http://localhost:8080/api/demandes-achat/${this.demandeARejeter.id}/rejeter`, {
+        const response = await fetch(`/api/demandes-achat/${this.demandeARejeter.id}/rejeter`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -370,7 +501,7 @@ export default {
       }
 
       try {
-        const response = await fetch(`http://localhost:8080/api/demandes-achat/${id}/annuler`, {
+        const response = await fetch(`/api/demandes-achat/${id}/annuler`, {
           method: 'POST'
         });
 

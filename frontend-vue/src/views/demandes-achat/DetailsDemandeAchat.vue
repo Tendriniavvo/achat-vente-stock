@@ -30,7 +30,7 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label fw-bold">Demandeur</label>
-                  <p class="form-control-plaintext">{{ demande.demandeurPrenom }} {{ demande.demandeurNom }}</p>
+                  <p class="form-control-plaintext">{{ demande.demandeur?.prenom }} {{ demande.demandeur?.nom }}</p>
                 </div>
               </div>
               <div class="col-md-6">
@@ -63,7 +63,7 @@
                     </thead>
                     <tbody>
                       <tr v-for="(ligne, index) in demande.lignes" :key="index">
-                        <td>{{ getArticleNom(ligne.articleId) }}</td>
+                        <td>{{ ligne.article?.code }} - {{ ligne.article?.nom }}</td>
                         <td class="text-center">{{ ligne.quantite }}</td>
                         <td class="text-end">{{ formatCurrency(ligne.prixEstime) }}</td>
                         <td class="text-end">{{ formatCurrency(ligne.prixEstime * ligne.quantite) }}</td>
@@ -90,41 +90,87 @@
 
             <!-- Boutons d'action -->
             <div class="d-flex justify-content-end gap-2">
+              <!-- Actions pour le Demandeur -->
               <router-link 
-                v-if="demande.statut === 'brouillon'"
+                v-if="isStatut('brouillon')"
                 :to="`/achats/${demande.id}/edit`" 
                 class="btn btn-warning"
               >
                 <i class="ti ti-edit"></i> Modifier
               </router-link>
               <button 
-                v-if="demande.statut === 'brouillon'"
+                v-if="isStatut('brouillon')"
                 class="btn btn-success" 
                 @click="soumettre"
               >
                 <i class="ti ti-send"></i> Soumettre à validation
               </button>
+
+              <!-- Actions d'Approbation Multi-niveaux -->
+              
+              <!-- N1: Chef de département -->
               <button 
-                v-if="demande.statut === 'en attente'"
-                class="btn btn-success me-2" 
+                v-if="isStatut('en attente') && (hasRole('CHEF') || hasRole('ADMIN')) && !isDemandeur()"
+                class="btn btn-success" 
                 @click="approuver"
               >
-                <i class="ti ti-check"></i> Approuver
+                <i class="ti ti-check"></i> Approuver (N1 - Chef)
               </button>
+
+              <!-- Vérification des fonds (Finance) -->
               <button 
-                v-if="demande.statut === 'en attente'"
-                class="btn btn-danger me-2" 
+                v-if="isStatut('attente_finance') && (hasRole('FINANCE') || hasRole('ADMIN'))"
+                class="btn btn-info" 
+                @click="verifierFonds"
+              >
+                <i class="ti ti-coin"></i> Vérifier les fonds
+              </button>
+
+              <!-- N2: Finance (après vérification des fonds) -->
+              <button 
+                v-if="isStatut('fonds_confirmés') && (hasRole('FINANCE') || hasRole('ADMIN')) && !isDemandeur()"
+                class="btn btn-success" 
+                @click="approuver"
+              >
+                <i class="ti ti-check"></i> Approuver (N2 - Finance)
+              </button>
+
+              <!-- N3: Admin / DG -->
+              <button 
+                v-if="isStatut('attente_admin') && hasRole('ADMIN') && !isDemandeur()"
+                class="btn btn-success" 
+                @click="approuver"
+              >
+                <i class="ti ti-check"></i> Approuver (N3 - Admin)
+              </button>
+
+              <button 
+                v-if="(isStatut('en attente') || isStatut('attente_finance') || isStatut('attente_admin') || isStatut('fonds_confirmés')) && (hasRole('ADMIN') || hasRole('CHEF') || hasRole('FINANCE')) && !isDemandeur()"
+                class="btn btn-danger" 
                 data-bs-toggle="modal" 
                 data-bs-target="#rejetModal"
               >
                 <i class="ti ti-x"></i> Rejeter
               </button>
+
+              <!-- Action d'annulation -->
               <button 
-                v-if="demande.statut !== 'approuvé' && demande.statut !== 'approuve' && demande.statut !== 'en attente'"
+                v-if="!isStatut('approuvé') && !isStatut('approuve') && !isStatut('annulé') && !isStatut('annule') && !isStatut('rejeté') && !isStatut('rejete') && !isStatut('transformé')"
                 class="btn btn-outline-danger" 
                 @click="annuler"
               >
                 <i class="ti ti-ban"></i> Annuler
+              </button>
+
+              <!-- ÉTAPE 4: Transformation en Bon de Commande -->
+              <button 
+                v-if="isStatut('approuvé') && (hasRole('ACHETEUR') || hasRole('ADMIN'))"
+                class="btn btn-primary" 
+                data-bs-toggle="modal" 
+                data-bs-target="#bcModal"
+                @click="loadFournisseurs"
+              >
+                <i class="ti ti-file-description"></i> Transformer en BC
               </button>
             </div>
           </div>
@@ -162,12 +208,43 @@
           </div>
         </div>
       </div>
+
+      <!-- Modal de transformation en BC -->
+      <div class="modal fade" id="bcModal" tabindex="-1" aria-labelledby="bcModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="bcModalLabel">Transformer en Bon de Commande</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="fournisseurId" class="form-label">Sélectionner un fournisseur (Optionnel)</label>
+                <select id="fournisseurId" class="form-select" v-model="selectedFournisseurId">
+                  <option :value="null">-- Choisir un fournisseur --</option>
+                  <option v-for="f in fournisseurs" :key="f.id" :value="f.id">
+                    {{ f.nom }} ({{ f.code }})
+                  </option>
+                </select>
+                <div class="form-text">Vous pourrez négocier et modifier le fournisseur plus tard sur le BC.</div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+              <button type="button" class="btn btn-primary" @click="confirmerTransformation">
+                <i class="ti ti-check"></i> Confirmer la transformation
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </MainLayout>
 </template>
 
 <script>
 import MainLayout from '../../layouts/MainLayout.vue';
+import { Modal } from 'bootstrap';
 
 export default {
   name: 'DetailsDemandeAchat',
@@ -178,9 +255,12 @@ export default {
     return {
       demande: null,
       articles: [],
+      fournisseurs: [],
+      selectedFournisseurId: null,
       isLoading: false,
       errorMessage: '',
-      motifRejet: ''
+      motifRejet: '',
+      currentUser: null
     };
   },
   computed: {
@@ -194,14 +274,59 @@ export default {
   mounted() {
     this.loadArticles();
     this.loadDemande();
+    const authData = JSON.parse(localStorage.getItem('user'));
+    if (authData) {
+      // Gérer les deux formats possibles (direct ou sous la clé user)
+      this.currentUser = authData.user || authData;
+    }
   },
   methods: {
+    hasRole(roleNom) {
+      if (!this.currentUser || !this.currentUser.roles) return false;
+      return this.currentUser.roles.some(r => r.nom.toUpperCase() === roleNom.toUpperCase());
+    },
+    isDemandeur() {
+      if (!this.demande || !this.currentUser) return false;
+      return this.demande.demandeur?.id === this.currentUser.id;
+    },
+    isStatut(statutTarget) {
+      if (!this.demande || !this.demande.statut) return false;
+      const currentStatut = this.demande.statut.toLowerCase();
+      const target = statutTarget.toLowerCase();
+      
+      // Mappages pour les nouveaux statuts
+      if (target === 'attente_finance') {
+        return currentStatut === 'attente_finance';
+      }
+      if (target === 'attente_admin') {
+        return currentStatut === 'attente_admin';
+      }
+
+      // Gérer les variantes avec/sans accents pour fonds_confirmés
+      if (target === 'fonds_confirmés' || target === 'fonds_confirmes') {
+        return currentStatut === 'fonds_confirmés' || currentStatut === 'fonds_confirmes';
+      }
+      // Gérer les variantes pour approuvé
+      if (target === 'approuvé' || target === 'approuve') {
+        return currentStatut === 'approuvé' || currentStatut === 'approuve';
+      }
+      // Gérer les variantes pour rejeté
+      if (target === 'rejeté' || target === 'rejete') {
+        return currentStatut === 'rejeté' || currentStatut === 'rejete';
+      }
+      // Gérer les variantes pour annulé
+      if (target === 'annulé' || target === 'annule') {
+        return currentStatut === 'annulé' || currentStatut === 'annule';
+      }
+      
+      return currentStatut === target;
+    },
     async loadDemande() {
       this.isLoading = true;
       const id = this.$route.params.id;
 
       try {
-        const response = await fetch(`http://localhost:8080/api/demandes-achat/${id}`);
+        const response = await fetch(`/api/demandes-achat/${id}`);
         if (response.ok) {
           this.demande = await response.json();
         } else {
@@ -216,12 +341,66 @@ export default {
     },
     async loadArticles() {
       try {
-        const response = await fetch('http://localhost:8080/api/articles');
+        const response = await fetch('/api/articles');
         if (response.ok) {
           this.articles = await response.json();
         }
       } catch (error) {
-        console.error('Erreur:', error);
+        console.error('Erreur chargement articles:', error);
+      }
+    },
+    async loadFournisseurs() {
+      try {
+        const response = await fetch('/api/fournisseurs');
+        if (response.ok) {
+          this.fournisseurs = await response.json();
+        }
+      } catch (error) {
+        console.error('Erreur chargement fournisseurs:', error);
+      }
+    },
+    async confirmerTransformation() {
+      if (!this.currentUser) {
+        alert('Utilisateur non connecté');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/bons-commande-fournisseur/transformer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            demandeAchatId: this.demande.id,
+            acheteurId: this.currentUser.id,
+            fournisseurId: this.selectedFournisseurId
+          })
+        });
+
+        if (response.ok) {
+          const bc = await response.json();
+          alert(`Demande transformée avec succès en Bon de Commande ${bc.reference}`);
+          
+          // Fermer le modal
+          const modalElement = document.getElementById('bcModal');
+          const modalInstance = Modal.getInstance(modalElement);
+          if (modalInstance) modalInstance.hide();
+          
+          // Recharger la demande pour voir le nouveau statut
+          this.loadDemande();
+          
+          // Rediriger vers la liste des Bons de Commande
+          setTimeout(() => {
+            this.$router.push('/commandes-achat');
+          }, 2000);
+        } else {
+          const error = await response.text();
+          alert('Erreur lors de la transformation: ' + error);
+        }
+      } catch (error) {
+        console.error('Erreur transformation BC:', error);
+        alert('Erreur de connexion lors de la transformation');
       }
     },
     getArticleNom(articleId) {
@@ -253,6 +432,13 @@ export default {
           return 'badge bg-secondary';
         case 'en attente':
           return 'badge bg-warning';
+        case 'attente_finance':
+          return 'badge bg-primary';
+        case 'attente_admin':
+          return 'badge bg-indigo';
+        case 'fonds_confirmés':
+        case 'fonds_confirmes':
+          return 'badge bg-info';
         case 'approuvé':
         case 'approuve':
           return 'badge bg-success';
@@ -262,6 +448,9 @@ export default {
         case 'annulé':
         case 'annule':
           return 'badge bg-dark';
+        case 'transformé':
+        case 'transforme':
+          return 'badge bg-primary';
         default:
           return 'badge bg-info';
       }
@@ -272,7 +461,7 @@ export default {
       }
 
       try {
-        const response = await fetch(`http://localhost:8080/api/demandes-achat/${this.demande.id}/soumettre`, {
+        const response = await fetch(`/api/demandes-achat/${this.demande.id}/soumettre`, {
           method: 'POST'
         });
 
@@ -287,14 +476,43 @@ export default {
         alert('Erreur de connexion au serveur');
       }
     },
+    async verifierFonds() {
+      if (!confirm('Voulez-vous vérifier la disponibilité des fonds for cette demande ?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/demandes-achat/${this.demande.id}/verifier-fonds`, {
+          method: 'POST'
+        });
+
+        if (response.ok) {
+          alert('Disponibilité des fonds confirmée');
+          this.loadDemande();
+        } else {
+          const errorMsg = await response.text();
+          alert('Erreur: ' + (errorMsg || 'Fonds insuffisants ou erreur de vérification'));
+          this.loadDemande();
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur de connexion au serveur');
+      }
+    },
     async approuver() {
       if (!confirm('Voulez-vous approuver cette demande d\'achat ?')) {
         return;
       }
 
       try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        const response = await fetch(`http://localhost:8080/api/demandes-achat/${this.demande.id}/approuver`, {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          alert('Utilisateur non connecté');
+          return;
+        }
+        const authData = JSON.parse(userStr);
+        const user = authData.user || authData;
+        const response = await fetch(`/api/demandes-achat/${this.demande.id}/approuver`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -305,10 +523,23 @@ export default {
         });
 
         if (response.ok) {
-          alert('Demande approuvée avec succès');
+          const updatedDemande = await response.json();
+          const newStatus = updatedDemande.statut;
+          let message = 'Demande approuvée avec succès';
+          
+          if (newStatus === 'attente_finance') {
+            message = 'Approbation N1 réussie. En attente de la Finance.';
+          } else if (newStatus === 'attente_admin') {
+            message = 'Approbation N2 réussie. En attente de l\'Administration.';
+          } else if (newStatus === 'approuvé' || newStatus === 'approuve') {
+            message = 'Demande approuvée définitivement.';
+          }
+          
+          alert(message);
           this.loadDemande();
         } else {
-          alert('Erreur lors de l\'approbation');
+          const errorMsg = await response.text();
+          alert('Erreur lors de l\'approbation : ' + errorMsg);
         }
       } catch (error) {
         console.error('Erreur:', error);
@@ -323,7 +554,7 @@ export default {
 
       try {
         const user = JSON.parse(localStorage.getItem('user'));
-        const response = await fetch(`http://localhost:8080/api/demandes-achat/${this.demande.id}/rejeter`, {
+        const response = await fetch(`/api/demandes-achat/${this.demande.id}/rejeter`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -365,7 +596,7 @@ export default {
       }
 
       try {
-        const response = await fetch(`http://localhost:8080/api/demandes-achat/${this.demande.id}/annuler`, {
+        const response = await fetch(`/api/demandes-achat/${this.demande.id}/annuler`, {
           method: 'POST'
         });
 

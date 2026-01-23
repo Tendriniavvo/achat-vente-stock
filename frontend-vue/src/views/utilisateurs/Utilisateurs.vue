@@ -165,7 +165,7 @@ export default {
   methods: {
     async loadDepartements() {
       try {
-        const response = await axios.get('http://localhost:8080/api/departements');
+        const response = await axios.get('/api/departements');
         this.departements = response.data;
       } catch (error) {
         console.error('Erreur lors du chargement des départements:', error);
@@ -175,7 +175,7 @@ export default {
       this.isLoading = true;
       this.errorMessage = '';
       try {
-        const response = await axios.get('http://localhost:8080/api/utilisateurs');
+        const response = await axios.get('/api/utilisateurs');
         this.utilisateurs = response.data;
       } catch (error) {
         console.error('Erreur lors du chargement des utilisateurs:', error);

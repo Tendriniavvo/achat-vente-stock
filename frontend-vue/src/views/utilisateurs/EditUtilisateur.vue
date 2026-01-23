@@ -149,7 +149,7 @@ export default {
   methods: {
     async loadDepartements() {
       try {
-        const response = await axios.get('http://localhost:8080/api/departements?actif=true');
+        const response = await axios.get('/api/departements?actif=true');
         this.departements = response.data;
       } catch (error) {
         console.error('Erreur lors du chargement des départements:', error);
@@ -160,7 +160,7 @@ export default {
       this.errorMessage = '';
       
       try {
-        const response = await axios.get(`http://localhost:8080/api/utilisateurs`);
+        const response = await axios.get(`/api/utilisateurs`);
         const utilisateurs = response.data;
         const utilisateur = utilisateurs.find(u => u.id === parseInt(this.$route.params.id));
         
@@ -193,7 +193,7 @@ export default {
         this.successMessage = 'Fonctionnalité de modification en cours de développement.';
         
         // TODO: Implémenter l'appel API PUT /api/utilisateurs/{id}
-        // await axios.put(`http://localhost:8080/api/utilisateurs/${this.$route.params.id}`, this.form);
+        // await axios.put(`/api/utilisateurs/${this.$route.params.id}`, this.form);
         
         setTimeout(() => {
           this.$router.push('/utilisateurs');

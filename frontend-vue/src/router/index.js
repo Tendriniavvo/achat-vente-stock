@@ -78,13 +78,13 @@ const router = createRouter({
     {
       path: '/fournisseurs',
       name: 'fournisseurs',
-      component: () => import('../views/Dashboard.vue'), // Temporaire
+      component: () => import('../views/fournisseurs/Fournisseurs.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/commandes-achat',
       name: 'commandes-achat',
-      component: () => import('../views/Dashboard.vue'), // Temporaire
+      component: () => import('../views/bons-commande/BonsCommandeFournisseur.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -163,6 +163,18 @@ const router = createRouter({
       path: '/articles',
       name: 'articles',
       component: () => import('../views/Dashboard.vue'), // Temporaire
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/budgets',
+      name: 'budgets',
+      component: () => import('../views/budgets/Budgets.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/budgets/create',
+      name: 'budgets-create',
+      component: () => import('../views/budgets/CreateBudget.vue'),
       meta: { requiresAuth: true }
     }
   ]

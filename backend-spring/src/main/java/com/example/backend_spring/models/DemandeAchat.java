@@ -1,10 +1,12 @@
 package com.example.backend_spring.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "demandes_achat")
@@ -22,6 +24,10 @@ public class DemandeAchat {
     @ManyToOne
     @JoinColumn(name = "demandeur_id")
     private Utilisateur demandeur;
+
+    @OneToMany(mappedBy = "demandeAchat", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<LigneDemandeAchat> lignes;
 
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();

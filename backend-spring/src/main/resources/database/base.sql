@@ -7,6 +7,18 @@ CREATE TABLE departements (
     actif BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE budgets (
+    id SERIAL PRIMARY KEY,
+    departement_id INTEGER NOT NULL,
+    annee INTEGER NOT NULL,
+    montant_initial DECIMAL(19, 2) NOT NULL DEFAULT 0,
+    montant_consomme DECIMAL(19, 2) NOT NULL DEFAULT 0,
+    montant_disponible DECIMAL(19, 2) NOT NULL DEFAULT 0,
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_budget_departement FOREIGN KEY (departement_id) REFERENCES departements(id),
+    CONSTRAINT unique_budget_dept_annee UNIQUE (departement_id, annee)
+);
+
 CREATE TABLE utilisateurs (
     id SERIAL PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,

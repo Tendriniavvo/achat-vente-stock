@@ -1,142 +1,151 @@
 <template>
   <MainLayout>
     <div class="container-fluid">
-      <div class="card">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="card-title fw-semibold mb-0">Nouvelle Demande d'Achat</h5>
-            <router-link to="/achats" class="btn btn-secondary">
-              <i class="ti ti-arrow-left"></i> Retour
-            </router-link>
-          </div>
-
-          <div v-if="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ errorMessage }}
-            <button type="button" class="btn-close" @click="errorMessage = ''"></button>
-          </div>
-
-          <div v-if="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ successMessage }}
-            <button type="button" class="btn-close" @click="successMessage = ''"></button>
-          </div>
-
-          <form @submit.prevent="handleSubmit">
-            <!-- Informations générales -->
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="reference" class="form-label">Référence <span class="text-danger">*</span></label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  id="reference" 
-                  v-model="form.reference" 
-                  placeholder="Ex: DA-2026-001"
-                  required
-                >
+      <div class="row">
+        <div class="col-12">
+          <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="card-title fw-bold mb-0">
+                  <i class="ti ti-plus me-2 text-primary"></i>Créer une Demande d'Achat
+                </h5>
+                <router-link to="/achats" class="btn btn-outline-secondary btn-sm">
+                  <i class="ti ti-arrow-left me-1"></i>Retour à la liste
+                </router-link>
               </div>
-              <div class="col-md-6 mb-3">
-                <label for="demandeur" class="form-label">Demandeur <span class="text-danger">*</span></label>
-                <select 
-                  class="form-select" 
-                  id="demandeur" 
-                  v-model="form.demandeurId" 
-                  required
-                >
-                  <option value="">Sélectionnez un demandeur</option>
-                  <option v-for="utilisateur in utilisateurs" :key="utilisateur.id" :value="utilisateur.id">
-                    {{ utilisateur.prenom }} {{ utilisateur.nom }} ({{ utilisateur.email }})
-                  </option>
-                </select>
-              </div>
-            </div>
 
-            <!-- Section Lignes de demande -->
-            <div class="card bg-light mb-4">
-              <div class="card-body">
-                <h6 class="card-title mb-3">Articles demandés</h6>
-                
-                <!-- Lignes existantes -->
-                <div v-for="(ligne, index) in form.lignes" :key="index" class="row mb-3 align-items-end">
+              <div v-if="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="ti ti-alert-circle me-2"></i>{{ errorMessage }}
+                <button type="button" class="btn-close" @click="errorMessage = ''"></button>
+              </div>
+
+              <form @submit.prevent="saveDemande">
+                <!-- Informations Générales -->
+                <div class="row mb-4">
                   <div class="col-md-4">
-                    <label class="form-label">Article <span class="text-danger">*</span></label>
+                    <label for="reference" class="form-label fw-semibold">Référence <span class="text-danger">*</span></label>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="reference" 
+                      v-model="form.reference" 
+                      placeholder="Ex: DA-2026-001"
+                      required
+                    >
+                  </div>
+                  <div class="col-md-4">
+                    <label for="demandeur" class="form-label fw-semibold">Demandeur <span class="text-danger">*</span></label>
                     <select 
                       class="form-select" 
-                      v-model="ligne.articleId" 
+                      id="demandeur" 
+                      v-model="form.demandeurId" 
                       required
-                      @change="updatePrixEstime(index)"
                     >
-                      <option value="">Sélectionnez un article</option>
-                      <option v-for="article in articles" :key="article.id" :value="article.id">
-                        {{ article.code }} - {{ article.nom }}
+                      <option value="" disabled>Sélectionner un demandeur</option>
+                      <option v-for="user in utilisateurs" :key="user.id" :value="user.id">
+                        {{ user.nom }} {{ user.prenom }} ({{ user.email }})
                       </option>
                     </select>
                   </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Quantité <span class="text-danger">*</span></label>
-                    <input 
-                      type="number" 
-                      class="form-control" 
-                      v-model.number="ligne.quantite" 
-                      min="1"
-                      required
-                    >
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">Prix Estimé (Ar)</label>
-                    <input 
-                      type="number" 
-                      class="form-control" 
-                      v-model.number="ligne.prixEstime" 
-                      step="0.01"
-                      min="0"
-                    >
-                  </div>
-                  <div class="col-md-2">
-                    <button 
-                      type="button" 
-                      class="btn btn-danger w-100" 
-                      @click="removeLigne(index)"
-                      :disabled="form.lignes.length === 1"
-                    >
-                      <i class="ti ti-trash"></i> Supprimer
-                    </button>
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">Statut Initial</label>
+                    <input type="text" class="form-control bg-light" value="Brouillon" disabled>
                   </div>
                 </div>
 
-                <!-- Bouton Ajouter ligne -->
-                <button 
-                  type="button" 
-                  class="btn btn-outline-primary btn-sm" 
-                  @click="addLigne"
-                >
-                  <i class="ti ti-plus"></i> Ajouter un article
-                </button>
-              </div>
-            </div>
+                <!-- Section Articles -->
+                <div class="card bg-light border-0 mb-4">
+                  <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h6 class="fw-bold mb-0">Articles et Besoins</h6>
+                      <button type="button" class="btn btn-primary btn-sm" @click="addLigne">
+                        <i class="ti ti-plus me-1"></i>Ajouter un article
+                      </button>
+                    </div>
 
-            <!-- Total estimé -->
-            <div class="row mb-4">
-              <div class="col-md-12 text-end">
-                <h5 class="mb-0">
-                  Total Estimé: <span class="text-primary">{{ formatCurrency(totalEstime) }}</span>
-                </h5>
-              </div>
-            </div>
+                    <div v-if="form.lignes.length === 0" class="text-center py-4 bg-white rounded">
+                      <p class="text-muted mb-0">Aucun article ajouté. Cliquez sur "Ajouter un article".</p>
+                    </div>
 
-            <!-- Boutons d'action -->
-            <div class="d-flex justify-content-end gap-2">
-              <router-link to="/achats" class="btn btn-light">Annuler</router-link>
-              <button type="submit" class="btn btn-primary" :disabled="isLoading || form.lignes.length === 0">
-                <span v-if="isLoading">
-                  <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  Enregistrement...
-                </span>
-                <span v-else>
-                  <i class="ti ti-device-floppy"></i> Enregistrer
-                </span>
-              </button>
+                    <div v-else class="table-responsive">
+                      <table class="table table-borderless align-middle mb-0">
+                        <thead>
+                          <tr class="text-muted small text-uppercase">
+                            <th style="width: 40%">Article <span class="text-danger">*</span></th>
+                            <th style="width: 15%" class="text-center">Quantité <span class="text-danger">*</span></th>
+                            <th style="width: 20%" class="text-end">Prix Estimé (U) <span class="text-danger">*</span></th>
+                            <th style="width: 20%" class="text-end">Total</th>
+                            <th style="width: 5%"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(ligne, index) in form.lignes" :key="index" class="bg-white rounded-3 mb-2">
+                            <td>
+                              <select 
+                                class="form-select border-0 shadow-none bg-light" 
+                                v-model="ligne.articleId" 
+                                @change="updatePrixEstime(index)"
+                                required
+                              >
+                                <option value="" disabled>Sélectionner un article</option>
+                                <option v-for="article in articles" :key="article.id" :value="article.id">
+                                  {{ article.code }} - {{ article.nom }}
+                                </option>
+                              </select>
+                            </td>
+                            <td>
+                              <input 
+                                type="number" 
+                                class="form-control border-0 shadow-none bg-light text-center" 
+                                v-model.number="ligne.quantite" 
+                                min="1" 
+                                required
+                              >
+                            </td>
+                            <td>
+                              <input 
+                                type="number" 
+                                class="form-control border-0 shadow-none bg-light text-end" 
+                                v-model.number="ligne.prixEstime" 
+                                step="0.01" 
+                                min="0" 
+                                required
+                              >
+                            </td>
+                            <td class="text-end fw-bold text-primary">
+                              {{ formatCurrency(ligne.quantite * (ligne.prixEstime || 0)) }}
+                            </td>
+                            <td class="text-end">
+                              <button type="button" class="btn btn-link text-danger p-0" @click="removeLigne(index)">
+                                <i class="ti ti-trash fs-5"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                        <tfoot>
+                          <tr class="border-top">
+                            <td colspan="3" class="text-end fw-bold pt-3">TOTAL ESTIMÉ :</td>
+                            <td class="text-end fw-bold text-primary fs-5 pt-3">
+                              {{ formatCurrency(totalEstime) }}
+                            </td>
+                            <td></td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-light px-4" @click="$router.push('/achats')">Annuler</button>
+                  <button type="submit" class="btn btn-primary px-4" :disabled="isSaving">
+                    <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+                    <i v-else class="ti ti-device-floppy me-2"></i>Enregistrer en Brouillon
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
@@ -155,88 +164,67 @@ export default {
     return {
       form: {
         reference: '',
-        demandeurId: null,
-        lignes: [
-          {
-            articleId: '',
-            quantite: 1,
-            prixEstime: 0
-          }
-        ]
+        demandeurId: '',
+        lignes: []
       },
       articles: [],
       utilisateurs: [],
-      user: null,
-      isLoading: false,
-      errorMessage: '',
-      successMessage: ''
+      isSaving: false,
+      errorMessage: ''
     };
   },
   computed: {
     totalEstime() {
       return this.form.lignes.reduce((total, ligne) => {
-        const prix = ligne.prixEstime || 0;
-        const quantite = ligne.quantite || 0;
-        return total + (prix * quantite);
+        return total + ((ligne.prixEstime || 0) * (ligne.quantite || 0));
       }, 0);
     }
   },
   mounted() {
-    this.loadUserData();
-    this.loadUtilisateurs();
-    this.loadArticles();
     this.generateReference();
+    this.loadArticles();
+    this.loadUtilisateurs();
+    this.setCurrentUser();
+    // Ajouter une ligne par défaut
+    this.addLigne();
   },
   methods: {
-    loadUserData() {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        this.user = JSON.parse(userData);
-        // Pré-sélectionner l'utilisateur connecté par défaut
-        this.form.demandeurId = this.user.id;
-      } else {
-        this.$router.push('/login');
-      }
-    },
     async loadUtilisateurs() {
-      console.log('Chargement des utilisateurs...');
       try {
-        const response = await fetch('http://localhost:8080/api/utilisateurs');
-        console.log('Réponse utilisateurs:', response.status);
+        const response = await fetch('/api/utilisateurs');
         if (response.ok) {
           this.utilisateurs = await response.json();
-          console.log('Utilisateurs chargés:', this.utilisateurs.length);
-        } else {
-          console.error('Erreur HTTP:', response.status);
-          this.errorMessage = 'Erreur lors du chargement des utilisateurs';
         }
       } catch (error) {
-        console.error('Erreur:', error);
-        this.errorMessage = 'Erreur de connexion au serveur pour les utilisateurs';
+        console.error('Erreur utilisateurs:', error);
+      }
+    },
+    setCurrentUser() {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        // On définit le demandeur par défaut sur l'utilisateur connecté
+        this.form.demandeurId = user.id;
+      } else {
+        this.errorMessage = 'Utilisateur non connecté. Veuillez vous reconnecter.';
+        this.$router.push('/login');
       }
     },
     async loadArticles() {
       try {
-        const response = await fetch('http://localhost:8080/api/articles');
+        const response = await fetch('/api/articles');
         if (response.ok) {
           this.articles = await response.json();
-        } else {
-          this.errorMessage = 'Erreur lors du chargement des articles';
         }
       } catch (error) {
-        console.error('Erreur:', error);
-        this.errorMessage = 'Erreur de connexion au serveur';
+        console.error('Erreur articles:', error);
       }
     },
     generateReference() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      this.form.reference = `DA-${year}${month}${day}-${hours}${minutes}${seconds}`;
+      const date = new Date();
+      const year = date.getFullYear();
+      const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      this.form.reference = `DA-${year}-${random}`;
     },
     addLigne() {
       this.form.lignes.push({
@@ -246,58 +234,34 @@ export default {
       });
     },
     removeLigne(index) {
-      if (this.form.lignes.length > 1) {
-        this.form.lignes.splice(index, 1);
-      }
+      this.form.lignes.splice(index, 1);
     },
     updatePrixEstime(index) {
-      const ligne = this.form.lignes[index];
-      if (ligne.articleId) {
-        const article = this.articles.find(a => a.id === parseInt(ligne.articleId));
-        if (article && article.prixAchat) {
-          ligne.prixEstime = article.prixAchat;
-        }
+      const articleId = this.form.lignes[index].articleId;
+      const article = this.articles.find(a => a.id === articleId);
+      if (article) {
+        this.form.lignes[index].prixEstime = article.prixAchat || 0;
       }
     },
     formatCurrency(value) {
-      return new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'MGA',
-        minimumFractionDigits: 0
-      }).format(value);
+      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA' }).format(value);
     },
-    async handleSubmit() {
-      // Validation
-      if (!this.form.reference.trim()) {
-        this.errorMessage = 'La référence est obligatoire';
-        return;
-      }
-
+    async saveDemande() {
       if (this.form.lignes.length === 0) {
-        this.errorMessage = 'Ajoutez au moins un article';
+        this.errorMessage = 'Veuillez ajouter au moins un article.';
         return;
       }
 
-      // Vérifier que tous les articles sont sélectionnés
-      const missingArticle = this.form.lignes.some(ligne => !ligne.articleId);
-      if (missingArticle) {
-        this.errorMessage = 'Veuillez sélectionner un article pour chaque ligne';
+      if (this.form.lignes.some(l => !l.articleId)) {
+        this.errorMessage = 'Veuillez sélectionner un article pour chaque ligne.';
         return;
       }
 
-      // Vérifier les quantités
-      const invalidQuantite = this.form.lignes.some(ligne => !ligne.quantite || ligne.quantite < 1);
-      if (invalidQuantite) {
-        this.errorMessage = 'Les quantités doivent être supérieures à 0';
-        return;
-      }
-
-      this.isLoading = true;
+      this.isSaving = true;
       this.errorMessage = '';
-      this.successMessage = '';
 
       try {
-        const response = await fetch('http://localhost:8080/api/demandes-achat', {
+        const response = await fetch('/api/demandes-achat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -306,22 +270,16 @@ export default {
         });
 
         if (response.ok) {
-          const data = await response.json();
-          this.successMessage = `Demande d'achat ${data.reference} créée avec succès!`;
-          
-          // Rediriger vers la liste après 2 secondes
-          setTimeout(() => {
-            this.$router.push('/achats');
-          }, 2000);
+          this.$router.push('/achats');
         } else {
-          const errorData = await response.text();
-          this.errorMessage = `Erreur lors de la création: ${errorData}`;
+          const errorText = await response.text();
+          this.errorMessage = errorText || 'Erreur lors de l\'enregistrement';
         }
       } catch (error) {
         console.error('Erreur:', error);
         this.errorMessage = 'Erreur de connexion au serveur';
       } finally {
-        this.isLoading = false;
+        this.isSaving = false;
       }
     }
   }
@@ -330,30 +288,19 @@ export default {
 
 <style scoped>
 .card {
-  border: none;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
 }
-
 .bg-light {
   background-color: #f8f9fa !important;
 }
-
-.form-label {
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.text-danger {
-  color: #dc3545 !important;
-}
-
-.btn-outline-primary {
+.form-control:focus, .form-select:focus {
   border-color: #5d87ff;
-  color: #5d87ff;
+  box-shadow: 0 0 0 0.25rem rgba(93, 135, 255, 0.1);
 }
-
-.btn-outline-primary:hover {
-  background-color: #5d87ff;
-  color: white;
+.table th {
+  border: none;
+}
+.table td {
+  padding: 0.75rem;
 }
 </style>

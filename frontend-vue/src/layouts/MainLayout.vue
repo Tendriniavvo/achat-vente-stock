@@ -81,6 +81,13 @@
                 <span class="hide-menu">Ventes</span>
               </router-link>
             </li>
+
+            <li v-if="hasRole('FINANCE') || hasRole('ADMIN')" class="sidebar-item">
+              <router-link class="sidebar-link" to="/budgets" aria-expanded="false">
+                <span><i class="ti ti-wallet"></i></span>
+                <span class="hide-menu">Budgets</span>
+              </router-link>
+            </li>
             
             <!-- Stock avec dropdown -->
             <li class="sidebar-item">
@@ -140,11 +147,11 @@
               </router-link>
             </li>
             
-            <li class="nav-small-cap">
+            <li v-if="hasRole('ADMIN')" class="nav-small-cap">
               <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
               <span class="hide-menu">Administration</span>
             </li>
-            <li class="sidebar-item">
+            <li v-if="hasRole('ADMIN')" class="sidebar-item">
               <router-link class="sidebar-link" to="/utilisateurs" aria-expanded="false">
                 <span><i class="ti ti-user"></i></span>
                 <span class="hide-menu">Utilisateurs</span>
@@ -242,6 +249,12 @@ const userRoles = computed(() => {
 const userDepartement = computed(() => {
   return currentUser.value?.departement?.nom || 'N/A';
 });
+
+// Vérifier si l'utilisateur a un rôle spécifique
+const hasRole = (roleNom) => {
+  if (!currentUser.value || !currentUser.value.roles) return false;
+  return currentUser.value.roles.some(r => r.nom.toUpperCase() === roleNom.toUpperCase());
+};
 
 // Vérifier si on est sur une page d'achats
 const isAchatsRoute = () => {

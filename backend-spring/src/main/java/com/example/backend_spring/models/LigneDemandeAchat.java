@@ -1,5 +1,6 @@
 package com.example.backend_spring.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class LigneDemandeAchat {
 
     @ManyToOne
     @JoinColumn(name = "demande_achat_id")
+    @JsonBackReference
     private DemandeAchat demandeAchat;
 
     @ManyToOne

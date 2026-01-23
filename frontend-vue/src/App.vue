@@ -2,12 +2,8 @@
   <router-view />
 </template>
 
-<script>
-export default {
-  name: 'App'
-}
+<script setup>
 </script>
 
 <style>
-/* Styles globaux de l'application */
 </style>
