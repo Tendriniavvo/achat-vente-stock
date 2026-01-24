@@ -154,14 +154,8 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/emplacements/:id',
-      name: 'emplacements-details',
-      component: () => import('../views/emplacements/DetailsEmplacement.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
       path: '/emplacements/:id/edit',
-      name: 'emplacements-edit',
+      name: 'edit-emplacement',
       component: () => import('../views/emplacements/EditEmplacement.vue'),
       meta: { requiresAuth: true }
     },
@@ -281,7 +275,6 @@ router.beforeEach((to, from, next) => {
       // Pour les autres routes, vérifier si l'un des chemins autorisés correspond
       const isAuthorized = userPermissions.some(p => {
         // On vérifie si le chemin de la route commence par le chemin autorisé
-        // Par exemple, si '/achats' est autorisé, alors '/achats/create' ou '/achats/1' le sont aussi
         return to.path === p.path || to.path.startsWith(p.path + '/');
       });
 
@@ -295,15 +288,12 @@ router.beforeEach((to, from, next) => {
         // Alerte et redirection sécurisée
         alert("Vous n'avez pas l'autorisation d'accéder à cette section.");
         
-        // Si on n'a pas accès au dashboard, on ne redirige pas vers lui pour éviter une boucle
         const hasDashboardAccess = userPermissions.some(p => p.path === '/dashboard');
         if (to.path !== '/dashboard' && (isAdmin || hasDashboardAccess)) {
           next({ name: 'dashboard' });
         } else if (userPermissions.length > 0) {
-          // Rediriger vers la première page autorisée
           next(userPermissions[0].path);
         } else {
-          // Aucun accès du tout, déconnexion forcée ou page neutre
           localStorage.removeItem('user');
           localStorage.removeItem('permissions');
           next({ name: 'login' });

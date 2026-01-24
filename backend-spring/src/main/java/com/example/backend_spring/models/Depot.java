@@ -18,10 +18,19 @@ public class Depot {
     @Column(nullable = false, length = 100)
     private String nom;
 
+    @Column(nullable = false, unique = true, length = 20)
+    private String code;
+
     @Column(columnDefinition = "TEXT")
     private String adresse;
 
+    private String responsable;
+
     private Integer capacite;
+
+    private String typeEntreposage;
+
+    private String horairesOuverture;
 
     private boolean actif = true;
 }

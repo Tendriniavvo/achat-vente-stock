@@ -28,9 +28,29 @@ public class EmplacementController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/depot/{depotId}")
+    public List<Emplacement> getEmplacementsByDepot(@PathVariable int depotId) {
+        return emplacementService.getEmplacementsByDepot(depotId);
+    }
+
+    @GetMapping("/depot/{depotId}/root")
+    public List<Emplacement> getRootEmplacementsByDepot(@PathVariable int depotId) {
+        return emplacementService.getRootEmplacementsByDepot(depotId);
+    }
+
+    @GetMapping("/{id}/children")
+    public List<Emplacement> getChildren(@PathVariable int id) {
+        return emplacementService.getChildren(id);
+    }
+
     @PostMapping
     public Emplacement saveEmplacement(@RequestBody Emplacement emplacement) {
         return emplacementService.saveEmplacement(emplacement);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Emplacement> updateEmplacement(@PathVariable int id, @RequestBody Emplacement details) {
+        return ResponseEntity.ok(emplacementService.updateEmplacement(id, details));
     }
 
     @DeleteMapping("/{id}")

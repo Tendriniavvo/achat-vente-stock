@@ -33,6 +33,17 @@ public class DepotController {
         return depotService.saveDepot(depot);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Depot> updateDepot(@PathVariable int id, @RequestBody Depot depot) {
+        return ResponseEntity.ok(depotService.updateDepot(id, depot));
+    }
+
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<Void> toggleStatus(@PathVariable int id) {
+        depotService.toggleStatus(id);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDepot(@PathVariable int id) {
         depotService.deleteDepot(id);

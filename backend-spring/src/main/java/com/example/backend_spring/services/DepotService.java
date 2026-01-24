@@ -28,6 +28,31 @@ public class DepotService {
     }
 
     @Transactional
+    public Depot updateDepot(int id, Depot depotDetails) {
+        Depot depot = depotRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dépôt non trouvé avec l'id : " + id));
+        
+        depot.setNom(depotDetails.getNom());
+        depot.setCode(depotDetails.getCode());
+        depot.setAdresse(depotDetails.getAdresse());
+        depot.setResponsable(depotDetails.getResponsable());
+        depot.setCapacite(depotDetails.getCapacite());
+        depot.setTypeEntreposage(depotDetails.getTypeEntreposage());
+        depot.setHorairesOuverture(depotDetails.getHorairesOuverture());
+        depot.setActif(depotDetails.isActif());
+        
+        return depotRepository.save(depot);
+    }
+
+    @Transactional
+    public void toggleStatus(int id) {
+        Depot depot = depotRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Dépôt non trouvé avec l'id : " + id));
+        depot.setActif(!depot.isActif());
+        depotRepository.save(depot);
+    }
+
+    @Transactional
     public void deleteDepot(int id) {
         depotRepository.deleteById(id);
     }

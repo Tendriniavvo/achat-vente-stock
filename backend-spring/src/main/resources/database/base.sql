@@ -128,12 +128,31 @@ CREATE TABLE clients (
     date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Table des types d'emplacement
+CREATE TABLE types_emplacement (
+    id SERIAL PRIMARY KEY,
+    libelle VARCHAR(50) NOT NULL UNIQUE, -- ZONE, ALLEE, RAYONNAGE, NIVEAU, CASIER
+    description TEXT
+);
+
+-- Insertion des données initiales pour les types d'emplacement
+INSERT INTO types_emplacement (libelle, description) VALUES 
+('ZONE', 'Zone principale de stockage'),
+('ALLEE', 'Allée de circulation entre les rayonnages'),
+('RAYONNAGE', 'Structure verticale de rangement'),
+('NIVEAU', 'Étage ou niveau sur un rayonnage'),
+('CASIER', 'Emplacement final ou bac de stockage');
+
 -- Table des dépôts (sites de stockage)
 CREATE TABLE depots (
     id SERIAL PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
+    code VARCHAR(20) UNIQUE NOT NULL,
     adresse TEXT,
+    responsable VARCHAR(100),
     capacite INTEGER,
+    type_entreposage VARCHAR(50),
+    horaires_ouverture VARCHAR(100),
     actif BOOLEAN DEFAULT TRUE
 );
 
@@ -141,9 +160,14 @@ CREATE TABLE depots (
 CREATE TABLE emplacements (
     id SERIAL PRIMARY KEY,
     depot_id INTEGER REFERENCES depots(id) ON DELETE CASCADE,
+    parent_id INTEGER REFERENCES emplacements(id) ON DELETE CASCADE,
+    type_id INTEGER REFERENCES types_emplacement(id),
     code VARCHAR(50) NOT NULL,
     description TEXT,
-    capacite INTEGER
+    capacite INTEGER,
+    caracteristiques TEXT,
+    conditions_stockage TEXT,
+    types_produits_acceptes TEXT
 );
 
 -- Table des stocks (niveau actuel par article/dépôt/emplacement)
