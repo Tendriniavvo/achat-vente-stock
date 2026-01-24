@@ -57,15 +57,15 @@
                     </div>
                     <small class="text-muted">{{ getProgressPercentage(budget) }}% utilisé</small>
                   </td>
-                  <td v-if="hasRole('FINANCE') || hasRole('ADMIN')" class="text-center">
-                    <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(budget)">
-                      <i class="ti ti-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr v-if="budgets.length === 0">
-                  <td :colspan="hasRole('FINANCE') || hasRole('ADMIN') ? 7 : 6" class="text-center py-4">Aucun budget défini</td>
-                </tr>
+                  <td v-if="hasRole('Comptable') || hasRole('Administrateur')" class="text-center">
+                      <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(budget)">
+                        <i class="ti ti-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="budgets.length === 0">
+                    <td :colspan="hasRole('Comptable') || hasRole('Administrateur') ? 7 : 6" class="text-center py-4">Aucun budget défini</td>
+                  </tr>
               </tbody>
             </table>
           </div>
@@ -96,8 +96,8 @@ export default {
     this.loadBudgets();
     this.loadDepartements();
     const authData = JSON.parse(localStorage.getItem('user'));
-    if (authData && authData.user) {
-      this.currentUser = authData.user;
+    if (authData) {
+      this.currentUser = authData.user || authData;
     }
   },
   methods: {

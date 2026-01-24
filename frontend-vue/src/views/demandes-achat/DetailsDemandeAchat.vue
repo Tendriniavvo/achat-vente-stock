@@ -110,7 +110,7 @@
               
               <!-- N1: Chef de département -->
               <button 
-                v-if="isStatut('en attente') && (hasRole('CHEF') || hasRole('ADMIN')) && !isDemandeur()"
+                v-if="isStatut('en attente') && (hasRole('Acheteur') || hasRole('Administrateur')) && !isDemandeur()"
                 class="btn btn-success" 
                 @click="approuver"
               >
@@ -119,7 +119,7 @@
 
               <!-- Vérification des fonds (Finance) -->
               <button 
-                v-if="isStatut('attente_finance') && (hasRole('FINANCE') || hasRole('ADMIN'))"
+                v-if="isStatut('attente_finance') && (hasRole('Comptable') || hasRole('Administrateur'))"
                 class="btn btn-info" 
                 @click="verifierFonds"
               >
@@ -128,7 +128,7 @@
 
               <!-- N2: Finance (après vérification des fonds) -->
               <button 
-                v-if="isStatut('fonds_confirmés') && (hasRole('FINANCE') || hasRole('ADMIN')) && !isDemandeur()"
+                v-if="isStatut('fonds_confirmés') && (hasRole('Comptable') || hasRole('Administrateur')) && !isDemandeur()"
                 class="btn btn-success" 
                 @click="approuver"
               >
@@ -137,7 +137,7 @@
 
               <!-- N3: Admin / DG -->
               <button 
-                v-if="isStatut('attente_admin') && hasRole('ADMIN') && !isDemandeur()"
+                v-if="isStatut('attente_admin') && hasRole('Administrateur') && !isDemandeur()"
                 class="btn btn-success" 
                 @click="approuver"
               >
@@ -145,7 +145,7 @@
               </button>
 
               <button 
-                v-if="(isStatut('en attente') || isStatut('attente_finance') || isStatut('attente_admin') || isStatut('fonds_confirmés')) && (hasRole('ADMIN') || hasRole('CHEF') || hasRole('FINANCE')) && !isDemandeur()"
+                v-if="(isStatut('en attente') || isStatut('attente_finance') || isStatut('attente_admin') || isStatut('fonds_confirmés')) && (hasRole('Administrateur') || hasRole('Acheteur') || hasRole('Comptable')) && !isDemandeur()"
                 class="btn btn-danger" 
                 data-bs-toggle="modal" 
                 data-bs-target="#rejetModal"
@@ -164,7 +164,7 @@
 
               <!-- ÉTAPE 4: Transformation en Bon de Commande -->
               <button 
-                v-if="isStatut('approuvé') && (hasRole('ACHETEUR') || hasRole('ADMIN'))"
+                v-if="isStatut('approuvé') && (hasRole('Acheteur') || hasRole('Administrateur'))"
                 class="btn btn-primary" 
                 data-bs-toggle="modal" 
                 data-bs-target="#bcModal"

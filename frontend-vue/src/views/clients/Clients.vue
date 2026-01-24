@@ -4,9 +4,9 @@
       <div class="card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="card-title fw-semibold mb-0">Gestion des Fournisseurs</h5>
-            <router-link to="/fournisseurs/create" class="btn btn-primary">
-              <i class="ti ti-plus"></i> Nouveau Fournisseur
+            <h5 class="card-title fw-semibold mb-0">Gestion des Clients</h5>
+            <router-link to="/clients/create" class="btn btn-primary">
+              <i class="ti ti-plus"></i> Nouveau Client
             </router-link>
           </div>
 
@@ -44,16 +44,16 @@
             </div>
           </div>
 
-          <div v-else-if="filteredFournisseurs.length === 0" class="text-center py-5">
+          <div v-else-if="filteredClients.length === 0" class="text-center py-5">
             <i class="ti ti-users-off fs-1 text-muted"></i>
-            <p class="mt-3 text-muted">Aucun fournisseur trouvé</p>
+            <p class="mt-3 text-muted">Aucun client trouvé</p>
           </div>
 
           <div v-else class="table-responsive">
             <table class="table table-hover align-middle">
               <thead class="table-light">
                 <tr>
-                  <th>Nom du Partenaire</th>
+                  <th>Nom du Client</th>
                   <th>Contact</th>
                   <th>Adresse</th>
                   <th class="text-center">Statut</th>
@@ -61,40 +61,40 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="f in filteredFournisseurs" :key="f.id">
+                <tr v-for="c in filteredClients" :key="c.id">
                   <td>
                     <div class="d-flex flex-column">
-                      <span class="fw-bold text-primary">{{ f.nom }}</span>
-                      <small class="text-muted">Inscrit le {{ formatDate(f.dateCreation) }}</small>
+                      <span class="fw-bold text-primary">{{ c.nom }}</span>
+                      <small class="text-muted">Inscrit le {{ formatDate(c.dateCreation) }}</small>
                     </div>
                   </td>
                   <td>
                     <div class="d-flex flex-column">
-                      <span><i class="ti ti-mail me-1 small"></i>{{ f.email || 'N/A' }}</span>
-                      <span><i class="ti ti-phone me-1 small"></i>{{ f.telephone || 'N/A' }}</span>
+                      <span><i class="ti ti-mail me-1 small"></i>{{ c.email || 'N/A' }}</span>
+                      <span><i class="ti ti-phone me-1 small"></i>{{ c.telephone || 'N/A' }}</span>
                     </div>
                   </td>
                   <td>
-                    <span class="text-truncate d-inline-block" style="max-width: 200px;" :title="f.adresse">
-                      {{ f.adresse || 'N/A' }}
+                    <span class="text-truncate d-inline-block" style="max-width: 200px;" :title="c.adresse">
+                      {{ c.adresse || 'N/A' }}
                     </span>
                   </td>
                   <td class="text-center">
-                    <span :class="f.actif ? 'badge bg-success' : 'badge bg-danger'">
-                      {{ f.actif ? 'Actif' : 'Inactif' }}
+                    <span :class="c.actif ? 'badge bg-success' : 'badge bg-danger'">
+                      {{ c.actif ? 'Actif' : 'Inactif' }}
                     </span>
                   </td>
                   <td class="text-end">
                     <div class="btn-group">
                       <router-link 
-                        :to="`/fournisseurs/${f.id}`" 
+                        :to="`/clients/${c.id}`" 
                         class="btn btn-sm btn-outline-info"
                         title="Voir détails"
                       >
                         <i class="ti ti-eye"></i>
                       </router-link>
                       <router-link 
-                        :to="`/fournisseurs/${f.id}/edit`" 
+                        :to="`/clients/${c.id}/edit`" 
                         class="btn btn-sm btn-outline-warning"
                         title="Modifier"
                       >
@@ -102,11 +102,11 @@
                       </router-link>
                       <button 
                         class="btn btn-sm" 
-                        :class="f.actif ? 'btn-outline-danger' : 'btn-outline-success'"
-                        :title="f.actif ? 'Désactiver' : 'Activer'"
-                        @click="toggleStatus(f)"
+                        :class="c.actif ? 'btn-outline-danger' : 'btn-outline-success'"
+                        :title="c.actif ? 'Désactiver' : 'Activer'"
+                        @click="toggleStatus(c)"
                       >
-                        <i :class="f.actif ? 'ti ti-player-pause' : 'ti ti-player-play'"></i>
+                        <i :class="c.actif ? 'ti ti-player-pause' : 'ti ti-player-play'"></i>
                       </button>
                     </div>
                   </td>
@@ -124,13 +124,13 @@
 import MainLayout from '../../layouts/MainLayout.vue';
 
 export default {
-  name: 'Fournisseurs',
+  name: 'Clients',
   components: {
     MainLayout
   },
   data() {
     return {
-      fournisseurs: [],
+      clients: [],
       searchQuery: '',
       filterStatut: 'tous',
       isLoading: false,
@@ -139,38 +139,38 @@ export default {
     };
   },
   computed: {
-    filteredFournisseurs() {
-      return this.fournisseurs.filter(f => {
+    filteredClients() {
+      return this.clients.filter(c => {
         const matchesSearch = 
-          f.nom.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          (f.email && f.email.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-          (f.telephone && f.telephone.includes(this.searchQuery));
+          c.nom.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          (c.email && c.email.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (c.telephone && c.telephone.includes(this.searchQuery));
         
         const matchesStatut = 
           this.filterStatut === 'tous' || 
-          (this.filterStatut === 'actif' && f.actif) || 
-          (this.filterStatut === 'inactif' && !f.actif);
+          (this.filterStatut === 'actif' && c.actif) || 
+          (this.filterStatut === 'inactif' && !c.actif);
         
         return matchesSearch && matchesStatut;
       });
     }
   },
   mounted() {
-    this.loadFournisseurs();
+    this.loadClients();
     const authData = JSON.parse(localStorage.getItem('user'));
     if (authData) {
       this.currentUser = authData.user || authData;
     }
   },
   methods: {
-    async loadFournisseurs() {
+    async loadClients() {
       this.isLoading = true;
       try {
-        const response = await fetch('/api/fournisseurs');
+        const response = await fetch('/api/clients');
         if (response.ok) {
-          this.fournisseurs = await response.json();
+          this.clients = await response.json();
         } else {
-          this.errorMessage = 'Erreur lors du chargement des fournisseurs';
+          this.errorMessage = 'Erreur lors du chargement des clients';
         }
       } catch (error) {
         console.error('Erreur:', error);
@@ -179,19 +179,19 @@ export default {
         this.isLoading = false;
       }
     },
-    async toggleStatus(fournisseur) {
+    async toggleStatus(client) {
       if (!this.currentUser) return;
       
-      const action = fournisseur.actif ? 'désactiver' : 'activer';
-      if (!confirm(`Voulez-vous vraiment ${action} ce fournisseur ?`)) return;
+      const action = client.actif ? 'désactiver' : 'activer';
+      if (!confirm(`Voulez-vous vraiment ${action} ce client ?`)) return;
 
       try {
-        const response = await fetch(`/api/fournisseurs/${fournisseur.id}/toggle-status?utilisateurId=${this.currentUser.id}`, {
+        const response = await fetch(`/api/clients/${client.id}/toggle-status?utilisateurId=${this.currentUser.id}`, {
           method: 'PATCH'
         });
         
         if (response.ok) {
-          fournisseur.actif = !fournisseur.actif;
+          client.actif = !client.actif;
         } else {
           alert('Erreur lors de la modification du statut');
         }

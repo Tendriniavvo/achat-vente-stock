@@ -57,14 +57,6 @@
                   </router-link>
                 </li>
                 <li class="sidebar-item">
-                  <router-link to="/fournisseurs" class="sidebar-link">
-                    <div class="round-16 d-flex align-items-center justify-content-center">
-                      <i class="ti ti-circle"></i>
-                    </div>
-                    <span class="hide-menu">Fournisseurs</span>
-                  </router-link>
-                </li>
-                <li class="sidebar-item">
                   <router-link to="/commandes-achat" class="sidebar-link">
                     <div class="round-16 d-flex align-items-center justify-content-center">
                       <i class="ti ti-circle"></i>
@@ -82,7 +74,7 @@
               </router-link>
             </li>
 
-            <li v-if="hasRole('FINANCE') || hasRole('ADMIN')" class="sidebar-item">
+            <li v-if="hasRole('Comptable') || hasRole('Administrateur')" class="sidebar-item">
               <router-link class="sidebar-link" to="/budgets" aria-expanded="false">
                 <span><i class="ti ti-wallet"></i></span>
                 <span class="hide-menu">Budgets</span>
@@ -135,9 +127,15 @@
               <span class="hide-menu">Données</span>
             </li>
             <li class="sidebar-item">
-              <router-link class="sidebar-link" to="/partenaires" aria-expanded="false">
+              <router-link class="sidebar-link" to="/clients" aria-expanded="false">
+                <span><i class="ti ti-user-check"></i></span>
+                <span class="hide-menu">Clients</span>
+              </router-link>
+            </li>
+            <li class="sidebar-item">
+              <router-link class="sidebar-link" to="/fournisseurs" aria-expanded="false">
                 <span><i class="ti ti-users"></i></span>
-                <span class="hide-menu">Partenaires</span>
+                <span class="hide-menu">Fournisseurs</span>
               </router-link>
             </li>
             <li class="sidebar-item">
@@ -147,11 +145,11 @@
               </router-link>
             </li>
             
-            <li v-if="hasRole('ADMIN')" class="nav-small-cap">
+            <li v-if="hasRole('Administrateur')" class="nav-small-cap">
               <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
               <span class="hide-menu">Administration</span>
             </li>
-            <li v-if="hasRole('ADMIN')" class="sidebar-item">
+            <li v-if="hasRole('Administrateur')" class="sidebar-item">
               <router-link class="sidebar-link" to="/utilisateurs" aria-expanded="false">
                 <span><i class="ti ti-user"></i></span>
                 <span class="hide-menu">Utilisateurs</span>
@@ -259,7 +257,6 @@ const hasRole = (roleNom) => {
 // Vérifier si on est sur une page d'achats
 const isAchatsRoute = () => {
   return route.path.startsWith('/achats') || 
-         route.path.startsWith('/fournisseurs') || 
          route.path.startsWith('/commandes-achat');
 };
 
