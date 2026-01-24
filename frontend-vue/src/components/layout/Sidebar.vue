@@ -17,7 +17,7 @@
             <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
             <span class="hide-menu">Accueil</span>
           </li>
-          <li class="sidebar-item">
+          <li v-if="hasPermission('/dashboard')" class="sidebar-item">
             <router-link class="sidebar-link" to="/dashboard" aria-expanded="false">
               <span><i class="ti ti-layout-dashboard"></i></span>
               <span class="hide-menu">Dashboard</span>
@@ -30,7 +30,7 @@
           </li>
           
           <!-- Achats avec dropdown -->
-          <li class="sidebar-item">
+          <li v-if="hasPermission('/achats')" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isAchatsRoute() }" href="javascript:void(0)" :aria-expanded="achatsMenuOpen" @click="toggleAchatsMenu">
               <span><i class="ti ti-shopping-cart"></i></span>
               <span class="hide-menu">Achats</span>
@@ -63,14 +63,14 @@
             </ul>
           </li>
           
-          <li class="sidebar-item">
+          <li v-if="hasPermission('/ventes')" class="sidebar-item">
             <router-link class="sidebar-link" to="/ventes" aria-expanded="false">
               <span><i class="ti ti-coin"></i></span>
               <span class="hide-menu">Ventes</span>
             </router-link>
           </li>
 
-          <li v-if="hasRole('FINANCE') || hasRole('ADMIN') || isAdmin()" class="sidebar-item">
+          <li v-if="hasPermission('/budgets')" class="sidebar-item">
             <router-link class="sidebar-link" to="/budgets" aria-expanded="false">
               <span><i class="ti ti-wallet"></i></span>
               <span class="hide-menu">Budgets</span>
@@ -78,7 +78,7 @@
           </li>
           
           <!-- Stock avec dropdown -->
-          <li class="sidebar-item">
+          <li v-if="hasPermission('/stock')" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isStockRoute() }" href="javascript:void(0)" :aria-expanded="stockMenuOpen" @click="toggleStockMenu">
               <span><i class="ti ti-package"></i></span>
               <span class="hide-menu">Stock</span>
@@ -92,7 +92,7 @@
                   <span class="hide-menu">Vue d'ensemble</span>
                 </router-link>
               </li>
-              <li class="sidebar-item">
+              <li v-if="hasPermission('/depots')" class="sidebar-item">
                 <router-link to="/depots" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
@@ -100,7 +100,7 @@
                   <span class="hide-menu">Dépôts</span>
                 </router-link>
               </li>
-              <li class="sidebar-item">
+              <li v-if="hasPermission('/emplacements')" class="sidebar-item">
                 <router-link to="/emplacements" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
@@ -111,7 +111,7 @@
             </ul>
           </li>
           
-          <li class="sidebar-item">
+          <li v-if="hasPermission('/inventaire')" class="sidebar-item">
             <router-link class="sidebar-link" to="/inventaire" aria-expanded="false">
               <span><i class="ti ti-clipboard-list"></i></span>
               <span class="hide-menu">Inventaire</span>
@@ -122,30 +122,30 @@
             <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
             <span class="hide-menu">Données</span>
           </li>
-          <li class="sidebar-item">
+          <li v-if="hasPermission('/clients')" class="sidebar-item">
             <router-link class="sidebar-link" to="/clients" aria-expanded="false">
               <span><i class="ti ti-user-check"></i></span>
               <span class="hide-menu">Clients</span>
             </router-link>
           </li>
-          <li class="sidebar-item">
+          <li v-if="hasPermission('/fournisseurs')" class="sidebar-item">
             <router-link class="sidebar-link" to="/fournisseurs" aria-expanded="false">
               <span><i class="ti ti-users"></i></span>
               <span class="hide-menu">Fournisseurs</span>
             </router-link>
           </li>
-          <li class="sidebar-item">
+          <li v-if="hasPermission('/articles')" class="sidebar-item">
             <router-link class="sidebar-link" to="/articles" aria-expanded="false">
               <span><i class="ti ti-article"></i></span>
               <span class="hide-menu">Articles</span>
             </router-link>
           </li>
           
-          <li v-if="hasRole('ADMIN') || isAdmin()" class="nav-small-cap">
+          <li v-if="hasPermission('/utilisateurs') || isAdmin()" class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
             <span class="hide-menu">Administration</span>
           </li>
-          <li v-if="hasRole('ADMIN') || isAdmin()" class="sidebar-item">
+          <li v-if="hasPermission('/utilisateurs') || isAdmin()" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isUserRoute() }" href="javascript:void(0)" :aria-expanded="userMenuOpen" @click="toggleUserMenu">
               <span><i class="ti ti-user"></i></span>
               <span class="hide-menu">Utilisateurs</span>
@@ -167,25 +167,17 @@
                   <span class="hide-menu">Créer un utilisateur</span>
                 </router-link>
               </li>
-              <li class="sidebar-item">
-                <router-link to="/utilisateurs?mode=edit" class="sidebar-link">
-                  <div class="round-16 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-circle"></i>
-                  </div>
-                  <span class="hide-menu">Modifier un utilisateur</span>
-                </router-link>
-              </li>
             </ul>
           </li>
 
           <!-- Rôles & Habilitations -->
-          <li v-if="hasRole('ADMIN') || isAdmin()" class="sidebar-item">
+          <li v-if="hasPermission('/roles') || hasPermission('/habilitations') || isAdmin()" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isRolesRoute() }" href="javascript:void(0)" :aria-expanded="rolesMenuOpen" @click="toggleRolesMenu">
               <span><i class="ti ti-shield-lock"></i></span>
               <span class="hide-menu">Rôles & Habilitations</span>
             </a>
             <ul class="collapse first-level" :class="{ show: rolesMenuOpen }">
-              <li class="sidebar-item">
+              <li v-if="hasPermission('/roles')" class="sidebar-item">
                 <router-link to="/roles" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
@@ -193,12 +185,12 @@
                   <span class="hide-menu">Gestion des Rôles</span>
                 </router-link>
               </li>
-              <li class="sidebar-item">
-                <router-link to="/roles/create" class="sidebar-link">
+              <li v-if="hasPermission('/habilitations')" class="sidebar-item">
+                <router-link to="/habilitations" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
                   </div>
-                  <span class="hide-menu">Créer un rôle</span>
+                  <span class="hide-menu">Habilitations</span>
                 </router-link>
               </li>
             </ul>
@@ -236,6 +228,13 @@ const hasRole = (roleNom) => {
 const isAdmin = () => {
   if (!props.currentUser || !props.currentUser.roles) return false;
   return props.currentUser.roles.some(r => r.id === 1);
+};
+
+// Vérifier les permissions granulaires par chemin
+const hasPermission = (path) => {
+  if (isAdmin()) return true;
+  const permissions = JSON.parse(localStorage.getItem('permissions') || '[]');
+  return permissions.some(p => p.path === path);
 };
 
 // Vérifier si on est sur une page d'achats

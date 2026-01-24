@@ -27,6 +27,9 @@ public class Permission {
     private String action;
 
     @Column(length = 255)
+    private String path;
+
+    @Column(length = 255)
     private String perimetre;
 
     @Column(name = "date_creation")

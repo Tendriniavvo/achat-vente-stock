@@ -75,9 +75,35 @@ export default {
         });
 
         if (response.status === 200) {
-          const user = response.data;
-          localStorage.setItem('user', JSON.stringify(user));
-          this.$router.push('/dashboard');
+          const authData = response.data;
+          const user = authData.user;
+          
+          // Récupérer les permissions pour tous les rôles de l'utilisateur
+          let allPermissions = [];
+          if (user.roles && user.roles.length > 0) {
+            const permPromises = user.roles.map(role => 
+              axios.get(`/api/permissions/role/${role.id}`)
+            );
+            const permResponses = await Promise.all(permPromises);
+            allPermissions = permResponses.flatMap(res => res.data);
+          }
+          
+          // Stocker l'utilisateur et ses permissions
+          localStorage.setItem('user', JSON.stringify(authData));
+          localStorage.setItem('permissions', JSON.stringify(allPermissions));
+          
+          // Rediriger vers le dashboard ou la première page autorisée
+          const isAdmin = user.roles?.some(r => r.id === 1);
+          const hasDashboard = allPermissions.some(p => p.path === '/dashboard');
+
+          if (isAdmin || hasDashboard) {
+            this.$router.push('/dashboard');
+          } else if (allPermissions.length > 0) {
+            // Rediriger vers le premier module autorisé
+            this.$router.push(allPermissions[0].path);
+          } else {
+            this.$router.push('/dashboard');
+          }
         }
       } catch (err) {
         console.error('Login error:', err);

@@ -21,6 +21,11 @@ public class PermissionController {
         return permissionService.getAllPermissions();
     }
 
+    @GetMapping("/role/{roleId}")
+    public List<Permission> getPermissionsByRole(@PathVariable int roleId) {
+        return permissionService.getPermissionsByRole(roleId);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Permission> getPermissionById(@PathVariable int id) {
         return permissionService.getPermissionById(id)
@@ -31,6 +36,12 @@ public class PermissionController {
     @PostMapping
     public Permission savePermission(@RequestBody Permission permission) {
         return permissionService.savePermission(permission);
+    }
+
+    @PostMapping("/role/{roleId}/bulk")
+    public ResponseEntity<Void> updateRolePermissions(@PathVariable int roleId, @RequestBody List<Permission> permissions) {
+        permissionService.updateRolePermissions(roleId, permissions);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")

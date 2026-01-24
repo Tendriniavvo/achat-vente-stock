@@ -18,6 +18,10 @@ public class PermissionService {
         return permissionRepository.findAll();
     }
 
+    public List<Permission> getPermissionsByRole(int roleId) {
+        return permissionRepository.findByRoleId(roleId);
+    }
+
     public Optional<Permission> getPermissionById(int id) {
         return permissionRepository.findById(id);
     }
@@ -25,6 +29,14 @@ public class PermissionService {
     @Transactional
     public Permission savePermission(Permission permission) {
         return permissionRepository.save(permission);
+    }
+
+    @Transactional
+    public void updateRolePermissions(int roleId, List<Permission> permissions) {
+        permissionRepository.deleteByRoleId(roleId);
+        for (Permission permission : permissions) {
+            permissionRepository.save(permission);
+        }
     }
 
     @Transactional

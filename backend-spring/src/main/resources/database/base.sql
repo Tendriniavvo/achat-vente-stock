@@ -54,6 +54,7 @@ CREATE TABLE permissions (
     role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
     module VARCHAR(100) NOT NULL, -- Ex: Achats, Ventes, Stocks
     action VARCHAR(50) NOT NULL, -- Ex: creer, modifier, valider, consulter
+    path VARCHAR(255), -- Chemin URL associé à la permission
     perimetre VARCHAR(255), -- Ex: site=Paris, montant<10000, etc.
     date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
