@@ -32,4 +32,8 @@ public class StockService {
     public void deleteStock(int id) {
         stockRepository.deleteById(id);
     }
+
+    public List<Stock> getStockAlerts() {
+        return stockRepository.findStockAlerts();
+    }
 }

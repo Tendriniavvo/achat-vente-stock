@@ -285,7 +285,7 @@ export default {
 
       const statut = demande.statut?.toLowerCase();
       // La vérification des fonds est pour Finance ou Admin quand le statut est attente_finance
-      return (statut === 'attente_finance') && (this.hasRole('FINANCE') || this.hasRole('ADMIN'));
+      return (statut === 'attente_finance') && (this.hasRole('Comptable') || this.hasRole('Administrateur'));
     },
     async verifierFonds(id) {
       if (!confirm('Voulez-vous vérifier la disponibilité des fonds ?')) return;
@@ -319,16 +319,16 @@ export default {
 
       const statut = demande.statut?.toLowerCase();
 
-      // N1: Chef de département approuve les DA "en attente"
+      // N1: Acheteur approuve les DA "en attente"
       if (statut === 'en attente') {
         // L'ABAC (même département) est vérifié par le backend, 
-        // ici on affiche le bouton si l'utilisateur est CHEF ou ADMIN
-        return this.hasRole('CHEF') || this.hasRole('ADMIN');
+        // ici on affiche le bouton si l'utilisateur est Acheteur ou Administrateur
+        return this.hasRole('Acheteur') || this.hasRole('Administrateur');
       }
 
       // N2: Finance approuve les DA "fonds_confirmés" (après vérification)
       if (statut === 'fonds_confirmés' || statut === 'fonds_confirmes') {
-        return this.hasRole('FINANCE') || this.hasRole('ADMIN');
+        return this.hasRole('Comptable') || this.hasRole('Administrateur');
       }
 
       // Si le statut est "attente_finance", Finance doit d'abord vérifier les fonds
@@ -339,7 +339,7 @@ export default {
 
       // N3: Admin approuve les DA "attente_admin"
       if (statut === 'attente_admin') {
-        return this.hasRole('ADMIN');
+        return this.hasRole('Administrateur');
       }
 
       return false;

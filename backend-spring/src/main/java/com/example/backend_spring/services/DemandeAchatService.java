@@ -50,21 +50,21 @@ public class DemandeAchatService {
                 + ", Validateur=" + validateur.getNom() + " (ID=" + validateurId + ")");
 
         if ("en attente".equals(statutActuel)) {
-            // Approbation N1 (Chef de département)
-            if (!hasRole(validateur, "CHEF") && !hasRole(validateur, "ADMIN")) {
-                System.out.println("DEBUG: Erreur N1 - Pas le rôle CHEF ou ADMIN. Roles=" + validateur.getRoles());
-                throw new RuntimeException("Seul un Chef de département peut effectuer l'approbation N1");
+            // Approbation N1 (Acheteur / Chef)
+            if (!hasRole(validateur, "Acheteur") && !hasRole(validateur, "Administrateur")) {
+                System.out.println("DEBUG: Erreur N1 - Pas le rôle Acheteur ou Administrateur. Roles=" + validateur.getRoles());
+                throw new RuntimeException("Seul un Acheteur ou Administrateur peut effectuer l'approbation N1");
             }
 
-            // ABAC : Le chef ne peut approuver que pour son propre département
-            if (hasRole(validateur, "CHEF") && !hasRole(validateur, "ADMIN")) {
+            // ABAC : L'acheteur ne peut approuver que pour son propre département (si pas admin)
+            if (hasRole(validateur, "Acheteur") && !hasRole(validateur, "Administrateur")) {
                 if (demande.getDemandeur() != null && demande.getDemandeur().getDepartement() != null &&
                         validateur.getDepartement() != null &&
                         demande.getDemandeur().getDepartement().getId() != validateur.getDepartement().getId()) {
                     System.out.println("DEBUG: Erreur N1 - Département différent. DemandeDept=" +
                             demande.getDemandeur().getDepartement().getId() + ", ValidateurDept="
                             + validateur.getDepartement().getId());
-                    throw new RuntimeException("Un chef ne peut approuver que les demandes de son propre département");
+                    throw new RuntimeException("Un validateur ne peut approuver que les demandes de son propre département");
                 }
             }
 
@@ -75,10 +75,10 @@ public class DemandeAchatService {
 
         } else if ("attente_finance".equals(statutActuel) || "fonds_confirmés".equals(statutActuel)
                 || "fonds_confirmes".equals(statutActuel)) {
-            // Approbation N2 (Finance)
-            if (!hasRole(validateur, "FINANCE") && !hasRole(validateur, "ADMIN")) {
-                System.out.println("DEBUG: Erreur N2 - Pas le rôle FINANCE ou ADMIN");
-                throw new RuntimeException("Seul un membre de la Finance peut effectuer l'approbation N2");
+            // Approbation N2 (Comptable / Finance)
+            if (!hasRole(validateur, "Comptable") && !hasRole(validateur, "Administrateur")) {
+                System.out.println("DEBUG: Erreur N2 - Pas le rôle Comptable ou Administrateur");
+                throw new RuntimeException("Seul un membre de la Comptabilité peut effectuer l'approbation N2");
             }
 
             // Exiger la vérification des fonds avant l'approbation N2
@@ -101,8 +101,8 @@ public class DemandeAchatService {
                         + validateur.getNom() + ". En attente de l'Administration.", validateur);
             }
         } else if ("attente_admin".equals(statutActuel)) {
-            // Approbation N3 (Admin)
-            if (!hasRole(validateur, "ADMIN")) {
+            // Approbation N3 (Administrateur)
+            if (!hasRole(validateur, "Administrateur")) {
                 throw new RuntimeException("Seul un Administrateur peut effectuer l'approbation N3");
             }
 

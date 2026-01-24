@@ -1,7 +1,10 @@
 package com.example.backend_spring.controllers;
 
 import com.example.backend_spring.models.Article;
+import com.example.backend_spring.models.JournalAudit;
+import com.example.backend_spring.models.Utilisateur;
 import com.example.backend_spring.services.ArticleService;
+import com.example.backend_spring.services.UtilisateurService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +18,13 @@ import java.util.List;
 public class ArticleController {
 
     private final ArticleService articleService;
+    private final UtilisateurService utilisateurService;
 
     @GetMapping
-    public List<Article> getAllArticles() {
+    public List<Article> getAllArticles(@RequestParam(required = false) Boolean active) {
+        if (active != null && active) {
+            return articleService.getActiveArticles();
+        }
         return articleService.getAllArticles();
     }
 
@@ -35,9 +42,23 @@ public class ArticleController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/{code}/history")
+    public List<JournalAudit> getArticleHistory(@PathVariable String code) {
+        return articleService.getArticleHistory(code);
+    }
+
     @PostMapping
-    public Article saveArticle(@RequestBody Article article) {
-        return articleService.saveArticle(article);
+    public ResponseEntity<?> saveArticle(@RequestBody Article article, @RequestParam int utilisateurId) {
+        return utilisateurService.getUtilisateurById(utilisateurId)
+                .map(u -> ResponseEntity.ok(articleService.saveArticle(article, u)))
+                .orElse(ResponseEntity.badRequest().build());
+    }
+
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<?> toggleStatus(@PathVariable int id, @RequestParam int utilisateurId) {
+        return utilisateurService.getUtilisateurById(utilisateurId)
+                .map(u -> ResponseEntity.ok(articleService.toggleStatus(id, u)))
+                .orElse(ResponseEntity.badRequest().build());
     }
 
     @DeleteMapping("/{id}")

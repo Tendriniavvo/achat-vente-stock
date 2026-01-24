@@ -82,6 +82,24 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/fournisseurs/create',
+      name: 'fournisseurs-create',
+      component: () => import('../views/fournisseurs/CreateFournisseur.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/fournisseurs/:id',
+      name: 'fournisseurs-details',
+      component: () => import('../views/fournisseurs/DetailsFournisseur.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/fournisseurs/:id/edit',
+      name: 'fournisseurs-edit',
+      component: () => import('../views/fournisseurs/EditFournisseur.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/commandes-achat',
       name: 'commandes-achat',
       component: () => import('../views/bons-commande/BonsCommandeFournisseur.vue'),
@@ -156,13 +174,31 @@ const router = createRouter({
     {
       path: '/partenaires',
       name: 'partenaires',
-      component: () => import('../views/Dashboard.vue'), // Temporaire
+      redirect: '/fournisseurs',
       meta: { requiresAuth: true }
     },
     {
       path: '/articles',
       name: 'articles',
-      component: () => import('../views/Dashboard.vue'), // Temporaire
+      component: () => import('../views/articles/Articles.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/articles/create',
+      name: 'articles-create',
+      component: () => import('../views/articles/CreateArticle.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/articles/:id',
+      name: 'articles-details',
+      component: () => import('../views/articles/DetailsArticle.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/articles/:id/edit',
+      name: 'articles-edit',
+      component: () => import('../views/articles/EditArticle.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -175,6 +211,31 @@ const router = createRouter({
       path: '/budgets/create',
       name: 'budgets-create',
       component: () => import('../views/budgets/CreateBudget.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/clients',
+      name: 'clients',
+      component: () => import('../views/clients/Clients.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/clients/create',
+      name: 'clients-create',
+      component: () => import('../views/clients/CreateClient.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/clients/:id',
+      name: 'clients-details',
+      component: () => import('../views/clients/DetailsClient.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/clients/:id/edit',
+      name: 'clients-edit',
+      component: () => import('../views/clients/CreateClient.vue'),
+      props: { isEdit: true },
       meta: { requiresAuth: true }
     }
   ]

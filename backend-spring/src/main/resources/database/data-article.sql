@@ -91,21 +91,6 @@ SELECT * FROM (
         TRUE
     ),
     (
-        'ART-004',
-        'Riz blanc local',
-        'Riz blanc qualité supérieure',
-        (SELECT id FROM categories_articles WHERE nom = 'Alimentaire'),
-        (SELECT id FROM unites WHERE nom = 'Kilogramme'),
-        (SELECT id FROM taxes WHERE nom = 'TVA 0%'),
-        0.80,
-        1.20,
-        'CUMP',
-        100,
-        2000,
-        TRUE,
-        TRUE
-    ),
-    (
         'ART-005',
         'Télévision LED 43 pouces',
         'TV LED Full HD 43 pouces',

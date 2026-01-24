@@ -1,9 +1,122 @@
 <template>
   <MainLayout>
     <div class="container-fluid">
-      <!--  Row 1 -->
+      <!-- KPI Row -->
+      <div class="row mb-4">
+        <div v-if="hasRole('Administrateur') || hasRole('Acheteur') || hasRole('Utilisateur')" class="col-md-3">
+          <div class="card border-start border-primary border-4">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Demandes d'Achat</p>
+                  <h4 class="mb-0">{{ statistiques.totalDemandesAchat }}</h4>
+                </div>
+                <div class="ms-auto text-primary">
+                  <i class="ti ti-shopping-cart fs-7"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="hasRole('Administrateur') || hasRole('Comptable') || hasRole('Commercial')" class="col-md-3">
+          <div class="card border-start border-success border-4">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Ventes Totales</p>
+                  <h4 class="mb-0">{{ formatCurrency(statistiques.montantTotalVentes) }}</h4>
+                </div>
+                <div class="ms-auto text-success">
+                  <i class="ti ti-currency-dollar fs-7"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="hasRole('Administrateur') || hasRole('Magasinier')" class="col-md-3">
+          <div class="card border-start border-warning border-4">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Alertes Stock</p>
+                  <h4 class="mb-0 text-warning">{{ statistiques.stockAlertsCount }}</h4>
+                </div>
+                <div class="ms-auto text-warning">
+                  <i class="ti ti-alert-triangle fs-7"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="hasRole('Administrateur') || hasRole('Comptable')" class="col-md-3">
+          <div class="card border-start border-info border-4">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Budget Dispo.</p>
+                  <h4 class="mb-0">{{ formatCurrency(statistiques.totalBudgetDisponible) }}</h4>
+                </div>
+                <div class="ms-auto text-info">
+                  <i class="ti ti-wallet fs-7"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!--  Row 1: Performance Chart -->
       <div class="row">
         <div class="col-lg-8 d-flex align-items-stretch">
+          <div class="card w-100">
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-4">Performance Globale (Achats vs Ventes)</h5>
+              <apexchart 
+                type="area" 
+                height="350" 
+                :options="chartOptions" 
+                :series="chartSeries"
+              ></apexchart>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4 d-flex align-items-stretch">
+          <div class="card w-100">
+            <div class="card-body">
+              <h5 class="card-title fw-semibold mb-4">Alertes de Stock</h5>
+              <div class="list-group list-group-flush">
+                <div v-for="alert in statistiques.stockAlerts" :key="alert.id" class="list-group-item px-0">
+                  <div class="d-flex align-items-center">
+                    <div class="me-3">
+                      <span class="badge bg-light-warning text-warning p-2">
+                        <i class="ti ti-package fs-5"></i>
+                      </span>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1 fw-semibold">{{ alert.article?.nom }}</h6>
+                      <p class="mb-0 text-muted fs-2">Dépôt: {{ alert.depot?.nom }}</p>
+                    </div>
+                    <div class="text-end">
+                      <span class="text-danger fw-bold">{{ alert.quantite }}</span>
+                      <p class="mb-0 text-muted fs-2">Min: {{ alert.article?.stockMin }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="!statistiques.stockAlerts || statistiques.stockAlerts.length === 0" class="text-center py-4">
+                  <p class="text-muted">Aucune alerte de stock</p>
+                </div>
+              </div>
+              <button v-if="statistiques.stockAlertsCount > 5" class="btn btn-outline-primary w-100 mt-3 btn-sm">
+                Voir toutes les alertes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Recent Demandes d'Achat -->
+      <div class="row">
+        <div class="col-lg-12 d-flex align-items-stretch">
           <div class="card w-100">
             <div class="card-body">
               <div class="d-sm-flex d-block align-items-center justify-content-between mb-9">
@@ -91,44 +204,6 @@
             </div>
           </div>
         </div>
-        <div class="col-lg-4">
-          <div class="row">
-            <div class="col-lg-12">
-              <!-- Yearly Breakup -->
-              <div class="card overflow-hidden">
-                <div class="card-body p-4">
-                  <h5 class="card-title mb-9 fw-semibold">Statistiques Rapides</h5>
-                  <div class="row align-items-center">
-                    <div class="col-8">
-                      <h4 class="fw-semibold mb-3">{{ statistiques.totalDemandes }}</h4>
-                      <p class="text-muted mb-0">Total Demandes d'Achat</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-12">
-              <!-- Monthly Earnings -->
-              <div class="card">
-                <div class="card-body">
-                  <div class="row aligh-items-start">
-                    <div class="col-8">
-                      <h5 class="card-title mb-9 fw-semibold"> Budgets </h5>
-                      <h4 class="fw-semibold mb-3">{{ formatCurrency(statistiques.totalBudget) }}</h4>
-                      <div class="d-flex align-items-center pb-1">
-                        <span
-                          class="me-2 rounded-circle bg-light-success round-20 d-flex align-items-center justify-content-center">
-                          <i class="ti ti-arrow-up-left text-success"></i>
-                        </span>
-                        <p class="text-dark me-1 fs-3 mb-0">Disponibles</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </MainLayout>
@@ -136,43 +211,84 @@
 
 <script>
 import MainLayout from '../layouts/MainLayout.vue';
+import VueApexCharts from "vue3-apexcharts";
 
 export default {
   name: 'Dashboard',
   components: {
-    MainLayout
+    MainLayout,
+    apexchart: VueApexCharts,
   },
   data() {
     return {
       recentesDemandes: [],
       statistiques: {
-        totalDemandes: 0,
-        totalBudget: 0
+        totalDemandesAchat: 0,
+        demandesEnAttente: 0,
+        totalVentes: 0,
+        montantTotalVentes: 0,
+        stockAlertsCount: 0,
+        stockAlerts: [],
+        totalBudgetDisponible: 0
+      },
+      chartSeries: [
+        { name: "Ventes", data: [] },
+        { name: "Achats", data: [] }
+      ],
+      chartOptions: {
+        chart: { height: 350, type: 'area', toolbar: { show: false }, fontFamily: 'inherit' },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 2 },
+        colors: ['#5D87FF', '#49BEFF'],
+        xaxis: { categories: [] },
+        tooltip: { theme: 'light' },
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1, stops: [0, 90, 100] } }
       }
     };
   },
   mounted() {
     this.loadData();
+    this.loadStats();
+    this.loadPerformance();
   },
   methods: {
     async loadData() {
       try {
-        // Charger les demandes récentes
         const resDemandes = await fetch('/api/demandes-achat');
         if (resDemandes.ok) {
           const data = await resDemandes.json();
           this.recentesDemandes = data.slice(0, 5);
-          this.statistiques.totalDemandes = data.length;
-        }
-
-        // Charger les budgets pour les stats
-        const resBudgets = await fetch('/api/budgets');
-        if (resBudgets.ok) {
-          const budgets = await resBudgets.json();
-          this.statistiques.totalBudget = budgets.reduce((total, b) => total + (b.montantDisponible || 0), 0);
         }
       } catch (err) {
-        console.error('Erreur chargement dashboard:', err);
+        console.error('Erreur chargement demandes:', err);
+      }
+    },
+    async loadStats() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        if (res.ok) {
+          this.statistiques = await res.json();
+        }
+      } catch (err) {
+        console.error('Erreur chargement stats:', err);
+      }
+    },
+    async loadPerformance() {
+      try {
+        const res = await fetch('/api/dashboard/performance');
+        if (res.ok) {
+          const data = await res.json();
+          this.chartSeries = [
+            { name: "Ventes", data: data.sales.map(d => d.amount) },
+            { name: "Achats", data: data.purchases.map(d => d.amount) }
+          ];
+          this.chartOptions = {
+            ...this.chartOptions,
+            xaxis: { categories: data.sales.map(d => d.month) }
+          };
+        }
+      } catch (err) {
+        console.error('Erreur chargement performance:', err);
       }
     },
     formatDate(dateString) {
@@ -183,8 +299,12 @@ export default {
       return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA', minimumFractionDigits: 0 }).format(value);
     },
     calculerTotal(demande) {
-      if (!demande.lignes) return 0;
-      return demande.lignes.reduce((total, ligne) => total + (ligne.prixEstime * ligne.quantite), 0);
+      if (!demande.lignes || !Array.isArray(demande.lignes)) return 0;
+      return demande.lignes.reduce((total, ligne) => {
+        const prix = ligne.prixEstime || 0;
+        const qte = ligne.quantite || 0;
+        return total + (prix * qte);
+      }, 0);
     },
     hasRole(roleNom) {
       const userStr = localStorage.getItem('user');
@@ -200,7 +320,7 @@ export default {
       const authData = JSON.parse(userStr);
       const user = authData.user || authData;
       const statut = demande.statut?.toLowerCase();
-      return (statut === 'attente_finance') && (this.hasRole('FINANCE') || this.hasRole('ADMIN'));
+      return (statut === 'attente_finance') && (this.hasRole('Comptable') || this.hasRole('Administrateur'));
     },
     async verifierFonds(id) {
       if (!confirm('Voulez-vous vérifier la disponibilité des fonds ?')) return;
@@ -230,9 +350,9 @@ export default {
       if (demande.demandeur && demande.demandeur.id === user.id) return false;
 
       const statut = demande.statut?.toLowerCase();
-      if (statut === 'en attente') return this.hasRole('CHEF') || this.hasRole('ADMIN');
-      if (statut === 'fonds_confirmés' || statut === 'fonds_confirmes') return this.hasRole('FINANCE') || this.hasRole('ADMIN');
-      if (statut === 'attente_admin') return this.hasRole('ADMIN');
+      if (statut === 'en attente') return this.hasRole('Acheteur') || this.hasRole('Administrateur');
+      if (statut === 'fonds_confirmés' || statut === 'fonds_confirmes') return this.hasRole('Comptable') || this.hasRole('Administrateur');
+      if (statut === 'attente_admin') return this.hasRole('Administrateur');
       return false;
     },
     async approuver(id) {
@@ -276,11 +396,11 @@ export default {
     },
     getStatutClass(statut) {
       const s = statut?.toLowerCase();
-      if (s === 'approuvé' || s === 'approuve') return 'badge bg-success rounded-3 fw-semibold';
-      if (s === 'en attente') return 'badge bg-warning rounded-3 fw-semibold';
+      if (s === 'approuvé' || s === 'approuve' || s === 'validee' || s === 'validée') return 'badge bg-success rounded-3 fw-semibold';
+      if (s === 'en attente' || s === 'soumise') return 'badge bg-warning rounded-3 fw-semibold';
       if (s === 'attente_finance') return 'badge bg-primary rounded-3 fw-semibold';
       if (s === 'attente_admin') return 'badge bg-indigo rounded-3 fw-semibold';
-      if (s === 'rejeté' || s === 'rejete') return 'badge bg-danger rounded-3 fw-semibold';
+      if (s === 'rejeté' || s === 'rejete' || s === 'rejetee') return 'badge bg-danger rounded-3 fw-semibold';
       if (s === 'transformé' || s === 'transforme') return 'badge bg-primary rounded-3 fw-semibold';
       return 'badge bg-secondary rounded-3 fw-semibold';
     }
