@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface BonCommandeFournisseurRepository extends JpaRepository<BonCommandeFournisseur, Integer> {
     Optional<BonCommandeFournisseur> findByReference(String reference);
-    List<BonCommandeFournisseur> findByFournisseurIdOrderByDateCommandeDesc(int fournisseurId);
+    List<BonCommandeFournisseur> findByFournisseur_IdOrderByDateCommandeDesc(int fournisseurId);
 }

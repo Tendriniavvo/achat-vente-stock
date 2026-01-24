@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "bons_commande_fournisseur")
+@Table(name = "bon_commande_fournisseur")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -43,4 +43,7 @@ public class BonCommandeFournisseur {
     @ManyToOne
     @JoinColumn(name = "utilisateur_id")
     private Utilisateur utilisateur;
+
+    @Transient
+    private Integer fournisseurId;
 }

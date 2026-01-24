@@ -30,13 +30,13 @@
           </li>
           
           <!-- Achats avec dropdown -->
-          <li v-if="hasPermission('/achats')" class="sidebar-item">
+          <li v-if="hasPermission('/achats') || hasPermission('/commandes-achat')" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isAchatsRoute() }" href="javascript:void(0)" :aria-expanded="achatsMenuOpen" @click="toggleAchatsMenu">
               <span><i class="ti ti-shopping-cart"></i></span>
               <span class="hide-menu">Achats</span>
             </a>
             <ul class="collapse first-level" :class="{ show: achatsMenuOpen }">
-              <li class="sidebar-item">
+              <li v-if="hasPermission('/achats')" class="sidebar-item">
                 <router-link to="/achats" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
@@ -44,7 +44,7 @@
                   <span class="hide-menu">Demandes d'Achat</span>
                 </router-link>
               </li>
-              <li class="sidebar-item">
+              <li v-if="hasPermission('/achats/create')" class="sidebar-item">
                 <router-link to="/achats/create" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
@@ -52,7 +52,7 @@
                   <span class="hide-menu">Nouvelle Demande</span>
                 </router-link>
               </li>
-              <li class="sidebar-item">
+              <li v-if="hasPermission('/commandes-achat')" class="sidebar-item">
                 <router-link to="/commandes-achat" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>

@@ -106,6 +106,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/commandes-achat/:id',
+      name: 'bc-details',
+      component: () => import('../views/bons-commande/DetailsBonCommandeFournisseur.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/commandes-achat/:id/edit',
+      name: 'bc-edit',
+      component: () => import('../views/bons-commande/EditBonCommandeFournisseur.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/ventes',
       name: 'ventes',
       component: () => import('../views/Dashboard.vue'), // Temporaire
@@ -217,6 +229,12 @@ const router = createRouter({
       path: '/receptions',
       name: 'receptions',
       component: () => import('../views/stock/Receptions.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/receptions/enregistrer/:bcId',
+      name: 'receptions-enregistrer',
+      component: () => import('../views/stock/EnregistrerReception.vue'),
       meta: { requiresAuth: true }
     },
     {

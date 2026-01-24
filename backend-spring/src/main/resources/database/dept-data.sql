@@ -57,6 +57,7 @@ INSERT INTO permissions (role_id, module, action, path, perimetre) VALUES
 
 -- 👔 RESPONSABLE ACHATS (Étape 5)
 ((SELECT id FROM roles WHERE nom = 'Responsable Achats'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Responsable Achats'), 'ACHATS', 'ACCESS', '/achats', NULL),
 ((SELECT id FROM roles WHERE nom = 'Responsable Achats'), 'ACHATS', 'VALIDATE_BC', '/commandes-achat', NULL),
 ((SELECT id FROM roles WHERE nom = 'Responsable Achats'), 'ACHATS', 'LITIGE_RESOLVE', '/commandes-achat', NULL),
 
@@ -73,6 +74,7 @@ INSERT INTO permissions (role_id, module, action, path, perimetre) VALUES
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'RECEPTION', '/receptions', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/stock', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/depots', NULL),
-((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/emplacements', NULL);
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/emplacements', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'ACHATS', 'ACCESS', '/commandes-achat', NULL);
 
 

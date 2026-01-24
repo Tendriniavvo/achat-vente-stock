@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bons-commande-fournisseur")
@@ -54,6 +55,79 @@ public class BonCommandeFournisseurController {
             return ResponseEntity.ok(bc);
         } catch (RuntimeException e) {
             log.error("Erreur lors de la transformation: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @GetMapping("/{id}/lignes")
+    public List<com.example.backend_spring.models.LigneBonCommande> getLignes(@PathVariable int id) {
+        return bonCommandeFournisseurService.getLignesByBcId(id);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BonCommandeFournisseur> updateBC(@PathVariable int id,
+            @RequestBody BonCommandeFournisseur bc) {
+        try {
+            return ResponseEntity.ok(bonCommandeFournisseurService.updateBonCommande(id, bc));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PutMapping("/{id}/lignes")
+    public ResponseEntity<Void> updateLignes(@PathVariable int id,
+            @RequestBody List<com.example.backend_spring.models.LigneBonCommande> lignes) {
+        try {
+            bonCommandeFournisseurService.updateLignes(id, lignes);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/{id}/valider")
+    public ResponseEntity<BonCommandeFournisseur> valider(@PathVariable int id,
+            @RequestBody Map<String, Integer> payload) {
+        try {
+            Integer utilisateurId = payload.get("validateurId");
+            if (utilisateurId == null) {
+                return ResponseEntity.badRequest().body(null);
+            }
+            return ResponseEntity.ok(bonCommandeFournisseurService.validerBC(id, utilisateurId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PostMapping("/{id}/litige")
+    public ResponseEntity<BonCommandeFournisseur> signalerLitige(@PathVariable int id,
+            @RequestBody Map<String, Integer> payload) {
+        try {
+            Integer utilisateurId = payload.get("utilisateurId");
+            return ResponseEntity.ok(bonCommandeFournisseurService.signalerLitige(id, utilisateurId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PostMapping("/{id}/lever-litige")
+    public ResponseEntity<BonCommandeFournisseur> leverLitige(@PathVariable int id,
+            @RequestBody Map<String, Integer> payload) {
+        try {
+            Integer utilisateurId = payload.get("utilisateurId");
+            return ResponseEntity.ok(bonCommandeFournisseurService.leverLitige(id, utilisateurId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PostMapping("/{id}/envoyer")
+    public ResponseEntity<BonCommandeFournisseur> envoyer(@PathVariable int id,
+            @RequestBody Map<String, Integer> payload) {
+        try {
+            Integer utilisateurId = payload.get("utilisateurId");
+            return ResponseEntity.ok(bonCommandeFournisseurService.envoyerAuFournisseur(id, utilisateurId));
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(null);
         }
     }

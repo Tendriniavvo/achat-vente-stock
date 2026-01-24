@@ -45,7 +45,7 @@
                   </td>
                   <td class="text-end fw-bold text-primary">{{ formatCurrency(bc.montantTotal) }}</td>
                   <td class="text-center">
-                    <span :class="getStatutClass(bc.statut)">{{ bc.statut }}</span>
+                    <span :class="getStatutClass(bc.statut)">{{ formatStatut(bc.statut) }}</span>
                   </td>
                   <td class="text-center">
                     <div class="btn-group">
@@ -128,23 +128,38 @@ export default {
         minimumFractionDigits: 0
       }).format(value);
     },
+    formatStatut(statut) {
+      if (!statut) return '';
+      const s = statut.toLowerCase();
+      switch (s) {
+        case 'brouillon': return 'Brouillon';
+        case 'attente_validation': return 'Attente Validation (Resp. Achats)';
+        case 'attente_approbation_finale': return 'Attente Approbation (DAF/DG)';
+        case 'valide': return 'Validé';
+        case 'envoye': return 'Envoyé au fournisseur';
+        case 'recu': return 'Reçu / Livré';
+        case 'annule': return 'Annulé';
+        default: return statut;
+      }
+    },
     getStatutClass(statut) {
       const s = statut?.toLowerCase();
       switch (s) {
         case 'brouillon': return 'badge bg-secondary';
-        case 'valide': return 'badge bg-info';
+        case 'attente_validation': return 'badge bg-warning text-dark';
+        case 'attente_approbation_finale': return 'badge bg-warning text-dark';
+        case 'valide': return 'badge bg-success';
         case 'envoye': return 'badge bg-primary';
-        case 'recu': return 'badge bg-success';
+        case 'recu': return 'badge bg-info';
         case 'annule': return 'badge bg-danger';
         default: return 'badge bg-info';
       }
     },
     voirDetails(id) {
-      // Pour l'instant on redirige vers le dashboard ou on affiche une alerte
-      alert('Détails du BC ID: ' + id + ' (En cours de développement)');
+      this.$router.push(`/commandes-achat/${id}`);
     },
     modifier(id) {
-      alert('Modification du BC ID: ' + id + ' (En cours de développement)');
+      this.$router.push(`/commandes-achat/${id}/edit`);
     }
   }
 };

@@ -128,6 +128,14 @@
                       <i class="ti ti-x"></i>
                     </button>
                     <button 
+                      v-if="canTransform(demande)"
+                      class="btn btn-sm btn-primary me-1" 
+                      title="Transformer en BC"
+                      @click="transformerEnBC(demande.id)"
+                    >
+                      <i class="ti ti-file-export"></i>
+                    </button>
+                    <button 
                       v-if="demande.statut !== 'approuvé' && demande.statut !== 'approuve' && demande.statut !== 'en attente'"
                       class="btn btn-sm btn-outline-danger" 
                       title="Annuler"
@@ -332,6 +340,26 @@ export default {
       }
 
       return false;
+    },
+    canTransform(demande) {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return false;
+      const authData = JSON.parse(userStr);
+      const user = authData.user || authData;
+
+      const statut = demande.statut?.toLowerCase();
+      const isApprouve = statut === 'approuvé' || statut === 'approuve';
+
+      // Seul un Acheteur ou Admin peut transformer, et la DA doit être approuvée
+      // Et l'acheteur ne doit pas être le demandeur (Séparation des tâches)
+      const isAcheteurOrAdmin = this.hasRole('Acheteur') || this.hasRole('Administrateur');
+      const isNotDemandeur = demande.demandeur && demande.demandeur.id !== user.id;
+
+      return isApprouve && isAcheteurOrAdmin && isNotDemandeur;
+    },
+    async transformerEnBC(id) {
+      // On redirige vers les détails pour utiliser le modal de transformation complet
+      this.$router.push(`/achats/${id}`);
     },
     getStatutClass(statut) {
       const statutLower = statut?.toLowerCase();

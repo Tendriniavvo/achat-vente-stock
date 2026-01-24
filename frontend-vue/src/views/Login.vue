@@ -58,7 +58,7 @@ export default {
   name: 'Login',
   data() {
     return {
-      email: 'admin@gmail.com',
+      email: '@gmail.com',
       password: 'test',
       error: '',
       isLoading: false

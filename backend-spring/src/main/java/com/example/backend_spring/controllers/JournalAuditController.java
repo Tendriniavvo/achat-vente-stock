@@ -28,6 +28,11 @@ public class JournalAuditController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/module/{module}/ref/{reference}")
+    public List<JournalAudit> getAudits(@PathVariable String module, @PathVariable String reference) {
+        return journalAuditService.getAuditsByModuleAndReference(module, reference);
+    }
+
     @PostMapping
     public JournalAudit saveAudit(@RequestBody JournalAudit audit) {
         return journalAuditService.saveAudit(audit);

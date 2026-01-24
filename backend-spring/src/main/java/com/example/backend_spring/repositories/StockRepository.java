@@ -7,8 +7,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import java.util.Optional;
+
 @Repository
 public interface StockRepository extends JpaRepository<Stock, Integer> {
     @Query("SELECT s FROM Stock s WHERE s.quantite <= s.article.stockMin")
     List<Stock> findStockAlerts();
+
+    Optional<Stock> findByArticleIdAndDepotId(int articleId, int depotId);
 }
