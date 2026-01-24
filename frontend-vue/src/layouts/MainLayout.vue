@@ -183,6 +183,32 @@
                 </li>
               </ul>
             </li>
+
+            <!-- Rôles & Habilitations -->
+            <li v-if="hasRole('ADMIN') || isAdmin()" class="sidebar-item">
+              <a class="sidebar-link has-arrow" :class="{ active: isRolesRoute() }" href="javascript:void(0)" :aria-expanded="rolesMenuOpen" @click="toggleRolesMenu">
+                <span><i class="ti ti-shield-lock"></i></span>
+                <span class="hide-menu">Rôles & Habilitations</span>
+              </a>
+              <ul class="collapse first-level" :class="{ show: rolesMenuOpen }">
+                <li class="sidebar-item">
+                  <router-link to="/roles" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Gestion des Rôles</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/roles/create" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Créer un rôle</span>
+                  </router-link>
+                </li>
+              </ul>
+            </li>
           </ul>
         </nav>
       </div>
@@ -261,6 +287,7 @@ const authData = ref(null);
 const achatsMenuOpen = ref(false);
 const stockMenuOpen = ref(false);
 const userMenuOpen = ref(false);
+const rolesMenuOpen = ref(false);
 
 // Accéder à l'objet utilisateur imbriqué dans l'AuthResponse
 const currentUser = computed(() => authData.value?.user || null);
@@ -308,6 +335,11 @@ const isUserRoute = () => {
   return route.path.startsWith('/utilisateurs');
 };
 
+// Vérifier si on est sur une page de rôles
+const isRolesRoute = () => {
+  return route.path.startsWith('/roles');
+};
+
 onMounted(() => {
   // Récupérer les informations d'authentification depuis localStorage
   const userData = localStorage.getItem('user');
@@ -324,6 +356,8 @@ onMounted(() => {
   stockMenuOpen.value = isStockRoute();
   // Ouvrir le menu Utilisateurs si on est sur une page d'utilisateurs
   userMenuOpen.value = isUserRoute();
+  // Ouvrir le menu Rôles si on est sur une page de rôles
+  rolesMenuOpen.value = isRolesRoute();
 });
 
 // Observer les changements de route
@@ -331,6 +365,7 @@ watch(() => route.path, () => {
   achatsMenuOpen.value = isAchatsRoute();
   stockMenuOpen.value = isStockRoute();
   userMenuOpen.value = isUserRoute();
+  rolesMenuOpen.value = isRolesRoute();
 });
 
 const logout = () => {
@@ -348,6 +383,10 @@ const toggleStockMenu = () => {
 
 const toggleUserMenu = () => {
   userMenuOpen.value = !userMenuOpen.value;
+};
+
+const toggleRolesMenu = () => {
+  rolesMenuOpen.value = !rolesMenuOpen.value;
 };
 </script>
 
