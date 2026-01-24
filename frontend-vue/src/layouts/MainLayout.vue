@@ -98,6 +98,54 @@
                   </router-link>
                 </li>
                 <li class="sidebar-item">
+                  <router-link to="/stock/mouvements" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Mouvements</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/stock/stocks" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Stocks</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/stock/lots" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Lots</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/stock/audits" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Audit</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/stock/ajustements" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Ajustements</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/stock/inventaires" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Inventaires</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
                   <router-link to="/depots" class="sidebar-link">
                     <div class="round-16 d-flex align-items-center justify-content-center">
                       <i class="ti ti-circle"></i>
@@ -114,13 +162,6 @@
                   </router-link>
                 </li>
               </ul>
-            </li>
-            
-            <li class="sidebar-item">
-              <router-link class="sidebar-link" to="/inventaire" aria-expanded="false">
-                <span><i class="ti ti-clipboard-list"></i></span>
-                <span class="hide-menu">Inventaire</span>
-              </router-link>
             </li>
             
             <li class="nav-small-cap">

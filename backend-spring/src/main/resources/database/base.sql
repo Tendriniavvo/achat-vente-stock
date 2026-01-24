@@ -85,6 +85,7 @@ CREATE TABLE articles (
     stock_min INTEGER,
     stock_max INTEGER,
     traceable_lot BOOLEAN DEFAULT FALSE, -- Pour lots/séries
+    stock_strategy VARCHAR(10) DEFAULT 'FEFO',
     actif BOOLEAN DEFAULT TRUE,
     historique TEXT, -- JSON ou texte pour historique
     date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP

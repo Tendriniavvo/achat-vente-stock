@@ -33,6 +33,20 @@ public class MouvementStockController {
         return mouvementStockService.saveMouvement(mouvement);
     }
 
+    @PostMapping("/{id}/valider")
+    public ResponseEntity<MouvementStock> validerMouvement(@PathVariable int id) {
+        try {
+            return ResponseEntity.ok(mouvementStockService.validerMouvement(id));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("introuvable")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.badRequest().header("X-Error-Message", String.valueOf(e.getMessage())).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().header("X-Error-Message", String.valueOf(e.getMessage())).build();
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMouvement(@PathVariable int id) {
         mouvementStockService.deleteMouvement(id);

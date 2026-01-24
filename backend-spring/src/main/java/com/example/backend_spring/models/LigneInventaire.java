@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Entity
 @Table(name = "lignes_inventaires")
 @Data
@@ -22,6 +23,10 @@ public class LigneInventaire {
     @ManyToOne
     @JoinColumn(name = "article_id")
     private Article article;
+
+    @ManyToOne
+    @JoinColumn(name = "emplacement_id")
+    private Emplacement emplacement;
 
     @Column(name = "quantite_theorique")
     private Integer quantiteTheorique;
