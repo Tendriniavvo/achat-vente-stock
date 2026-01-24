@@ -7,7 +7,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/dashboard'
+      redirect: '/login'
     },
     {
       path: '/dashboard',
@@ -236,6 +236,18 @@ const router = createRouter({
       name: 'clients-edit',
       component: () => import('../views/clients/CreateClient.vue'),
       props: { isEdit: true },
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/roles',
+      name: 'roles',
+      component: () => import('../views/roles/Roles.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/roles/create',
+      name: 'roles-create',
+      component: () => import('../views/roles/CreateRole.vue'),
       meta: { requiresAuth: true }
     }
   ]
