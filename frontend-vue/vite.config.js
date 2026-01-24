@@ -18,4 +18,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        quietDeps: true,
+        api: 'modern-compiler',
+        silenceDeprecations: ['import', 'global-builtin', 'color-functions', 'mixed-decls'],
+      },
+    },
+  },
 })
