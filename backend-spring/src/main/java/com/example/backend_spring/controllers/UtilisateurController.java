@@ -42,14 +42,16 @@ public class UtilisateurController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Utilisateur> updateUtilisateur(@PathVariable int id, @RequestBody Map<String, Object> updates) {
+    public ResponseEntity<Utilisateur> updateUtilisateur(@PathVariable int id,
+            @RequestBody Map<String, Object> updates) {
         String nom = (String) updates.get("nom");
         String prenom = (String) updates.get("prenom");
         String email = (String) updates.get("email");
         Integer departementId = (Integer) updates.get("departementId");
+        List<Integer> roleIds = (List<Integer>) updates.get("roleIds");
 
         try {
-            Utilisateur updated = utilisateurService.updateUtilisateur(id, nom, prenom, email, departementId);
+            Utilisateur updated = utilisateurService.updateUtilisateur(id, nom, prenom, email, departementId, roleIds);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();

@@ -106,46 +106,28 @@
                 <i class="ti ti-send"></i> Soumettre à validation
               </button>
 
-              <!-- Actions d'Approbation Multi-niveaux -->
+              <!-- Actions d'Approbation Simplifiées -->
               
-              <!-- N1: Chef de département -->
+              <!-- Approbation (Approbateur) -->
               <button 
-                v-if="isStatut('en attente') && (hasRole('Acheteur') || hasRole('Administrateur')) && !isDemandeur()"
+                v-if="isStatut('en attente') && (hasRole('Approbateur') || hasRole('Administrateur')) && !isDemandeur()"
                 class="btn btn-success" 
                 @click="approuver"
               >
-                <i class="ti ti-check"></i> Approuver (N1 - Chef)
+                <i class="ti ti-check"></i> Approuver la demande
               </button>
 
               <!-- Vérification des fonds (Finance) -->
               <button 
-                v-if="isStatut('attente_finance') && (hasRole('Comptable') || hasRole('Administrateur'))"
+                v-if="isStatut('attente_finance') && (hasRole('Finance') || hasRole('Administrateur'))"
                 class="btn btn-info" 
                 @click="verifierFonds"
               >
-                <i class="ti ti-coin"></i> Vérifier les fonds
-              </button>
-
-              <!-- N2: Finance (après vérification des fonds) -->
-              <button 
-                v-if="isStatut('fonds_confirmés') && (hasRole('Comptable') || hasRole('Administrateur')) && !isDemandeur()"
-                class="btn btn-success" 
-                @click="approuver"
-              >
-                <i class="ti ti-check"></i> Approuver (N2 - Finance)
-              </button>
-
-              <!-- N3: Admin / DG -->
-              <button 
-                v-if="isStatut('attente_admin') && hasRole('Administrateur') && !isDemandeur()"
-                class="btn btn-success" 
-                @click="approuver"
-              >
-                <i class="ti ti-check"></i> Approuver (N3 - Admin)
+                <i class="ti ti-coin"></i> Confirmer les fonds
               </button>
 
               <button 
-                v-if="(isStatut('en attente') || isStatut('attente_finance') || isStatut('attente_admin') || isStatut('fonds_confirmés')) && (hasRole('Administrateur') || hasRole('Acheteur') || hasRole('Comptable')) && !isDemandeur()"
+                v-if="(isStatut('en attente') || isStatut('attente_finance')) && (hasRole('Administrateur') || hasRole('Approbateur') || hasRole('Finance')) && !isDemandeur()"
                 class="btn btn-danger" 
                 data-bs-toggle="modal" 
                 data-bs-target="#rejetModal"
@@ -243,6 +225,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import MainLayout from '../../layouts/MainLayout.vue';
 import { Modal } from 'bootstrap';
 
@@ -326,9 +309,9 @@ export default {
       const id = this.$route.params.id;
 
       try {
-        const response = await fetch(`/api/demandes-achat/${id}`);
-        if (response.ok) {
-          this.demande = await response.json();
+        const response = await axios.get(`/api/demandes-achat/${id}`);
+        if (response.status === 200) {
+          this.demande = response.data;
         } else {
           this.errorMessage = 'Demande d\'achat non trouvée';
         }
@@ -341,9 +324,9 @@ export default {
     },
     async loadArticles() {
       try {
-        const response = await fetch('/api/articles');
-        if (response.ok) {
-          this.articles = await response.json();
+        const response = await axios.get('/api/articles');
+        if (response.status === 200) {
+          this.articles = response.data;
         }
       } catch (error) {
         console.error('Erreur chargement articles:', error);
@@ -351,13 +334,18 @@ export default {
     },
     async loadFournisseurs() {
       try {
-        const response = await fetch('/api/fournisseurs');
-        if (response.ok) {
-          this.fournisseurs = await response.json();
+        const response = await axios.get('/api/fournisseurs');
+        if (response.status === 200) {
+          this.fournisseurs = response.data;
         }
       } catch (error) {
         console.error('Erreur chargement fournisseurs:', error);
       }
+    },
+    async preparerTransformation() {
+      await this.loadFournisseurs();
+      const modal = new Modal(document.getElementById('bcModal'));
+      modal.show();
     },
     async confirmerTransformation() {
       if (!this.currentUser) {
@@ -366,20 +354,14 @@ export default {
       }
 
       try {
-        const response = await fetch('/api/bons-commande-fournisseur/transformer', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            demandeAchatId: this.demande.id,
-            acheteurId: this.currentUser.id,
-            fournisseurId: this.selectedFournisseurId
-          })
+        const response = await axios.post('/api/bons-commande-fournisseur/transformer', {
+          demandeAchatId: this.demande.id,
+          acheteurId: this.currentUser.id,
+          fournisseurId: this.selectedFournisseurId
         });
 
-        if (response.ok) {
-          const bc = await response.json();
+        if (response.status === 200) {
+          const bc = response.data;
           alert(`Demande transformée avec succès en Bon de Commande ${bc.reference}`);
           
           // Fermer le modal
@@ -394,13 +376,11 @@ export default {
           setTimeout(() => {
             this.$router.push('/commandes-achat');
           }, 2000);
-        } else {
-          const error = await response.text();
-          alert('Erreur lors de la transformation: ' + error);
         }
       } catch (error) {
         console.error('Erreur transformation BC:', error);
-        alert('Erreur de connexion lors de la transformation');
+        const errorMsg = error.response?.data?.message || error.response?.data || error.message;
+        alert('Erreur lors de la transformation: ' + errorMsg);
       }
     },
     getArticleNom(articleId) {
@@ -477,26 +457,29 @@ export default {
       }
     },
     async verifierFonds() {
-      if (!confirm('Voulez-vous vérifier la disponibilité des fonds for cette demande ?')) {
+      if (!confirm('Voulez-vous vérifier la disponibilité des fonds pour cette demande ?')) {
         return;
       }
 
       try {
-        const response = await fetch(`/api/demandes-achat/${this.demande.id}/verifier-fonds`, {
-          method: 'POST'
+        if (!this.currentUser) {
+          alert('Utilisateur non connecté');
+          return;
+        }
+
+        const response = await axios.post(`/api/demandes-achat/${this.demande.id}/verifier-fonds`, {
+          validateurId: this.currentUser.id
         });
 
-        if (response.ok) {
+        if (response.status === 200) {
           alert('Disponibilité des fonds confirmée');
-          this.loadDemande();
-        } else {
-          const errorMsg = await response.text();
-          alert('Erreur: ' + (errorMsg || 'Fonds insuffisants ou erreur de vérification'));
           this.loadDemande();
         }
       } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur de connexion au serveur');
+        const errorMsg = error.response?.data || error.message;
+        alert('Erreur: ' + (errorMsg || 'Fonds insuffisants ou erreur de vérification'));
+        this.loadDemande();
       }
     },
     async approuver() {
@@ -505,45 +488,23 @@ export default {
       }
 
       try {
-        const userStr = localStorage.getItem('user');
-        if (!userStr) {
+        if (!this.currentUser) {
           alert('Utilisateur non connecté');
           return;
         }
-        const authData = JSON.parse(userStr);
-        const user = authData.user || authData;
-        const response = await fetch(`/api/demandes-achat/${this.demande.id}/approuver`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            validateurId: user.id
-          })
+
+        const response = await axios.post(`/api/demandes-achat/${this.demande.id}/approuver`, {
+          validateurId: this.currentUser.id
         });
 
-        if (response.ok) {
-          const updatedDemande = await response.json();
-          const newStatus = updatedDemande.statut;
-          let message = 'Demande approuvée avec succès';
-          
-          if (newStatus === 'attente_finance') {
-            message = 'Approbation N1 réussie. En attente de la Finance.';
-          } else if (newStatus === 'attente_admin') {
-            message = 'Approbation N2 réussie. En attente de l\'Administration.';
-          } else if (newStatus === 'approuvé' || newStatus === 'approuve') {
-            message = 'Demande approuvée définitivement.';
-          }
-          
-          alert(message);
+        if (response.status === 200) {
+          alert('Demande approuvée avec succès. En attente de la Finance.');
           this.loadDemande();
-        } else {
-          const errorMsg = await response.text();
-          alert('Erreur lors de l\'approbation : ' + errorMsg);
         }
       } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur de connexion au serveur');
+        const errorMsg = error.response?.data || error.message;
+        alert('Erreur lors de l\'approbation : ' + errorMsg);
       }
     },
     async confirmerRejet() {
@@ -553,24 +514,22 @@ export default {
       }
 
       try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        const response = await fetch(`/api/demandes-achat/${this.demande.id}/rejeter`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            validateurId: user.id,
-            motif: this.motifRejet
-          })
+        if (!this.currentUser) {
+          alert('Utilisateur non connecté');
+          return;
+        }
+
+        const response = await axios.post(`/api/demandes-achat/${this.demande.id}/rejeter`, {
+          validateurId: this.currentUser.id,
+          motif: this.motifRejet
         });
 
-        if (response.ok) {
+        if (response.status === 200) {
           // Fermer le modal avec Bootstrap
           const modalElement = document.getElementById('rejetModal');
-          const modal = window.bootstrap?.Modal?.getInstance(modalElement);
-          if (modal) {
-            modal.hide();
+          const modalInstance = Modal.getInstance(modalElement);
+          if (modalInstance) {
+            modalInstance.hide();
           } else {
             // Fallback: fermer manuellement
             modalElement.classList.remove('show');
@@ -582,12 +541,11 @@ export default {
           
           alert('Demande rejetée avec succès');
           this.loadDemande();
-        } else {
-          alert('Erreur lors du rejet');
         }
       } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur de connexion au serveur');
+        const errorMsg = error.response?.data || error.message;
+        alert('Erreur lors du rejet : ' + errorMsg);
       }
     },
     async annuler() {
@@ -596,19 +554,16 @@ export default {
       }
 
       try {
-        const response = await fetch(`/api/demandes-achat/${this.demande.id}/annuler`, {
-          method: 'POST'
-        });
+        const response = await axios.post(`/api/demandes-achat/${this.demande.id}/annuler`);
 
-        if (response.ok) {
+        if (response.status === 200) {
           alert('Demande annulée avec succès');
           this.loadDemande();
-        } else {
-          alert('Erreur lors de l\'annulation');
         }
       } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur de connexion au serveur');
+        const errorMsg = error.response?.data || error.message;
+        alert('Erreur lors de l\'annulation : ' + errorMsg);
       }
     }
   }

@@ -28,9 +28,6 @@ public class DemandeAchatService {
     private final ArticleRepository articleRepository;
     private final BudgetService budgetService;
 
-    private static final BigDecimal SEUIL_N2 = new BigDecimal("1000000");
-    private static final BigDecimal SEUIL_N3 = new BigDecimal("5000000");
-
     @Transactional
     public DemandeAchat approuver(int id, int validateurId) {
         DemandeAchat demande = demandeAchatRepository.findByIdWithDetails(id)
@@ -44,74 +41,30 @@ public class DemandeAchatService {
             throw new RuntimeException("Un demandeur ne peut pas approuver sa propre demande d'achat");
         }
 
-        BigDecimal total = calculerTotalDemande(id);
         String statutActuel = demande.getStatut() != null ? demande.getStatut().toLowerCase() : "";
-        System.out.println("DEBUG: Approuver ID=" + id + ", Statut=" + statutActuel + ", Total=" + total
+        System.out.println("DEBUG: Approuver ID=" + id + ", Statut=" + statutActuel
                 + ", Validateur=" + validateur.getNom() + " (ID=" + validateurId + ")");
 
         if ("en attente".equals(statutActuel)) {
-            // Approbation N1 (Acheteur / Chef)
-            if (!hasRole(validateur, "Acheteur") && !hasRole(validateur, "Administrateur")) {
-                System.out.println("DEBUG: Erreur N1 - Pas le rôle Acheteur ou Administrateur. Roles=" + validateur.getRoles());
-                throw new RuntimeException("Seul un Acheteur ou Administrateur peut effectuer l'approbation N1");
+            // Approbation par le rôle "Approbateur" (ou Admin)
+            if (!hasRole(validateur, "Approbateur") && !hasRole(validateur, "Administrateur")) {
+                throw new RuntimeException("Seul un Approbateur ou Administrateur peut approuver la demande d'achat");
             }
 
-            // ABAC : L'acheteur ne peut approuver que pour son propre département (si pas admin)
-            if (hasRole(validateur, "Acheteur") && !hasRole(validateur, "Administrateur")) {
+            // ABAC : L'approbateur ne peut approuver que pour son propre département (si
+            // pas admin)
+            if (!hasRole(validateur, "Administrateur")) {
                 if (demande.getDemandeur() != null && demande.getDemandeur().getDepartement() != null &&
                         validateur.getDepartement() != null &&
                         demande.getDemandeur().getDepartement().getId() != validateur.getDepartement().getId()) {
-                    System.out.println("DEBUG: Erreur N1 - Département différent. DemandeDept=" +
-                            demande.getDemandeur().getDepartement().getId() + ", ValidateurDept="
-                            + validateur.getDepartement().getId());
-                    throw new RuntimeException("Un validateur ne peut approuver que les demandes de son propre département");
+                    throw new RuntimeException(
+                            "Un validateur ne peut approuver que les demandes de son propre département");
                 }
             }
 
-            System.out.println("DEBUG: N1 - Passage à attente_finance");
             return updateStatusWithValidateur(id, "attente_finance",
-                    "Approbation N1 validée par " + validateur.getNom() + ". En attente de la Finance.",
+                    "Approbation validée par " + validateur.getNom() + ". En attente de confirmation des fonds.",
                     validateur);
-
-        } else if ("attente_finance".equals(statutActuel) || "fonds_confirmés".equals(statutActuel)
-                || "fonds_confirmes".equals(statutActuel)) {
-            // Approbation N2 (Comptable / Finance)
-            if (!hasRole(validateur, "Comptable") && !hasRole(validateur, "Administrateur")) {
-                System.out.println("DEBUG: Erreur N2 - Pas le rôle Comptable ou Administrateur");
-                throw new RuntimeException("Seul un membre de la Comptabilité peut effectuer l'approbation N2");
-            }
-
-            // Exiger la vérification des fonds avant l'approbation N2
-            if ("attente_finance".equals(statutActuel)) {
-                System.out.println("DEBUG: Erreur N2 - Fonds non confirmés");
-                throw new RuntimeException(
-                        "La disponibilité des fonds doit être confirmée avant l'approbation Finance");
-            }
-
-            if (total.compareTo(SEUIL_N3) < 0) {
-                // Consommer le budget lors de l'approbation finale
-                System.out.println("DEBUG: N2 - Montant < SEUIL_N3. Approbation finale.");
-                budgetService.consommerBudget(demande.getDemandeur().getDepartement(), total);
-
-                return updateStatusWithValidateur(id, "approuvé",
-                        "Approbation N2 (Finance) finalisée par " + validateur.getNom(), validateur);
-            } else {
-                System.out.println("DEBUG: N2 - Montant >= SEUIL_N3. Passage à attente_admin");
-                return updateStatusWithValidateur(id, "attente_admin", "Approbation N2 (Finance) validée par "
-                        + validateur.getNom() + ". En attente de l'Administration.", validateur);
-            }
-        } else if ("attente_admin".equals(statutActuel)) {
-            // Approbation N3 (Administrateur)
-            if (!hasRole(validateur, "Administrateur")) {
-                throw new RuntimeException("Seul un Administrateur peut effectuer l'approbation N3");
-            }
-
-            // Si on vient de N3 et que le budget n'a pas été consommé en N2 (car SEUIL_N3
-            // atteint)
-            budgetService.consommerBudget(demande.getDemandeur().getDepartement(), total);
-
-            return updateStatusWithValidateur(id, "approuvé",
-                    "Approbation N3 (Admin) finalisée par " + validateur.getNom(), validateur);
         } else {
             throw new RuntimeException(
                     "Cette demande ne peut pas être approuvée dans son état actuel : " + statutActuel);
@@ -173,15 +126,24 @@ public class DemandeAchatService {
     }
 
     @Transactional
-    public DemandeAchat verifierFonds(int id) {
+    public DemandeAchat verifierFonds(int id, int validateurId) {
         DemandeAchat demande = demandeAchatRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Demande d'achat non trouvée"));
 
-        // La vérification des fonds ne peut se faire que si la DA est en attente
-        // Finance (après N1)
-        if (!demande.getStatut().equals("attente_finance")) {
+        Utilisateur validateur = utilisateurRepository.findById(validateurId)
+                .orElseThrow(() -> new RuntimeException("Validateur non trouvé"));
+
+        // Vérification du rôle Finance (ou Admin)
+        if (!hasRole(validateur, "Finance") && !hasRole(validateur, "Administrateur")
+                && !hasRole(validateur, "Comptable")) {
             throw new RuntimeException(
-                    "La demande doit être validée par le Chef de département (N1) avant la vérification des fonds");
+                    "Seul un membre du service Finance ou un Administrateur peut confirmer les fonds");
+        }
+
+        // La vérification des fonds ne peut se faire que si la DA est en attente
+        // Finance (après approbation)
+        if (!demande.getStatut().equals("attente_finance")) {
+            throw new RuntimeException("La demande doit être approuvée avant la vérification des fonds");
         }
 
         BigDecimal total = calculerTotalDemande(id);
@@ -194,19 +156,19 @@ public class DemandeAchatService {
         boolean disponibles = budgetService.isFondsDisponibles(demandeur.getDepartement(), total);
 
         if (!disponibles) {
-            // Blocage si fonds insuffisants : on laisse en attente_finance mais avec un
-            // message d'erreur
-            // Ou on rejette si c'est définitif. Ici on choisit le rejet pour bloquer le
-            // flux.
-            updateStatus(id, "rejeté",
+            // Blocage si fonds insuffisants : on rejette pour bloquer le flux.
+            updateStatusWithValidateur(id, "rejeté",
                     "Fonds budgétaires insuffisants pour le département " + demandeur.getDepartement().getNom() +
-                            " (Total requis: " + formatCurrencyMGA(total) + ")");
+                            " (Total requis: " + formatCurrencyMGA(total) + ")",
+                    validateur);
             throw new RuntimeException(
                     "Fonds insuffisants : le budget disponible est inférieur au montant total de la demande");
         }
 
-        return updateStatus(id, "fonds_confirmés",
-                "Disponibilité des fonds confirmée par la Finance (Total: " + formatCurrencyMGA(total) + ")");
+        return updateStatusWithValidateur(id, "approuvé",
+                "Disponibilité des fonds confirmée par " + validateur.getNom() + " (Total: " + formatCurrencyMGA(total)
+                        + "). Demande prête pour transformation en BC.",
+                validateur);
     }
 
     private String formatCurrencyMGA(BigDecimal amount) {

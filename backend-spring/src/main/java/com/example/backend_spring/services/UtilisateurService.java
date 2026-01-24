@@ -106,7 +106,8 @@ public class UtilisateurService {
     }
 
     @Transactional
-    public Utilisateur updateUtilisateur(int id, String nom, String prenom, String email, Integer departementId) {
+    public Utilisateur updateUtilisateur(int id, String nom, String prenom, String email, Integer departementId,
+            List<Integer> roleIds) {
         Utilisateur utilisateur = utilisateurRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'ID: " + id));
 
@@ -120,6 +121,11 @@ public class UtilisateurService {
             utilisateur.setDepartement(dept);
         } else {
             utilisateur.setDepartement(null);
+        }
+
+        if (roleIds != null) {
+            Set<Role> roles = new HashSet<>(roleRepository.findAllById(roleIds));
+            utilisateur.setRoles(roles);
         }
 
         return utilisateurRepository.save(utilisateur);

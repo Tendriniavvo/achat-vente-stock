@@ -70,11 +70,37 @@
             </router-link>
           </li>
 
-          <li v-if="hasPermission('/budgets')" class="sidebar-item">
-            <router-link class="sidebar-link" to="/budgets" aria-expanded="false">
+          <li v-if="hasPermission('/budgets') || hasPermission('/factures') || hasPermission('/paiements')" class="sidebar-item">
+            <a class="sidebar-link has-arrow" :class="{ active: isFinanceRoute() }" href="javascript:void(0)" :aria-expanded="financeMenuOpen" @click="toggleFinanceMenu">
               <span><i class="ti ti-wallet"></i></span>
-              <span class="hide-menu">Budgets</span>
-            </router-link>
+              <span class="hide-menu">Finances</span>
+            </a>
+            <ul class="collapse first-level" :class="{ show: financeMenuOpen }">
+              <li v-if="hasPermission('/budgets')" class="sidebar-item">
+                <router-link to="/budgets" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Budgets</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/factures')" class="sidebar-item">
+                <router-link to="/factures" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Factures</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/paiements')" class="sidebar-item">
+                <router-link to="/paiements" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Paiements</span>
+                </router-link>
+              </li>
+            </ul>
           </li>
           
           <!-- Stock avec dropdown -->
@@ -90,6 +116,14 @@
                     <i class="ti ti-circle"></i>
                   </div>
                   <span class="hide-menu">Vue d'ensemble</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/receptions')" class="sidebar-item">
+                <router-link to="/receptions" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Réceptions</span>
                 </router-link>
               </li>
               <li v-if="hasPermission('/depots')" class="sidebar-item">
@@ -215,6 +249,7 @@ const props = defineProps({
 const route = useRoute();
 const achatsMenuOpen = ref(false);
 const stockMenuOpen = ref(false);
+const financeMenuOpen = ref(false);
 const userMenuOpen = ref(false);
 const rolesMenuOpen = ref(false);
 
@@ -247,7 +282,15 @@ const isAchatsRoute = () => {
 const isStockRoute = () => {
   return route.path.startsWith('/stock') || 
          route.path.startsWith('/depots') ||
-         route.path.startsWith('/emplacements');
+         route.path.startsWith('/emplacements') ||
+         route.path.startsWith('/receptions');
+};
+
+// Vérifier si on est sur une page de finance
+const isFinanceRoute = () => {
+  return route.path.startsWith('/budgets') || 
+         route.path.startsWith('/factures') ||
+         route.path.startsWith('/paiements');
 };
 
 // Vérifier si on est sur une page d'utilisateurs
@@ -263,6 +306,7 @@ const isRolesRoute = () => {
 const updateMenuStates = () => {
   achatsMenuOpen.value = isAchatsRoute();
   stockMenuOpen.value = isStockRoute();
+  financeMenuOpen.value = isFinanceRoute();
   userMenuOpen.value = isUserRoute();
   rolesMenuOpen.value = isRolesRoute();
 };
@@ -282,6 +326,10 @@ const toggleAchatsMenu = () => {
 
 const toggleStockMenu = () => {
   stockMenuOpen.value = !stockMenuOpen.value;
+};
+
+const toggleFinanceMenu = () => {
+  financeMenuOpen.value = !financeMenuOpen.value;
 };
 
 const toggleUserMenu = () => {

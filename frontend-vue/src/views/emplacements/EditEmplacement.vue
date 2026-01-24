@@ -117,7 +117,7 @@ const form = ref({
 
 const fetchTypesEmplacement = async () => {
   try {
-    const response = await axios.get('http://localhost:8080/api/types-emplacement');
+    const response = await axios.get('/api/types-emplacement');
     typesEmplacement.value = response.data;
   } catch (error) {
     console.error('Erreur lors de la récupération des types:', error);
@@ -126,7 +126,7 @@ const fetchTypesEmplacement = async () => {
 
 const fetchEmplacement = async () => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/emplacements/${id}`);
+    const response = await axios.get(`/api/emplacements/${id}`);
     form.value = response.data;
     if (form.value.depot) {
       fetchPotentialParents(form.value.depot.id);
@@ -142,7 +142,7 @@ const fetchEmplacement = async () => {
 
 const fetchPotentialParents = async (depotId) => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/emplacements/depot/${depotId}`);
+    const response = await axios.get(`/api/emplacements/depot/${depotId}`);
     potentialParents.value = response.data;
   } catch (error) {
     console.error('Erreur lors de la récupération des parents:', error);
@@ -152,7 +152,7 @@ const fetchPotentialParents = async (depotId) => {
 const updateEmplacement = async () => {
   isSaving.value = true;
   try {
-    await axios.put(`http://localhost:8080/api/emplacements/${id}`, form.value);
+    await axios.put(`/api/emplacements/${id}`, form.value);
     router.push(`/emplacements?depotId=${form.value.depot.id}`);
   } catch (error) {
     console.error('Erreur lors de la mise à jour:', error);

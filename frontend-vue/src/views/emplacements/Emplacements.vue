@@ -131,7 +131,7 @@ let deleteModal = null;
 
 const fetchDepot = async () => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/depots/${depotId}`);
+    const response = await axios.get(`/api/depots/${depotId}`);
     depot.value = response.data;
   } catch (error) {
     console.error('Erreur lors de la récupération du dépôt:', error);
@@ -140,7 +140,7 @@ const fetchDepot = async () => {
 
 const fetchEmplacements = async () => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/emplacements/depot/${depotId}`);
+    const response = await axios.get(`/api/emplacements/depot/${depotId}`);
     emplacements.value = response.data;
   } catch (error) {
     console.error('Erreur lors de la récupération des emplacements:', error);
@@ -188,7 +188,7 @@ const deleteEmplacement = async () => {
   if (!emplacementToDelete.value) return;
   
   try {
-    await axios.delete(`http://localhost:8080/api/emplacements/${emplacementToDelete.value.id}`);
+    await axios.delete(`/api/emplacements/${emplacementToDelete.value.id}`);
     deleteModal.hide();
     fetchEmplacements();
   } catch (error) {

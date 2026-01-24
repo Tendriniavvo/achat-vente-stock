@@ -21,10 +21,8 @@
               >
                 <option value="tous">Tous</option>
                 <option value="brouillon">Brouillon</option>
-                <option value="en attente">En attente N1 (Chef)</option>
-                <option value="attente_finance">En attente N2 (Finance)</option>
-                <option value="fonds_confirmés">Fonds confirmés (Finance)</option>
-                <option value="attente_admin">En attente N3 (Admin)</option>
+                <option value="en attente">En attente (Approbateur)</option>
+                <option value="attente_finance">En attente (Finance)</option>
                 <option value="approuvé">Approuvé</option>
                 <option value="rejeté">Rejeté</option>
                 <option value="annulé">Annulé</option>
@@ -278,20 +276,29 @@ export default {
       return user.roles.some(r => r.nom.toUpperCase() === roleNom.toUpperCase());
     },
     canVerifyFonds(demande) {
-      const userStr = localStorage.getItem('user');
-      if (!userStr) return false;
-      const authData = JSON.parse(userStr);
-      const user = authData.user || authData;
-
       const statut = demande.statut?.toLowerCase();
       // La vérification des fonds est pour Finance ou Admin quand le statut est attente_finance
-      return (statut === 'attente_finance') && (this.hasRole('Comptable') || this.hasRole('Administrateur'));
+      return (statut === 'attente_finance') && (this.hasRole('Finance') || this.hasRole('Administrateur'));
     },
     async verifierFonds(id) {
       if (!confirm('Voulez-vous vérifier la disponibilité des fonds ?')) return;
       try {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          alert('Utilisateur non connecté');
+          return;
+        }
+        const authData = JSON.parse(userStr);
+        const user = authData.user || authData;
+
         const response = await fetch(`/api/demandes-achat/${id}/verifier-fonds`, {
-          method: 'POST'
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            validateurId: user.id
+          })
         });
         if (response.ok) {
           alert('Disponibilité des fonds confirmée');
@@ -319,27 +326,9 @@ export default {
 
       const statut = demande.statut?.toLowerCase();
 
-      // N1: Acheteur approuve les DA "en attente"
+      // Approbation par l'Approbateur
       if (statut === 'en attente') {
-        // L'ABAC (même département) est vérifié par le backend, 
-        // ici on affiche le bouton si l'utilisateur est Acheteur ou Administrateur
-        return this.hasRole('Acheteur') || this.hasRole('Administrateur');
-      }
-
-      // N2: Finance approuve les DA "fonds_confirmés" (après vérification)
-      if (statut === 'fonds_confirmés' || statut === 'fonds_confirmes') {
-        return this.hasRole('Comptable') || this.hasRole('Administrateur');
-      }
-
-      // Si le statut est "attente_finance", Finance doit d'abord vérifier les fonds
-      // donc canApprove retourne false ici pour forcer l'action "Vérifier les fonds"
-      if (statut === 'attente_finance') {
-        return false;
-      }
-
-      // N3: Admin approuve les DA "attente_admin"
-      if (statut === 'attente_admin') {
-        return this.hasRole('Administrateur');
+        return this.hasRole('Approbateur') || this.hasRole('Administrateur');
       }
 
       return false;

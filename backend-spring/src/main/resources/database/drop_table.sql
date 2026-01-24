@@ -40,5 +40,6 @@ DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS utilisateurs CASCADE;
 DROP TABLE IF EXISTS budgets CASCADE;
 DROP TABLE IF EXISTS departements CASCADE;
+DROP TABLE IF EXISTS types_emplacement CASCADE;
 
 -- Fin du script de nettoyage

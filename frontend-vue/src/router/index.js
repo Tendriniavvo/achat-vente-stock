@@ -202,6 +202,24 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/factures',
+      name: 'factures',
+      component: () => import('../views/budgets/Factures.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/paiements',
+      name: 'paiements',
+      component: () => import('../views/budgets/Paiements.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/receptions',
+      name: 'receptions',
+      component: () => import('../views/stock/Receptions.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/budgets/create',
       name: 'budgets-create',
       component: () => import('../views/budgets/CreateBudget.vue'),

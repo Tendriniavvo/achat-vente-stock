@@ -79,7 +79,14 @@
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <div class="form-check">
+                <label for="role" class="form-label">Rôle <span class="text-danger">*</span></label>
+                <select class="form-select" id="role" v-model="selectedRoleId" required>
+                  <option value="" disabled>Sélectionner un rôle</option>
+                  <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.nom }}</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-check mt-4">
                   <input 
                     class="form-check-input" 
                     type="checkbox" 
@@ -133,8 +140,11 @@ export default {
         prenom: '',
         email: '',
         departementId: '',
-        actif: true
+        actif: true,
+        roleIds: []
       },
+      selectedRoleId: '',
+      roles: [],
       departements: [],
       isLoading: false,
       isSubmitting: false,
@@ -144,15 +154,24 @@ export default {
   },
   mounted() {
     this.loadDepartements();
+    this.loadRoles();
     this.loadUtilisateur();
   },
   methods: {
     async loadDepartements() {
       try {
-        const response = await axios.get('/api/departements?actif=true');
+        const response = await axios.get('/api/departements');
         this.departements = response.data;
       } catch (error) {
         console.error('Erreur lors du chargement des départements:', error);
+      }
+    },
+    async loadRoles() {
+      try {
+        const response = await axios.get('/api/roles');
+        this.roles = response.data;
+      } catch (error) {
+        console.error('Erreur lors du chargement des rôles:', error);
       }
     },
     async loadUtilisateur() {
@@ -160,18 +179,21 @@ export default {
       this.errorMessage = '';
       
       try {
-        const response = await axios.get(`/api/utilisateurs`);
-        const utilisateurs = response.data;
-        const utilisateur = utilisateurs.find(u => u.id === parseInt(this.$route.params.id));
+        const response = await axios.get(`/api/utilisateurs/${this.$route.params.id}`);
+        const utilisateur = response.data;
         
         if (utilisateur) {
           this.form = {
             nom: utilisateur.nom,
             prenom: utilisateur.prenom,
             email: utilisateur.email,
-            departementId: utilisateur.departementId || '',
-            actif: utilisateur.actif !== undefined ? utilisateur.actif : true
+            departementId: utilisateur.departement ? utilisateur.departement.id : '',
+            actif: utilisateur.actif !== undefined ? utilisateur.actif : true,
+            roleIds: utilisateur.roles ? utilisateur.roles.map(r => r.id) : []
           };
+          if (this.form.roleIds.length > 0) {
+            this.selectedRoleId = this.form.roleIds[0];
+          }
         } else {
           this.errorMessage = 'Utilisateur introuvable.';
         }
@@ -187,20 +209,20 @@ export default {
       this.errorMessage = '';
       this.successMessage = '';
 
+      if (this.selectedRoleId) {
+        this.form.roleIds = [parseInt(this.selectedRoleId)];
+      }
+
       try {
-        // Note: L'API de mise à jour devrait être créée dans le backend
-        // Pour l'instant, on affiche juste un message
-        this.successMessage = 'Fonctionnalité de modification en cours de développement.';
-        
-        // TODO: Implémenter l'appel API PUT /api/utilisateurs/{id}
-        // await axios.put(`/api/utilisateurs/${this.$route.params.id}`, this.form);
+        await axios.put(`/api/utilisateurs/${this.$route.params.id}`, this.form);
+        this.successMessage = 'Utilisateur mis à jour avec succès !';
         
         setTimeout(() => {
           this.$router.push('/utilisateurs');
         }, 2000);
       } catch (error) {
         console.error('Erreur lors de la modification de l\'utilisateur:', error);
-        this.errorMessage = 'Erreur lors de la modification de l\'utilisateur.';
+        this.errorMessage = error.response?.data?.message || 'Erreur lors de la modification de l\'utilisateur.';
       } finally {
         this.isSubmitting = false;
       }

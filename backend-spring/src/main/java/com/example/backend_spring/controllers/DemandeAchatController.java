@@ -67,9 +67,13 @@ public class DemandeAchatController {
     }
 
     @PostMapping("/{id}/verifier-fonds")
-    public ResponseEntity<?> verifierFonds(@PathVariable int id) {
+    public ResponseEntity<?> verifierFonds(@PathVariable int id, @RequestBody Map<String, Integer> body) {
         try {
-            DemandeAchat demande = demandeAchatService.verifierFonds(id);
+            Integer validateurId = body.get("validateurId");
+            if (validateurId == null) {
+                return ResponseEntity.badRequest().body("ID du validateur manquant");
+            }
+            DemandeAchat demande = demandeAchatService.verifierFonds(id, validateurId);
             return ResponseEntity.ok(demande);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

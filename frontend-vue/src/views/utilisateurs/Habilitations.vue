@@ -89,8 +89,8 @@ const fetchData = async () => {
   loading.value = true;
   try {
     const [rolesRes, permsRes] = await Promise.all([
-      axios.get('http://localhost:8080/api/roles'),
-      axios.get('http://localhost:8080/api/permissions')
+      axios.get('/api/roles'),
+      axios.get('/api/permissions')
     ]);
     roles.value = rolesRes.data;
     permissions.value = permsRes.data;
@@ -131,7 +131,7 @@ const saveChanges = async () => {
     // Pour chaque rôle, envoyer ses nouvelles permissions au backend
     const savePromises = roles.value.map(role => {
       const rolePerms = permissions.value.filter(p => p.role.id === role.id);
-      return axios.post(`http://localhost:8080/api/permissions/role/${role.id}/bulk`, rolePerms);
+      return axios.post(`/api/permissions/role/${role.id}/bulk`, rolePerms);
     });
     
     await Promise.all(savePromises);

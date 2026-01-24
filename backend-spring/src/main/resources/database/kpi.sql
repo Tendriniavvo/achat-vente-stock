@@ -1,6 +1,41 @@
 INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, actif) VALUES
-('Admin', 'System', 'admin@local.test', 'hash', true)
+('Admin', 'System', 'admin@local.test', '$2a$10$vYy.Ff5W3.v6z.1Y8Y.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8', true),
+('Finance', 'User', 'finance@local.test', '$2a$10$vYy.Ff5W3.v6z.1Y8Y.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8', true),
+('Demandeur', 'User', 'demandeur@local.test', '$2a$10$vYy.Ff5W3.v6z.1Y8Y.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8', true),
+('Approbateur', 'N1', 'approbateur1@local.test', '$2a$10$vYy.Ff5W3.v6z.1Y8Y.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8', true),
+('Acheteur', 'User', 'acheteur@local.test', '$2a$10$vYy.Ff5W3.v6z.1Y8Y.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8', true),
+('Responsable', 'Achats', 'resp_achats@local.test', '$2a$10$vYy.Ff5W3.v6z.1Y8Y.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8', true),
+('Magasinier', 'User', 'magasinier@local.test', '$2a$10$vYy.Ff5W3.v6z.1Y8Y.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8.Y8', true)
 ON CONFLICT (email) DO NOTHING;
+
+-- Assigner les rôles
+INSERT INTO utilisateurs_roles (utilisateur_id, role_id)
+SELECT u.id, r.id FROM utilisateurs u, roles r WHERE u.email = 'admin@local.test' AND r.nom = 'Administrateur'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO utilisateurs_roles (utilisateur_id, role_id)
+SELECT u.id, r.id FROM utilisateurs u, roles r WHERE u.email = 'finance@local.test' AND r.nom = 'Finance'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO utilisateurs_roles (utilisateur_id, role_id)
+SELECT u.id, r.id FROM utilisateurs u, roles r WHERE u.email = 'demandeur@local.test' AND r.nom = 'Demandeur'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO utilisateurs_roles (utilisateur_id, role_id)
+SELECT u.id, r.id FROM utilisateurs u, roles r WHERE u.email = 'approbateur1@local.test' AND r.nom = 'Approbateur'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO utilisateurs_roles (utilisateur_id, role_id)
+SELECT u.id, r.id FROM utilisateurs u, roles r WHERE u.email = 'acheteur@local.test' AND r.nom = 'Acheteur'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO utilisateurs_roles (utilisateur_id, role_id)
+SELECT u.id, r.id FROM utilisateurs u, roles r WHERE u.email = 'resp_achats@local.test' AND r.nom = 'Responsable Achats'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO utilisateurs_roles (utilisateur_id, role_id)
+SELECT u.id, r.id FROM utilisateurs u, roles r WHERE u.email = 'magasinier@local.test' AND r.nom = 'Magasinier'
+ON CONFLICT DO NOTHING;
 
 INSERT INTO fournisseurs (nom, email, telephone, actif) VALUES
 ('Fournisseur A', 'fa@local.test', '0340000001', true),

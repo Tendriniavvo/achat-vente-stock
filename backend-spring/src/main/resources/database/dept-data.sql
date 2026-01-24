@@ -13,41 +13,66 @@ INSERT INTO departements (code, nom, description, actif) VALUES
 
 INSERT INTO roles (nom, description) VALUES
 ('Administrateur', 'Accès complet au système et gestion des utilisateurs'),
-('Acheteur', 'Responsable des achats et des fournisseurs'),
-('Magasinier', 'Gestion du stock et des entrées/sorties'),
-('Commercial', 'Gestion des ventes et relation clients'),
-('Comptable', 'Gestion comptable et financière'),
-('Responsable Logistique', 'Supervision du transport et de la distribution'),
-('Responsable RH', 'Gestion du personnel et des ressources humaines'),
-('Utilisateur', 'Accès standard aux fonctionnalités du système');
+('Demandeur', 'Création et suivi des demandes d''achat (DA)'),
+('Approbateur', 'Approbation unique des demandes d''achat'),
+('Acheteur', 'Transformation des DA en BC, négociation et gestion des fournisseurs'),
+('Responsable Achats', 'Validation des BC, déblocage des litiges et supervision des achats'),
+('Finance', 'Vérification budgétaire, rapprochement facture (3-way match) et paiements'),
+('DAF', 'Approbation finale des BC et validation des paiements'),
+('DG', 'Approbation exceptionnelle pour montants importants'),
+('Magasinier', 'Réception des articles et gestion du stock');
 
 
 
-INSERT INTO permissions (role_id, module, action, perimetre) VALUES
+INSERT INTO permissions (role_id, module, action, path, perimetre) VALUES
 
--- 🔑 ADMINISTRATEUR : tout
-((SELECT id FROM roles WHERE nom = 'Administrateur'), 'Utilisateurs', 'creer', NULL),
-((SELECT id FROM roles WHERE nom = 'Administrateur'), 'Utilisateurs', 'modifier', NULL),
-((SELECT id FROM roles WHERE nom = 'Administrateur'), 'Utilisateurs', 'supprimer', NULL),
-((SELECT id FROM roles WHERE nom = 'Administrateur'), 'Systeme', 'configurer', NULL),
+-- 🔑 ADMINISTRATEUR : Tout
+((SELECT id FROM roles WHERE nom = 'Administrateur'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Administrateur'), 'SYSTEME', 'ACCESS', '/utilisateurs', NULL),
+((SELECT id FROM roles WHERE nom = 'Administrateur'), 'SYSTEME', 'ACCESS', '/roles', NULL),
+((SELECT id FROM roles WHERE nom = 'Administrateur'), 'SYSTEME', 'ACCESS', '/habilitations', NULL),
 
--- 🛒 ACHETEUR
-((SELECT id FROM roles WHERE nom = 'Acheteur'), 'Achats', 'creer', NULL),
-((SELECT id FROM roles WHERE nom = 'Acheteur'), 'Achats', 'modifier', NULL),
-((SELECT id FROM roles WHERE nom = 'Acheteur'), 'Achats', 'consulter', NULL),
+-- 📝 DEMANDEUR (Étape 1)
+((SELECT id FROM roles WHERE nom = 'Demandeur'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Demandeur'), 'ACHATS', 'ACCESS', '/achats', NULL),
+((SELECT id FROM roles WHERE nom = 'Demandeur'), 'ACHATS', 'CREATE', '/achats/create', NULL),
 
--- 📦 MAGASINIER
-((SELECT id FROM roles WHERE nom = 'Magasinier'), 'Stocks', 'consulter', NULL),
-((SELECT id FROM roles WHERE nom = 'Magasinier'), 'Stocks', 'modifier', 'quantite>=0'),
-((SELECT id FROM roles WHERE nom = 'Magasinier'), 'Stocks', 'valider', NULL),
+-- ✅ APPROBATEUR (Étape 2)
+((SELECT id FROM roles WHERE nom = 'Approbateur'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Approbateur'), 'ACHATS', 'APPROVE', '/achats', NULL),
+((SELECT id FROM roles WHERE nom = 'Approbateur'), 'ACHATS', 'ACCESS', '/achats', NULL),
 
--- 💼 COMMERCIAL
-((SELECT id FROM roles WHERE nom = 'Commercial'), 'Ventes', 'creer', NULL),
-((SELECT id FROM roles WHERE nom = 'Commercial'), 'Ventes', 'modifier', NULL),
-((SELECT id FROM roles WHERE nom = 'Commercial'), 'Clients', 'consulter', NULL),
+-- 💰 FINANCE (Étapes 3, 8, 9)
+((SELECT id FROM roles WHERE nom = 'Finance'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Finance'), 'FINANCES', 'BUDGET_CHECK', '/budgets', NULL),
+((SELECT id FROM roles WHERE nom = 'Finance'), 'FINANCES', 'INVOICE_MATCH', '/factures', NULL),
+((SELECT id FROM roles WHERE nom = 'Finance'), 'FINANCES', 'PAYMENT', '/paiements', NULL),
+((SELECT id FROM roles WHERE nom = 'Finance'), 'ACHATS', 'ACCESS', '/achats', NULL),
 
--- 💰 COMPTABLE
-((SELECT id FROM roles WHERE nom = 'Comptable'), 'Finances', 'consulter', NULL),
-((SELECT id FROM roles WHERE nom = 'Comptable'), 'Finances', 'valider', 'montant < 10000');
+-- 🛒 ACHETEUR (Étapes 4, 6)
+((SELECT id FROM roles WHERE nom = 'Acheteur'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Acheteur'), 'ACHATS', 'TRANSFORM', '/achats', NULL),
+((SELECT id FROM roles WHERE nom = 'Acheteur'), 'ACHATS', 'ACCESS', '/commandes-achat', NULL),
+((SELECT id FROM roles WHERE nom = 'Acheteur'), 'PARTENAIRES', 'ACCESS', '/fournisseurs', NULL),
+
+-- 👔 RESPONSABLE ACHATS (Étape 5)
+((SELECT id FROM roles WHERE nom = 'Responsable Achats'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Responsable Achats'), 'ACHATS', 'VALIDATE_BC', '/commandes-achat', NULL),
+((SELECT id FROM roles WHERE nom = 'Responsable Achats'), 'ACHATS', 'LITIGE_RESOLVE', '/commandes-achat', NULL),
+
+-- 🏦 DAF / DG (Étape 5, 9)
+((SELECT id FROM roles WHERE nom = 'DAF'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'DAF'), 'ACHATS', 'FINAL_APPROVE', '/commandes-achat', NULL),
+((SELECT id FROM roles WHERE nom = 'DAF'), 'FINANCES', 'VALIDATE_PAYMENT', '/paiements', NULL),
+
+((SELECT id FROM roles WHERE nom = 'DG'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'DG'), 'ACHATS', 'EXCEPTIONAL_APPROVE', '/commandes-achat', NULL),
+
+-- 📦 MAGASINIER (Étape 7)
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'RECEPTION', '/receptions', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/stock', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/depots', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/emplacements', NULL);
 
 
