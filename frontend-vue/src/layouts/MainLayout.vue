@@ -82,7 +82,7 @@
               </router-link>
             </li>
 
-            <li v-if="hasRole('FINANCE') || hasRole('ADMIN')" class="sidebar-item">
+            <li v-if="hasRole('FINANCE') || hasRole('ADMIN') || isAdmin()" class="sidebar-item">
               <router-link class="sidebar-link" to="/budgets" aria-expanded="false">
                 <span><i class="ti ti-wallet"></i></span>
                 <span class="hide-menu">Budgets</span>
@@ -147,15 +147,41 @@
               </router-link>
             </li>
             
-            <li v-if="hasRole('ADMIN')" class="nav-small-cap">
+            <li v-if="hasRole('ADMIN') || isAdmin()" class="nav-small-cap">
               <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
               <span class="hide-menu">Administration</span>
             </li>
-            <li v-if="hasRole('ADMIN')" class="sidebar-item">
-              <router-link class="sidebar-link" to="/utilisateurs" aria-expanded="false">
+            <li v-if="hasRole('ADMIN') || isAdmin()" class="sidebar-item">
+              <a class="sidebar-link has-arrow" :class="{ active: isUserRoute() }" href="javascript:void(0)" :aria-expanded="userMenuOpen" @click="toggleUserMenu">
                 <span><i class="ti ti-user"></i></span>
                 <span class="hide-menu">Utilisateurs</span>
-              </router-link>
+              </a>
+              <ul class="collapse first-level" :class="{ show: userMenuOpen }">
+                <li class="sidebar-item">
+                  <router-link to="/utilisateurs" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Gestion des Utilisateurs</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/utilisateurs/create" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Créer un utilisateur</span>
+                  </router-link>
+                </li>
+                <li class="sidebar-item">
+                  <router-link to="/utilisateurs?mode=edit" class="sidebar-link">
+                    <div class="round-16 d-flex align-items-center justify-content-center">
+                      <i class="ti ti-circle"></i>
+                    </div>
+                    <span class="hide-menu">Modifier un utilisateur</span>
+                  </router-link>
+                </li>
+              </ul>
             </li>
           </ul>
         </nav>
@@ -234,6 +260,7 @@ const route = useRoute();
 const authData = ref(null);
 const achatsMenuOpen = ref(false);
 const stockMenuOpen = ref(false);
+const userMenuOpen = ref(false);
 
 // Accéder à l'objet utilisateur imbriqué dans l'AuthResponse
 const currentUser = computed(() => authData.value?.user || null);
@@ -256,6 +283,12 @@ const hasRole = (roleNom) => {
   return currentUser.value.roles.some(r => r.nom.toUpperCase() === roleNom.toUpperCase());
 };
 
+// Vérifier si l'utilisateur est administrateur par ID (1)
+const isAdmin = () => {
+  if (!currentUser.value || !currentUser.value.roles) return false;
+  return currentUser.value.roles.some(r => r.id === 1);
+};
+
 // Vérifier si on est sur une page d'achats
 const isAchatsRoute = () => {
   return route.path.startsWith('/achats') || 
@@ -268,6 +301,11 @@ const isStockRoute = () => {
   return route.path.startsWith('/stock') || 
          route.path.startsWith('/depots') ||
          route.path.startsWith('/emplacements');
+};
+
+// Vérifier si on est sur une page d'utilisateurs
+const isUserRoute = () => {
+  return route.path.startsWith('/utilisateurs');
 };
 
 onMounted(() => {
@@ -284,12 +322,15 @@ onMounted(() => {
   achatsMenuOpen.value = isAchatsRoute();
   // Ouvrir le menu Stock si on est sur une page de stock
   stockMenuOpen.value = isStockRoute();
+  // Ouvrir le menu Utilisateurs si on est sur une page d'utilisateurs
+  userMenuOpen.value = isUserRoute();
 });
 
 // Observer les changements de route
 watch(() => route.path, () => {
   achatsMenuOpen.value = isAchatsRoute();
   stockMenuOpen.value = isStockRoute();
+  userMenuOpen.value = isUserRoute();
 });
 
 const logout = () => {
@@ -303,6 +344,10 @@ const toggleAchatsMenu = () => {
 
 const toggleStockMenu = () => {
   stockMenuOpen.value = !stockMenuOpen.value;
+};
+
+const toggleUserMenu = () => {
+  userMenuOpen.value = !userMenuOpen.value;
 };
 </script>
 

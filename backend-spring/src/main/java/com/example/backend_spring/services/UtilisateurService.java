@@ -106,6 +106,26 @@ public class UtilisateurService {
     }
 
     @Transactional
+    public Utilisateur updateUtilisateur(int id, String nom, String prenom, String email, Integer departementId) {
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'ID: " + id));
+
+        utilisateur.setNom(nom);
+        utilisateur.setPrenom(prenom);
+        utilisateur.setEmail(email);
+
+        if (departementId != null) {
+            Departement dept = departementRepository.findById(departementId)
+                    .orElseThrow(() -> new RuntimeException("Département non trouvé avec l'ID: " + departementId));
+            utilisateur.setDepartement(dept);
+        } else {
+            utilisateur.setDepartement(null);
+        }
+
+        return utilisateurRepository.save(utilisateur);
+    }
+
+    @Transactional
     public void deleteUtilisateur(int id) {
         utilisateurRepository.deleteById(id);
     }

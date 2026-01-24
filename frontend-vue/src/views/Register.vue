@@ -81,10 +81,10 @@ export default {
   data() {
     return {
       form: {
-        nom: '',
-        prenom: '',
-        email: '',
-        motDePasse: '',
+        nom: 'Admin',
+        prenom: 'Admin',
+        email: 'admin@gmail.com',
+        motDePasse: 'test',
         roleIds: [],
         departementId: ''
       },
