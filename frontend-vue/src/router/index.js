@@ -220,6 +220,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/factures/:id',
+      name: 'facture-details',
+      component: () => import('../views/budgets/DetailsFacture.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/paiements',
       name: 'paiements',
       component: () => import('../views/budgets/Paiements.vue'),
@@ -235,6 +241,12 @@ const router = createRouter({
       path: '/receptions/enregistrer/:bcId',
       name: 'receptions-enregistrer',
       component: () => import('../views/stock/EnregistrerReception.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/receptions/:id',
+      name: 'receptions-details',
+      component: () => import('../views/stock/DetailsReception.vue'),
       meta: { requiresAuth: true }
     },
     {

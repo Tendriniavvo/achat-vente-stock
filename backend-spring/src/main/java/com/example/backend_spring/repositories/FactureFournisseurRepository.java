@@ -8,4 +8,6 @@ import java.util.Optional;
 @Repository
 public interface FactureFournisseurRepository extends JpaRepository<FactureFournisseur, Integer> {
     Optional<FactureFournisseur> findByReference(String reference);
+
+    Optional<FactureFournisseur> findByReceptionId(int receptionId);
 }

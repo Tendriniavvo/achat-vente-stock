@@ -89,9 +89,9 @@
                         <span :class="getStatutBRClass(br.statut)">{{ formatStatut(br.statut) }}</span>
                       </td>
                       <td class="text-center">
-                        <button class="btn btn-sm btn-outline-info" @click="voirDetailsBR(br.id)">
-                          <i class="ti ti-eye"></i>
-                        </button>
+                        <router-link :to="'/receptions/' + br.id" class="btn btn-sm btn-outline-info">
+                          <i class="ti ti-eye"></i> Voir détails
+                        </router-link>
                       </td>
                     </tr>
                     <tr v-if="receptions.length === 0">
@@ -105,55 +105,11 @@
         </div>
       </div>
     </div>
-
-    <!-- Modal Détails BR -->
-    <div class="modal fade" id="modalDetailsBR" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content" v-if="selectedBR">
-          <div class="modal-header">
-            <h5 class="modal-title">Détails du Bon de Réception : {{ selectedBR.reference }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row mb-4">
-              <div class="col-md-6">
-                <p><strong>BC Source:</strong> {{ selectedBR.bonCommande?.reference }}</p>
-                <p><strong>Date Réception:</strong> {{ formatDate(selectedBR.dateReception) }}</p>
-              </div>
-              <div class="col-md-6 text-md-end">
-                <p><strong>Dépôt:</strong> {{ selectedBR.depot?.nom }}</p>
-                <p><strong>Magasinier:</strong> {{ selectedBR.utilisateur?.nom }}</p>
-              </div>
-            </div>
-            
-            <table class="table table-sm">
-              <thead class="table-light">
-                <tr>
-                  <th>Article</th>
-                  <th class="text-center">Qté Reçue</th>
-                  <th>Lot</th>
-                  <th>Expiration</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="ligne in selectedBRLignes" :key="ligne.id">
-                  <td>{{ ligne.article?.nom }}</td>
-                  <td class="text-center fw-bold">{{ ligne.quantiteRecue }}</td>
-                  <td>{{ ligne.lot?.numeroLot || '-' }}</td>
-                  <td>{{ ligne.lot?.dateExpiration ? formatDate(ligne.lot.dateExpiration) : '-' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
   </MainLayout>
 </template>
 
 <script>
 import MainLayout from '@/layouts/MainLayout.vue';
-import * as bootstrap from 'bootstrap';
 
 export default {
   name: 'Receptions',
@@ -165,16 +121,12 @@ export default {
       bonsAwaitingReception: [],
       receptions: [],
       isLoadingBC: false,
-      isLoadingBR: false,
-      selectedBR: null,
-      selectedBRLignes: [],
-      modalBR: null
+      isLoadingBR: false
     };
   },
   mounted() {
     this.loadBonsAwaitingReception();
     this.loadReceptions();
-    this.modalBR = new bootstrap.Modal(document.getElementById('modalDetailsBR'));
   },
   methods: {
     async loadBonsAwaitingReception() {
@@ -209,20 +161,6 @@ export default {
     },
     ouvrirReception(bcId) {
       this.$router.push(`/receptions/enregistrer/${bcId}`);
-    },
-    async voirDetailsBR(brId) {
-      try {
-        const resBR = await fetch(`/api/receptions/${brId}`);
-        const resLignes = await fetch(`/api/receptions/${brId}/lignes`);
-        
-        if (resBR.ok && resLignes.ok) {
-          this.selectedBR = await resBR.json();
-          this.selectedBRLignes = await resLignes.json();
-          this.modalBR.show();
-        }
-      } catch (error) {
-        console.error('Erreur chargement détails BR:', error);
-      }
     },
     formatDate(dateStr) {
       if (!dateStr) return '-';
