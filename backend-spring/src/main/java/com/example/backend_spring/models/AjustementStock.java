@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+
 @Entity
 @Table(name = "ajustements_stock")
 @Data
@@ -26,6 +27,14 @@ public class AjustementStock {
     @ManyToOne
     @JoinColumn(name = "article_id")
     private Article article;
+
+    @ManyToOne
+    @JoinColumn(name = "emplacement_id")
+    private Emplacement emplacement;
+
+    @ManyToOne
+    @JoinColumn(name = "lot_id")
+    private Lot lot;
 
     @Column(name = "quantite_ajustee", nullable = false)
     private int quantiteAjustee;

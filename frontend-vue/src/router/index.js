@@ -130,6 +130,66 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/stock/mouvements',
+      name: 'stock-mouvements',
+      component: () => import('../views/stock/MouvementsStock.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/mouvements/create',
+      name: 'stock-mouvements-create',
+      component: () => import('../views/stock/CreateMouvementStock.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/mouvements/:id',
+      name: 'stock-mouvements-details',
+      component: () => import('../views/stock/DetailsMouvementStock.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/stocks',
+      name: 'stock-stocks',
+      component: () => import('../views/stock/Stocks.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/lots',
+      name: 'stock-lots',
+      component: () => import('../views/stock/Lots.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/audits',
+      name: 'stock-audits',
+      component: () => import('../views/stock/Audits.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/ajustements',
+      name: 'stock-ajustements',
+      component: () => import('../views/stock/Ajustements.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/inventaires',
+      name: 'stock-inventaires',
+      component: () => import('../views/stock/Inventaires.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/inventaires/create',
+      name: 'stock-inventaires-create',
+      component: () => import('../views/stock/CreateInventaire.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/inventaires/:id',
+      name: 'stock-inventaires-details',
+      component: () => import('../views/stock/DetailsInventaire.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/depots',
       name: 'depots',
       component: () => import('../views/depots/Depots.vue'),
@@ -169,12 +229,6 @@ const router = createRouter({
       path: '/emplacements/:id/edit',
       name: 'edit-emplacement',
       component: () => import('../views/emplacements/EditEmplacement.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/inventaire',
-      name: 'inventaire',
-      component: () => import('../views/Dashboard.vue'), // Temporaire
       meta: { requiresAuth: true }
     },
     {
