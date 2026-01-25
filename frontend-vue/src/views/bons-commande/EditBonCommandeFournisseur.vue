@@ -44,7 +44,7 @@
                 </div>
                 <div class="mb-3">
                   <label for="dateLivraison" class="form-label fw-bold">Date de livraison prévue</label>
-                  <input type="date" id="dateLivraison" class="form-control" v-model="bc.dateLivraisonPrevue">
+                  <input type="datetime-local" id="dateLivraison" class="form-control" v-model="bc.dateLivraisonPrevue">
                 </div>
               </div>
             </div>
@@ -150,7 +150,14 @@ export default {
           this.bc.fournisseurId = this.bc.fournisseur.id;
         }
         if (this.bc.dateLivraisonPrevue) {
-          this.bc.dateLivraisonPrevue = this.bc.dateLivraisonPrevue.split('T')[0];
+          // Garder le format ISO (YYYY-MM-DDTHH:mm) pour datetime-local
+          const date = new Date(this.bc.dateLivraisonPrevue);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          this.bc.dateLivraisonPrevue = `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
         this.fournisseurs = fournisseursRes.data;

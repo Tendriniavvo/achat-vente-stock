@@ -290,6 +290,7 @@ CREATE TABLE devis_clients (
     statut VARCHAR(50) DEFAULT 'brouillon', -- brouillon, envoye, accepte, rejete
     montant_total DECIMAL(10,2),
     remise_exceptionnelle BOOLEAN DEFAULT FALSE,
+    notes TEXT,
     utilisateur_id INTEGER REFERENCES utilisateurs(id) -- Commercial
 );
 

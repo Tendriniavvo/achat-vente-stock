@@ -126,7 +126,19 @@ const router = createRouter({
     {
       path: '/stock',
       name: 'stock',
-      component: () => import('../views/Dashboard.vue'), // Temporaire
+      redirect: '/stock/niveaux',
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/niveaux',
+      name: 'stock-niveaux',
+      component: () => import('../views/stock/StockLevels.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stock/mouvements',
+      name: 'stock-mouvements',
+      component: () => import('../views/stock/StockMovements.vue'),
       meta: { requiresAuth: true }
     },
     {

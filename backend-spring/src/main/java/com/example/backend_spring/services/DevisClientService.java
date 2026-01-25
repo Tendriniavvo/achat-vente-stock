@@ -258,7 +258,9 @@ public class DevisClientService {
             stockRepository.save(s);
 
             // Créer le mouvement de réservation avec les infos de dépôt/emplacement
-            createReservationMovement(article, lot, pris, commande, utilisateur, s.getDepot(), s.getEmplacement());
+            // On utilise le prix d'achat de l'article comme coût par défaut
+            createReservationMovement(article, lot, pris, commande, utilisateur, s.getDepot(), s.getEmplacement(),
+                    article.getPrixAchat());
 
             aRetirer -= pris;
         }
@@ -269,7 +271,7 @@ public class DevisClientService {
     }
 
     private void createReservationMovement(Article article, Lot lot, int quantite, CommandeClient commande,
-            Utilisateur utilisateur, Depot depot, Emplacement emplacement) {
+            Utilisateur utilisateur, Depot depot, Emplacement emplacement, java.math.BigDecimal cout) {
         MouvementStock mouvement = new MouvementStock();
         mouvement.setType("reservation");
         mouvement.setArticle(article);
@@ -280,6 +282,7 @@ public class DevisClientService {
         mouvement.setReferenceDocument(commande.getReference());
         mouvement.setUtilisateur(utilisateur);
         mouvement.setDateMouvement(LocalDateTime.now());
+        mouvement.setCout(cout);
         mouvement.setMotif("Réservation pour commande client " + commande.getReference());
         mouvementStockRepository.save(mouvement);
     }

@@ -99,12 +99,16 @@ public class ReceptionService {
                     if (lot.getDateExpiration() != null && lot.getDateExpiration().isBefore(LocalDateTime.now())) {
                         throw new RuntimeException("Le lot " + numeroLot + " est expiré");
                     }
+                    // Mettre à jour la quantité du lot existant si on reçoit à nouveau le même lot
+                    lot.setQuantite((lot.getQuantite() != null ? lot.getQuantite() : 0) + quantiteRecue);
+                    lot = lotRepository.save(lot);
                 } else {
                     lot = new Lot();
                     lot.setNumeroLot(numeroLot);
                     lot.setArticle(article);
                     lot.setDateEntree(LocalDateTime.now());
                     lot.setDateExpiration(dateExpiration);
+                    lot.setQuantite(quantiteRecue); // Initialiser la quantité du lot avec la quantité reçue
                     lot.setConforme(true);
                     lot = lotRepository.save(lot);
                 }
@@ -157,6 +161,13 @@ public class ReceptionService {
                         return s;
                     });
             stock.setQuantite(stock.getQuantite() + quantiteRecue);
+            
+            // Correction : Définir l'emplacement dans la table stocks si fourni
+            if (emplacementId != null) {
+                Emplacement emp = emplacementRepository.findById(emplacementId).orElse(null);
+                stock.setEmplacement(emp);
+            }
+            
             stockRepository.save(stock);
         }
 

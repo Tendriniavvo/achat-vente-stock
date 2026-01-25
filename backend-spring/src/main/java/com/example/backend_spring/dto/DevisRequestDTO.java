@@ -6,15 +6,15 @@ import java.util.List;
 
 @Data
 public class DevisRequestDTO {
-    private int clientId;
-    private int utilisateurId;
+    private Integer clientId;
+    private Integer utilisateurId;
     private String notes;
     private List<LigneDevisDTO> lignes;
 
     @Data
     public static class LigneDevisDTO {
-        private int articleId;
-        private int quantite;
+        private Integer articleId;
+        private Integer quantite;
         private BigDecimal prixUnitaire;
         private BigDecimal remise;
     }

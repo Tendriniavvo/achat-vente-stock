@@ -71,30 +71,21 @@ public class LivraisonService {
             sortie.setType("sortie");
             sortie.setArticle(ligne.getArticle());
             sortie.setQuantite(ligne.getQuantiteLivree());
-            sortie.setLot(ligne.getLot());
-            sortie.setEmplacement(ligne.getEmplacement());
-            sortie.setDepot(ligne.getEmplacement() != null ? ligne.getEmplacement().getDepot() : null);
+            // On récupère le lot et l'emplacement depuis la réservation pour être sûr
+            sortie.setLot(reservation.getLot());
+            sortie.setEmplacement(reservation.getEmplacement());
+            sortie.setDepot(reservation.getDepot() != null ? reservation.getDepot() : livraison.getDepot());
             sortie.setReferenceDocument(livraison.getReference());
             sortie.setUtilisateur(utilisateur);
             sortie.setDateMouvement(LocalDateTime.now());
-            sortie.setCout(reservation.getCout()); // On garde le coût de la réservation (PMP ou spécifique)
+            sortie.setCout(reservation.getCout()); // On garde le coût de la réservation (fixé dans DevisClientService)
             sortie.setMotif("Expédition livraison " + livraison.getReference());
 
             mouvementStockRepository.save(sortie);
 
-            // 3. Mettre à jour le stock physique
-            if (sortie.getDepot() != null) {
-                Stock stock = stockRepository
-                        .findByArticleIdAndDepotId(ligne.getArticle().getId(), sortie.getDepot().getId())
-                        .orElseThrow(() -> new RuntimeException(
-                                "Stock non trouvé pour l'article " + ligne.getArticle().getNom()
-                                        + " dans le dépôt " + sortie.getDepot().getNom()));
-
-                stock.setQuantite(stock.getQuantite() - ligne.getQuantiteLivree());
-                // La valorisation (stock.setValeur) pourrait être mise à jour ici si nécessaire
-                stock.setDateMaj(LocalDateTime.now());
-                stockRepository.save(stock);
-            }
+            // 3. Le stock physique a déjà été diminué lors de la réservation
+            // (dans DevisClientService.reserverStock), donc on ne le diminue pas une
+            // seconde fois ici.
         }
 
         // 4. Mettre à jour les statuts

@@ -75,12 +75,14 @@ INSERT INTO permissions (role_id, module, action, path, perimetre) VALUES
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'RECEPTION', '/receptions', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/stock', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/stock/niveaux', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/stock/mouvements', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/depots', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'ACHATS', 'ACCESS', '/commandes-achat', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/stock', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'VENTES', 'ACCESS', '/commandes-client', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'VENTES', 'ACCESS', '/livraisons', NULL),
-((SELECT id FROM roles WHERE nom = 'Magasinier'), 'VENTES', 'PREPARER_LIVRAISON', '/commandes-client', NULL);
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'VENTES', 'PREPARER_LIVRAISON', '/commandes-client', NULL),
 
 -- 💼 COMMERCIAL
 ((SELECT id FROM roles WHERE nom = 'Commercial'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),

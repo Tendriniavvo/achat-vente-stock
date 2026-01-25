@@ -77,8 +77,12 @@ public class DevisClientController {
     }
 
     @PostMapping
-    public ResponseEntity<DevisClient> createDevis(@RequestBody DevisRequestDTO dto) {
+    public ResponseEntity<?> createDevis(@RequestBody DevisRequestDTO dto) {
         try {
+            if (dto.getClientId() == null || dto.getUtilisateurId() == null) {
+                return ResponseEntity.badRequest().body("Client ID and Utilisateur ID are required");
+            }
+
             List<LigneDevis> lignes = dto.getLignes().stream().map(l -> {
                 LigneDevis ligne = new LigneDevis();
                 Article article = new Article();
@@ -97,7 +101,7 @@ public class DevisClientController {
                     lignes);
             return ResponseEntity.ok(devis);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

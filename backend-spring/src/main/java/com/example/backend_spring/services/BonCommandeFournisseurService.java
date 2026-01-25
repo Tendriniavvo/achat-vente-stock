@@ -54,7 +54,8 @@ public class BonCommandeFournisseurService {
     }
 
     @Transactional
-    public BonCommandeFournisseur transformerEnBonCommande(int demandeAchatId, int acheteurId, Integer fournisseurId) {
+    public BonCommandeFournisseur transformerEnBonCommande(int demandeAchatId, int acheteurId, Integer fournisseurId,
+            String dateLivraisonPrevue) {
         // Utiliser findByIdWithDetails pour charger explicitement les lignes de la DA
         DemandeAchat demande = demandeAchatRepository.findByIdWithDetails(demandeAchatId)
                 .orElseThrow(() -> new RuntimeException("Demande d'achat non trouvée"));
@@ -77,6 +78,19 @@ public class BonCommandeFournisseurService {
         bc.setDemandeAchat(demande);
         bc.setUtilisateur(acheteur);
         bc.setDateCommande(LocalDateTime.now());
+
+        if (dateLivraisonPrevue != null && !dateLivraisonPrevue.isEmpty()) {
+            try {
+                if (dateLivraisonPrevue.contains("T")) {
+                    bc.setDateLivraisonPrevue(LocalDateTime.parse(dateLivraisonPrevue));
+                } else {
+                    bc.setDateLivraisonPrevue(java.time.LocalDate.parse(dateLivraisonPrevue).atStartOfDay());
+                }
+            } catch (Exception e) {
+                log.warn("Format de date invalide: {}, erreur: {}", dateLivraisonPrevue, e.getMessage());
+            }
+        }
+
         bc.setStatut("brouillon");
         bc.setReference(genererReference());
 

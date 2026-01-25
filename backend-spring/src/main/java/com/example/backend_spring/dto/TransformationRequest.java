@@ -7,4 +7,5 @@ public class TransformationRequest {
     private int demandeAchatId;
     private int acheteurId;
     private Integer fournisseurId;
+    private String dateLivraisonPrevue;
 }

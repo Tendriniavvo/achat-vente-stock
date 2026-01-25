@@ -138,18 +138,26 @@
           </li>
           
           <!-- Stock avec dropdown -->
-          <li v-if="hasPermission('/stock')" class="sidebar-item">
+          <li v-if="hasPermission('/stock/niveaux') || hasPermission('/stock/mouvements')" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isStockRoute() }" href="javascript:void(0)" :aria-expanded="stockMenuOpen" @click="toggleStockMenu">
               <span><i class="ti ti-package"></i></span>
               <span class="hide-menu">Stock</span>
             </a>
             <ul class="collapse first-level" :class="{ show: stockMenuOpen }">
-              <li class="sidebar-item">
-                <router-link to="/stock" class="sidebar-link">
+              <li v-if="hasPermission('/stock/niveaux')" class="sidebar-item">
+                <router-link to="/stock/niveaux" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
                   </div>
-                  <span class="hide-menu">Vue d'ensemble</span>
+                  <span class="hide-menu">Niveaux de stock</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/stock/mouvements')" class="sidebar-item">
+                <router-link to="/stock/mouvements" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Mouvements de stock</span>
                 </router-link>
               </li>
               <li v-if="hasPermission('/receptions')" class="sidebar-item">
@@ -304,7 +312,13 @@ const isAdmin = () => {
 const hasPermission = (path) => {
   if (isAdmin()) return true;
   const permissions = JSON.parse(localStorage.getItem('permissions') || '[]');
-  return permissions.some(p => p.path === path);
+  
+  // Vérification exacte ou par parent (ex: /stock donne accès à /stock/niveaux)
+  return permissions.some(p => {
+    if (p.path === path) return true;
+    if (path.startsWith(p.path + '/') && p.path !== '/') return true;
+    return false;
+  });
 };
 
 // Vérifier si on est sur une page d'achats

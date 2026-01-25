@@ -51,7 +51,8 @@ public class BonCommandeFournisseurController {
             BonCommandeFournisseur bc = bonCommandeFournisseurService.transformerEnBonCommande(
                     request.getDemandeAchatId(),
                     request.getAcheteurId(),
-                    request.getFournisseurId());
+                    request.getFournisseurId(),
+                    request.getDateLivraisonPrevue());
             return ResponseEntity.ok(bc);
         } catch (RuntimeException e) {
             log.error("Erreur lors de la transformation: {}", e.getMessage());

@@ -210,6 +210,10 @@
                 </select>
                 <div class="form-text">Vous pourrez négocier et modifier le fournisseur plus tard sur le BC.</div>
               </div>
+              <div class="mb-3">
+                <label for="dateLivraisonPrevue" class="form-label">Date de livraison prévue</label>
+                <input type="datetime-local" id="dateLivraisonPrevue" class="form-control" v-model="dateLivraisonPrevue">
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -240,6 +244,7 @@ export default {
       articles: [],
       fournisseurs: [],
       selectedFournisseurId: null,
+      dateLivraisonPrevue: '',
       isLoading: false,
       errorMessage: '',
       motifRejet: '',
@@ -357,7 +362,8 @@ export default {
         const response = await axios.post('/api/bons-commande-fournisseur/transformer', {
           demandeAchatId: this.demande.id,
           acheteurId: this.currentUser.id,
-          fournisseurId: this.selectedFournisseurId
+          fournisseurId: this.selectedFournisseurId,
+          dateLivraisonPrevue: this.dateLivraisonPrevue
         });
 
         if (response.status === 200) {
