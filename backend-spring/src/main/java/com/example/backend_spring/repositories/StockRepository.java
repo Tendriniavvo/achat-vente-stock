@@ -15,4 +15,11 @@ public interface StockRepository extends JpaRepository<Stock, Integer> {
     Optional<Stock> findByArticleAndDepotAndEmplacement(Article article, Depot depot, Emplacement emplacement);
 
     List<Stock> findByDepot(Depot depot);
+
+    List<Stock> findByArticleId(int articleId);
+
+    Optional<Stock> findByArticleIdAndDepotId(int articleId, int depotId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM Stock s WHERE s.quantite <= s.article.stockMin")
+    List<Stock> findStockAlerts();
 }

@@ -7,10 +7,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface MouvementStockRepository extends JpaRepository<MouvementStock, Integer> {
     Optional<MouvementStock> findByReference(String reference);
+
+    List<MouvementStock> findByReferenceDocumentAndType(String referenceDocument, String type);
 
     @Query("select distinct m from MouvementStock m " +
             "left join fetch m.lignes l " +

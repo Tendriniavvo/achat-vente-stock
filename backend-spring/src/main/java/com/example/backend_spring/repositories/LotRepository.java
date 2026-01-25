@@ -12,6 +12,10 @@ import java.util.Optional;
 public interface LotRepository extends JpaRepository<Lot, Integer> {
     Optional<Lot> findByNumeroLot(String numeroLot);
 
+    List<Lot> findByArticleIdAndQuantiteGreaterThanAndConformeTrueOrderByDateExpirationAsc(int articleId, int quantite);
+
+    List<Lot> findByArticleIdAndQuantiteGreaterThanAndConformeTrueOrderByDateEntreeAsc(int articleId, int quantite);
+
     @Query("select l from Lot l where l.article.id = :articleId and l.conforme = true and coalesce(l.quantite, 0) > 0")
     List<Lot> findAvailableLotsByArticleId(@Param("articleId") int articleId);
 }
