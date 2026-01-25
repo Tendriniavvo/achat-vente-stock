@@ -1,0 +1,109 @@
+package com.example.backend_spring.controllers;
+
+import com.example.backend_spring.dto.DevisRequestDTO;
+import com.example.backend_spring.dto.StatutUpdateRequest;
+import com.example.backend_spring.models.Article;
+import com.example.backend_spring.models.CommandeClient;
+import com.example.backend_spring.models.DevisClient;
+import com.example.backend_spring.models.LigneDevis;
+import com.example.backend_spring.repositories.LigneDevisRepository;
+import com.example.backend_spring.services.DevisClientService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/devis")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+public class DevisClientController {
+    private final DevisClientService devisClientService;
+    private final LigneDevisRepository ligneDevisRepository;
+
+    @GetMapping
+    public List<DevisClient> getAllDevis() {
+        return devisClientService.getAllDevis();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<DevisClient> getDevisById(@PathVariable int id) {
+        return devisClientService.getDevisById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/lignes")
+    public List<LigneDevis> getLignesByDevisId(@PathVariable int id) {
+        return ligneDevisRepository.findByDevisId(id);
+    }
+
+    @PutMapping("/{id}/statut")
+    public ResponseEntity<?> updateStatut(@PathVariable int id, @RequestBody StatutUpdateRequest request) {
+        try {
+            DevisClient updated = devisClientService.updateStatut(id, request.getStatut(), request.getUtilisateurId());
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/valider")
+    public ResponseEntity<?> validerDevis(@PathVariable int id, @RequestBody Map<String, Integer> payload) {
+        try {
+            int utilisateurId = payload.get("utilisateurId");
+            DevisClient validated = devisClientService.validerDevis(id, utilisateurId);
+            return ResponseEntity.ok(validated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/transformer")
+    public ResponseEntity<?> transformerEnCommande(@PathVariable int id,
+            @RequestBody Map<String, Object> payload) {
+        try {
+            int utilisateurId = (Integer) payload.get("utilisateurId");
+            String dateLivraisonStr = (String) payload.get("dateLivraisonPrevue");
+
+            CommandeClient commande = devisClientService.transformerEnCommande(id, utilisateurId, dateLivraisonStr);
+            return ResponseEntity.ok(commande);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<DevisClient> createDevis(@RequestBody DevisRequestDTO dto) {
+        try {
+            List<LigneDevis> lignes = dto.getLignes().stream().map(l -> {
+                LigneDevis ligne = new LigneDevis();
+                Article article = new Article();
+                article.setId(l.getArticleId());
+                ligne.setArticle(article);
+                ligne.setQuantite(l.getQuantite());
+                ligne.setPrixUnitaire(l.getPrixUnitaire());
+                ligne.setRemise(l.getRemise());
+                return ligne;
+            }).collect(Collectors.toList());
+
+            DevisClient devis = devisClientService.creerDevis(
+                    dto.getClientId(),
+                    dto.getUtilisateurId(),
+                    dto.getNotes(),
+                    lignes);
+            return ResponseEntity.ok(devis);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDevis(@PathVariable int id) {
+        devisClientService.deleteDevis(id);
+        return ResponseEntity.noContent().build();
+    }
+}

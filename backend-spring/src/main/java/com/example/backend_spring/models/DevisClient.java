@@ -39,6 +39,9 @@ public class DevisClient {
     @Column(name = "remise_exceptionnelle")
     private boolean remiseExceptionnelle = false;
 
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
     @ManyToOne
     @JoinColumn(name = "utilisateur_id")
     private Utilisateur utilisateur;

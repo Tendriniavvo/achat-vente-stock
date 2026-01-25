@@ -225,6 +225,49 @@ const router = createRouter({
       component: () => import('../views/budgets/DetailsFacture.vue'),
       meta: { requiresAuth: true }
     },
+    // Ventes / Devis
+    {
+      path: '/devis',
+      name: 'devis',
+      component: () => import('../views/ventes/Devis.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/devis/create',
+      name: 'devis-create',
+      component: () => import('../views/ventes/CreateDevis.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/devis/:id',
+      name: 'devis-details',
+      component: () => import('../views/ventes/DetailsDevis.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/commandes-client',
+      name: 'commandes-client',
+      component: () => import('../views/ventes/CommandesClient.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/commandes-client/:id',
+      name: 'commande-client-details',
+      component: () => import('../views/ventes/DetailsCommandeClient.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/livraisons',
+      name: 'livraisons',
+      component: () => import('../views/ventes/Livraisons.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/livraisons/:id',
+      name: 'livraison-details',
+      component: () => import('../views/ventes/DetailsLivraison.vue'),
+      meta: { requiresAuth: true }
+    },
     {
       path: '/paiements',
       name: 'paiements',

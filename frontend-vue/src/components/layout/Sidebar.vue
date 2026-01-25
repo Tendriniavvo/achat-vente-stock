@@ -63,11 +63,45 @@
             </ul>
           </li>
           
-          <li v-if="hasPermission('/ventes')" class="sidebar-item">
-            <router-link class="sidebar-link" to="/ventes" aria-expanded="false">
+          <li v-if="hasPermission('/ventes') || hasPermission('/devis') || hasPermission('/commandes-client') || hasPermission('/livraisons')" class="sidebar-item">
+            <a class="sidebar-link has-arrow" :class="{ active: isVentesRoute() }" href="javascript:void(0)" :aria-expanded="ventesMenuOpen" @click="toggleVentesMenu">
               <span><i class="ti ti-coin"></i></span>
               <span class="hide-menu">Ventes</span>
-            </router-link>
+            </a>
+            <ul class="collapse first-level" :class="{ show: ventesMenuOpen }">
+              <li v-if="hasPermission('/devis')" class="sidebar-item">
+                <router-link to="/devis" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Devis Clients</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/devis/create')" class="sidebar-item">
+                <router-link to="/devis/create" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Nouveau Devis</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/commandes-client')" class="sidebar-item">
+                <router-link to="/commandes-client" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Commandes Client</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/livraisons')" class="sidebar-item">
+                <router-link to="/livraisons" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Livraisons</span>
+                </router-link>
+              </li>
+            </ul>
           </li>
 
           <li v-if="hasPermission('/budgets') || hasPermission('/factures') || hasPermission('/paiements')" class="sidebar-item">
@@ -249,6 +283,7 @@ const props = defineProps({
 const route = useRoute();
 const achatsMenuOpen = ref(false);
 const stockMenuOpen = ref(false);
+const ventesMenuOpen = ref(false);
 const financeMenuOpen = ref(false);
 const userMenuOpen = ref(false);
 const rolesMenuOpen = ref(false);
@@ -276,6 +311,14 @@ const hasPermission = (path) => {
 const isAchatsRoute = () => {
   return route.path.startsWith('/achats') || 
          route.path.startsWith('/commandes-achat');
+};
+
+// Vérifier si on est sur une page de ventes
+const isVentesRoute = () => {
+  return route.path.startsWith('/ventes') || 
+         route.path.startsWith('/devis') ||
+         route.path.startsWith('/commandes-client') ||
+         route.path.startsWith('/livraisons');
 };
 
 // Vérifier si on est sur une page de stock
@@ -306,6 +349,7 @@ const isRolesRoute = () => {
 const updateMenuStates = () => {
   achatsMenuOpen.value = isAchatsRoute();
   stockMenuOpen.value = isStockRoute();
+  ventesMenuOpen.value = isVentesRoute();
   financeMenuOpen.value = isFinanceRoute();
   userMenuOpen.value = isUserRoute();
   rolesMenuOpen.value = isRolesRoute();
@@ -322,6 +366,10 @@ watch(() => route.path, () => {
 
 const toggleAchatsMenu = () => {
   achatsMenuOpen.value = !achatsMenuOpen.value;
+};
+
+const toggleVentesMenu = () => {
+  ventesMenuOpen.value = !ventesMenuOpen.value;
 };
 
 const toggleStockMenu = () => {

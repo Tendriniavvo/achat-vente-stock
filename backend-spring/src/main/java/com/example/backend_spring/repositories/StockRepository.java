@@ -15,4 +15,6 @@ public interface StockRepository extends JpaRepository<Stock, Integer> {
     List<Stock> findStockAlerts();
 
     Optional<Stock> findByArticleIdAndDepotId(int articleId, int depotId);
+    
+    List<Stock> findByArticleId(int articleId);
 }

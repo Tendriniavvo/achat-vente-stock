@@ -20,7 +20,9 @@ INSERT INTO roles (nom, description) VALUES
 ('Finance', 'Vérification budgétaire, rapprochement facture (3-way match) et paiements'),
 ('DAF', 'Approbation finale des BC et validation des paiements'),
 ('DG', 'Approbation exceptionnelle pour montants importants'),
-('Magasinier', 'Réception des articles et gestion du stock');
+('Magasinier', 'Réception des articles et gestion du stock'),
+('Commercial', 'Gestion des devis et des relations clients'),
+('Responsable ventes', 'Validation des devis et supervision des ventes');
 
 
 
@@ -74,7 +76,24 @@ INSERT INTO permissions (role_id, module, action, path, perimetre) VALUES
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'RECEPTION', '/receptions', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/stock', NULL),
 ((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/depots', NULL),
-((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/emplacements', NULL),
-((SELECT id FROM roles WHERE nom = 'Magasinier'), 'ACHATS', 'ACCESS', '/commandes-achat', NULL);
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'ACHATS', 'ACCESS', '/commandes-achat', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'STOCK', 'ACCESS', '/stock', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'VENTES', 'ACCESS', '/commandes-client', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'VENTES', 'ACCESS', '/livraisons', NULL),
+((SELECT id FROM roles WHERE nom = 'Magasinier'), 'VENTES', 'PREPARER_LIVRAISON', '/commandes-client', NULL);
+
+-- 💼 COMMERCIAL
+((SELECT id FROM roles WHERE nom = 'Commercial'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Commercial'), 'VENTES', 'ACCESS', '/devis', NULL),
+((SELECT id FROM roles WHERE nom = 'Commercial'), 'VENTES', 'CREATE', '/devis/create', NULL),
+((SELECT id FROM roles WHERE nom = 'Commercial'), 'VENTES', 'ACCESS', '/commandes-client', NULL),
+((SELECT id FROM roles WHERE nom = 'Commercial'), 'PARTENAIRES', 'ACCESS', '/clients', NULL),
+
+-- 💼 RESPONSABLE VENTES
+((SELECT id FROM roles WHERE nom = 'Responsable ventes'), 'DASHBOARD', 'ACCESS', '/dashboard', NULL),
+((SELECT id FROM roles WHERE nom = 'Responsable ventes'), 'VENTES', 'ACCESS', '/devis', NULL),
+((SELECT id FROM roles WHERE nom = 'Responsable ventes'), 'VENTES', 'VALIDATE', '/devis', NULL),
+((SELECT id FROM roles WHERE nom = 'Responsable ventes'), 'VENTES', 'ACCESS', '/commandes-client', NULL),
+((SELECT id FROM roles WHERE nom = 'Responsable ventes'), 'PARTENAIRES', 'ACCESS', '/clients', NULL);
 
 
