@@ -281,6 +281,31 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/factures-client',
+      name: 'factures-client',
+      component: () => import('../views/ventes/FacturesClient.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/factures-client/:id',
+      name: 'facture-client-details',
+      component: () => import('../views/ventes/DetailsFactureClient.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/factures-client/livraison/:livraisonId',
+      name: 'facture-client-by-livraison',
+      component: () => import('../views/ventes/DetailsFactureClient.vue'),
+      props: true,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/encaissements',
+      name: 'encaissements',
+      component: () => import('../views/ventes/Encaissements.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/paiements',
       name: 'paiements',
       component: () => import('../views/budgets/Paiements.vue'),
@@ -383,9 +408,14 @@ router.beforeEach((to, from, next) => {
 
       // Cas particulier : l'admin a toujours accès à tout
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      const isAdmin = userData.user?.roles?.some(r => r.id === 1);
+      const user = userData.user || userData;
+      const isAdmin = user.roles?.some(r => r.id === 1);
+      const isFinance = user.roles?.some(r => r.nom.toUpperCase() === 'FINANCE');
 
-      if (isAdmin || isAuthorized) {
+      // Autoriser explicitement le rôle Finance pour les factures clients et encaissements
+      const isFinancePath = to.path.startsWith('/factures-client') || to.path.startsWith('/encaissements');
+
+      if (isAdmin || isAuthorized || (isFinance && isFinancePath)) {
         next();
       } else {
         // Alerte et redirection sécurisée

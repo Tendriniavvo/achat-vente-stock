@@ -21,6 +21,22 @@
                   >
                     <i class="ti ti-truck me-1"></i>Expédier
                   </button>
+                  <button 
+                    v-if="livraison.statut === 'expediee' && !livraison.facturee" 
+                    class="btn btn-primary" 
+                    @click="genererFacture"
+                    :disabled="isGeneratingFacture"
+                  >
+                    <span v-if="isGeneratingFacture" class="spinner-border spinner-border-sm me-1"></span>
+                    <i v-else class="ti ti-receipt me-1"></i>Générer Facture
+                  </button>
+                  <router-link 
+                    v-if="livraison.statut === 'expediee' && livraison.facturee" 
+                    :to="'/factures-client/livraison/' + livraison.id"
+                    class="btn btn-outline-info"
+                  >
+                    <i class="ti ti-receipt me-1"></i>Voir Facture
+                  </router-link>
                 </div>
               </div>
 
@@ -115,7 +131,8 @@ export default {
     return {
       livraison: {},
       lignes: [],
-      isLoading: false
+      isLoading: false,
+      isGeneratingFacture: false
     };
   },
   computed: {
@@ -179,6 +196,24 @@ export default {
           const msg = error.response?.data || 'Erreur lors de l\'expédition';
           alert(typeof msg === 'string' ? msg : 'Erreur lors de l\'expédition.');
         }
+      }
+    },
+    async genererFacture() {
+      if (!this.currentUser) {
+        alert('Erreur: Utilisateur non connecté');
+        return;
+      }
+
+      this.isGeneratingFacture = true;
+      try {
+        const response = await axios.post(`/api/factures-client/generer/${this.livraison.id}?utilisateurId=${this.currentUser.id}`);
+        alert('Facture générée avec succès !');
+        this.$router.push(`/factures-client/${response.data.id}`);
+      } catch (error) {
+        const msg = error.response?.data || 'Erreur lors de la génération de la facture';
+        alert(typeof msg === 'string' ? msg : 'Erreur lors de la génération de la facture.');
+      } finally {
+        this.isGeneratingFacture = false;
       }
     }
   }

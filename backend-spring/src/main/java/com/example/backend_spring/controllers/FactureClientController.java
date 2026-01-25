@@ -40,6 +40,52 @@ public class FactureClientController {
         return factureClientService.saveFacture(facture);
     }
 
+    @PostMapping("/generer/{livraisonId}")
+    public ResponseEntity<FactureClient> genererFacture(@PathVariable int livraisonId,
+            @RequestParam int utilisateurId) {
+        try {
+            FactureClient facture = factureClientService.genererFactureDepuisLivraison(livraisonId, utilisateurId);
+            return ResponseEntity.ok(facture);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PostMapping("/{id}/valider")
+    public ResponseEntity<FactureClient> validerFacture(@PathVariable int id, @RequestParam int utilisateurId) {
+        try {
+            FactureClient facture = factureClientService.validerFacture(id, utilisateurId);
+            return ResponseEntity.ok(facture);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PostMapping("/{id}/avoir")
+    public ResponseEntity<FactureClient> creerAvoir(@PathVariable int id,
+            @RequestParam String motif,
+            @RequestParam int utilisateurId,
+            @RequestBody(required = false) List<FactureClientService.LigneAvoirRequest> lignesAvoir) {
+        try {
+            FactureClient avoir = factureClientService.creerAvoir(id, motif, utilisateurId, lignesAvoir);
+            return ResponseEntity.ok(avoir);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @GetMapping("/{id}/lignes")
+    public List<com.example.backend_spring.models.LigneFactureClient> getLignes(@PathVariable int id) {
+        return factureClientService.getLignesByFactureId(id);
+    }
+
+    @GetMapping("/livraison/{livraisonId}")
+    public ResponseEntity<FactureClient> getFactureByLivraisonId(@PathVariable int livraisonId) {
+        return factureClientService.getFactureByLivraisonId(livraisonId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteFacture(@PathVariable int id) {
         factureClientService.deleteFacture(id);

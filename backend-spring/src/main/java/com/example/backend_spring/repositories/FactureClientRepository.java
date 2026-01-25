@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface FactureClientRepository extends JpaRepository<FactureClient, Integer> {
     Optional<FactureClient> findByReference(String reference);
     List<FactureClient> findByClientIdOrderByDateFactureDesc(int clientId);
+    boolean existsByLivraisonId(int livraisonId);
+    Optional<FactureClient> findByLivraisonId(int livraisonId);
 }

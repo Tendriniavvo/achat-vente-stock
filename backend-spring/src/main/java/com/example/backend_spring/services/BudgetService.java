@@ -54,11 +54,26 @@ public class BudgetService {
                 .orElseThrow(() -> new RuntimeException("Aucun budget défini pour ce département en " + anneeActuelle));
 
         if (budget.getMontantDisponible().compareTo(montant) < 0) {
-            throw new RuntimeException("Fonds insuffisants dans le budget du département");
+            throw new RuntimeException("Fonds insuffisants dans le budget du département " + departement.getNom());
         }
 
         budget.setMontantConsomme(budget.getMontantConsomme().add(montant));
         budgetRepository.save(budget);
+    }
+
+    @Transactional
+    public void rechargerBudget(Departement departement, BigDecimal montant) {
+        int anneeActuelle = LocalDate.now().getYear();
+        Optional<Budget> budgetOpt = budgetRepository.findByDepartementAndAnnee(departement, anneeActuelle);
+
+        if (budgetOpt.isPresent()) {
+            Budget budget = budgetOpt.get();
+            // Réduire le montant consommé augmente le montant disponible
+            budget.setMontantConsomme(budget.getMontantConsomme().subtract(montant));
+            budgetRepository.save(budget);
+        }
+        // Si aucun budget n'est défini, on ne fait rien (pas d'erreur bloquante pour
+        // une recette)
     }
 
     @Transactional

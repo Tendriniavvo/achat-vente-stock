@@ -77,10 +77,10 @@
                       <router-link :to="'/devis/' + devis.id" class="btn btn-sm btn-light-primary text-primary" title="Voir Détails">
                         <i class="ti ti-eye"></i>
                       </router-link>
-                      <button v-if="devis.statut === 'brouillon' && (devis.remiseExceptionnelle || devis.notes) && isResponsableVentes" 
+                      <button v-if="devis.statut === 'brouillon' && (!devis.remiseExceptionnelle && !devis.notes || isResponsableVentes)" 
                               class="btn btn-sm btn-light-success text-success" 
-                              @click="validerDevis(devis.id)" 
-                              title="Valider le Devis">
+                              @click="validerDevis(devis.id, devis.remiseExceptionnelle || devis.notes)" 
+                              :title="devis.remiseExceptionnelle || devis.notes ? 'Valider le Devis' : 'Confirmer le Devis'">
                         <i class="ti ti-check"></i>
                       </button>
                       <button v-if="devis.statut === 'brouillon'" 
@@ -177,15 +177,20 @@ export default {
         }
       }
     },
-    async validerDevis(id) {
-      if (confirm('Voulez-vous valider ce devis ?')) {
+    async validerDevis(id, needsValidation) {
+      const msg = needsValidation 
+        ? 'Voulez-vous valider ce devis ? Cela confirmera les remises exceptionnelles.' 
+        : 'Voulez-vous confirmer ce devis ? Il pourra ensuite être envoyé au client.';
+        
+      if (confirm(msg)) {
         try {
           await axios.post(`/api/devis/${id}/valider`, {
             utilisateurId: this.currentUser.id
           });
           this.fetchDevis();
         } catch (error) {
-          alert('Erreur lors de la validation');
+          const errorMsg = error.response?.data || 'Erreur lors de l\'opération';
+          alert(typeof errorMsg === 'string' ? errorMsg : 'Erreur lors de l\'opération. Vérifiez vos permissions.');
         }
       }
     }

@@ -63,7 +63,7 @@
             </ul>
           </li>
           
-          <li v-if="hasPermission('/ventes') || hasPermission('/devis') || hasPermission('/commandes-client') || hasPermission('/livraisons')" class="sidebar-item">
+          <li v-if="hasPermission('/ventes') || hasPermission('/devis') || hasPermission('/commandes-client') || hasPermission('/livraisons') || hasPermission('/factures-client') || hasPermission('/encaissements') || hasRole('Finance')" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isVentesRoute() }" href="javascript:void(0)" :aria-expanded="ventesMenuOpen" @click="toggleVentesMenu">
               <span><i class="ti ti-coin"></i></span>
               <span class="hide-menu">Ventes</span>
@@ -101,10 +101,26 @@
                   <span class="hide-menu">Livraisons</span>
                 </router-link>
               </li>
+              <li v-if="hasPermission('/factures-client') || hasRole('Finance')" class="sidebar-item">
+                <router-link to="/factures-client" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Factures Clients</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/encaissements') || hasRole('Finance')" class="sidebar-item">
+                <router-link to="/encaissements" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Encaissements</span>
+                </router-link>
+              </li>
             </ul>
           </li>
 
-          <li v-if="hasPermission('/budgets') || hasPermission('/factures') || hasPermission('/paiements')" class="sidebar-item">
+          <li v-if="hasPermission('/budgets') || hasPermission('/factures') || hasPermission('/paiements') || hasRole('Finance')" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isFinanceRoute() }" href="javascript:void(0)" :aria-expanded="financeMenuOpen" @click="toggleFinanceMenu">
               <span><i class="ti ti-wallet"></i></span>
               <span class="hide-menu">Finances</span>
@@ -138,7 +154,7 @@
           </li>
           
           <!-- Stock avec dropdown -->
-          <li v-if="hasPermission('/stock/niveaux') || hasPermission('/stock/mouvements')" class="sidebar-item">
+          <li v-if="hasPermission('/stock/niveaux') || hasPermission('/stock/mouvements') || hasPermission('/stock')" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isStockRoute() }" href="javascript:void(0)" :aria-expanded="stockMenuOpen" @click="toggleStockMenu">
               <span><i class="ti ti-package"></i></span>
               <span class="hide-menu">Stock</span>
@@ -313,10 +329,18 @@ const hasPermission = (path) => {
   if (isAdmin()) return true;
   const permissions = JSON.parse(localStorage.getItem('permissions') || '[]');
   
-  // Vérification exacte ou par parent (ex: /stock donne accès à /stock/niveaux)
   return permissions.some(p => {
+    // Permission exacte
     if (p.path === path) return true;
-    if (path.startsWith(p.path + '/') && p.path !== '/') return true;
+    
+    // Permission parent (ex: /stock donne accès à /stock/niveaux)
+    // On s'assure que p.path n'est pas juste '/' pour éviter de tout autoriser indûment
+    if (p.path !== '/' && path.startsWith(p.path + '/')) return true;
+    
+    // Permission inverse : si on a accès à une sous-page, on devrait voir le menu parent
+    // (ex: si on a accès à /stock/niveaux, on doit voir le menu /stock)
+    if (path !== '/' && p.path.startsWith(path + '/')) return true;
+
     return false;
   });
 };
@@ -332,7 +356,8 @@ const isVentesRoute = () => {
   return route.path.startsWith('/ventes') || 
          route.path.startsWith('/devis') ||
          route.path.startsWith('/commandes-client') ||
-         route.path.startsWith('/livraisons');
+         route.path.startsWith('/livraisons') ||
+         route.path.startsWith('/factures-client');
 };
 
 // Vérifier si on est sur une page de stock

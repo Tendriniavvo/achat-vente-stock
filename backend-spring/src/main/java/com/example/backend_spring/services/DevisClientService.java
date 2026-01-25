@@ -57,10 +57,16 @@ public class DevisClientService {
         boolean needsValidation = devis.isRemiseExceptionnelle()
                 || (devis.getNotes() != null && !devis.getNotes().trim().isEmpty());
 
-        if (needsValidation && "envoye".equalsIgnoreCase(statut)
-                && !"valide".equalsIgnoreCase(devis.getStatut())) {
+        // Règle 1 : Un devis 'brouillon' ne peut pas être 'envoye' directement.
+        // Il doit passer par l'étape 'valide' d'abord.
+        if ("envoye".equalsIgnoreCase(statut) && "brouillon".equalsIgnoreCase(devis.getStatut())) {
+            throw new RuntimeException("Le devis doit être validé ou confirmé avant d'être envoyé au client.");
+        }
+
+        // Règle 2 : Si validation requise, il doit être 'valide' avant d'être 'envoye'
+        if (needsValidation && "envoye".equalsIgnoreCase(statut) && !"valide".equalsIgnoreCase(devis.getStatut())) {
             throw new RuntimeException(
-                    "Ce devis contient des remises exceptionnelles ou des conditions particulières et doit être validé par un Responsable Ventes avant d'être envoyé.");
+                    "Ce devis nécessite une validation par un Responsable Ventes avant d'être envoyé.");
         }
 
         devis.setStatut(statut);
@@ -77,29 +83,48 @@ public class DevisClientService {
     }
 
     @Transactional
-    public DevisClient validerDevis(int id, int responsableId) {
+    public DevisClient validerDevis(int id, int utilisateurId) {
         DevisClient devis = devisClientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Devis non trouvé"));
-        Utilisateur responsable = utilisateurRepository.findById(responsableId)
+        Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        boolean isResponsable = responsable.getRoles().stream()
-                .anyMatch(r -> r.getNom().equalsIgnoreCase("Responsable ventes")
-                        || r.getNom().equalsIgnoreCase("Administrateur"));
+        boolean needsValidation = devis.isRemiseExceptionnelle()
+                || (devis.getNotes() != null && !devis.getNotes().trim().isEmpty());
 
-        if (!isResponsable) {
-            throw new RuntimeException("Seul un Responsable Ventes peut valider ce devis.");
+        if (needsValidation) {
+            // Seul un Responsable Ventes peut valider si remise > plafond
+            boolean isResponsable = utilisateur.getRoles().stream()
+                    .anyMatch(r -> r.getNom().equalsIgnoreCase("Responsable ventes")
+                            || r.getNom().equalsIgnoreCase("Administrateur"));
+
+            if (!isResponsable) {
+                throw new RuntimeException(
+                        "Seul un Responsable Ventes peut valider ce devis car il contient des remises exceptionnelles ou conditions particulières.");
+            }
+        } else {
+            // Si pas de validation requise, le Commercial peut lui-même confirmer le devis
+            // (passer de brouillon à valide)
+            boolean isCommercial = utilisateur.getRoles().stream()
+                    .anyMatch(r -> r.getNom().equalsIgnoreCase("Commercial")
+                            || r.getNom().equalsIgnoreCase("Responsable ventes")
+                            || r.getNom().equalsIgnoreCase("Administrateur"));
+
+            if (!isCommercial) {
+                throw new RuntimeException("Action non autorisée.");
+            }
         }
 
         devis.setStatut("valide");
         DevisClient saved = devisClientRepository.save(devis);
 
+        String actionLog = needsValidation ? "VALIDATION_DEVIS_RESPONSABLE" : "CONFIRMATION_DEVIS_COMMERCIAL";
         journalAuditService.logAction(
-                responsable,
-                "VALIDATION_DEVIS",
+                utilisateur,
+                actionLog,
                 "VENTES",
                 saved.getReference(),
-                "Devis validé par le responsable " + responsable.getNom() + " (Remise exceptionnelle confirmée)");
+                "Devis validé/confirmé par " + utilisateur.getNom());
 
         return saved;
     }
@@ -111,14 +136,10 @@ public class DevisClientService {
         Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        if (!"valide".equalsIgnoreCase(devis.getStatut()) && !"envoye".equalsIgnoreCase(devis.getStatut())
-                && !"brouillon".equalsIgnoreCase(devis.getStatut())) {
-            // On accepte brouillon si pas de validation requise
-            boolean needsValidation = devis.isRemiseExceptionnelle()
-                    || (devis.getNotes() != null && !devis.getNotes().trim().isEmpty());
-            if (needsValidation && !"valide".equalsIgnoreCase(devis.getStatut())) {
-                throw new RuntimeException("Le devis doit être validé par un Responsable Ventes avant transformation");
-            }
+        // Règle : Seul un devis ENVOYE (donc déjà validé et présenté au client) peut
+        // être transformé
+        if (!"envoye".equalsIgnoreCase(devis.getStatut())) {
+            throw new RuntimeException("Seul un devis déjà envoyé au client peut être transformé en commande.");
         }
 
         // Conversion de la date

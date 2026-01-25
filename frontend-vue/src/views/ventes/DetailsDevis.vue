@@ -15,14 +15,20 @@
               
               <!-- Action Buttons in Header -->
               <div v-if="isCommercial" class="d-flex gap-2">
-                <button v-if="devis.statut === 'brouillon' && !needsValidation || devis.statut === 'valide'" 
+                <!-- Si Brouillon : Confirmer (Commercial) ou Valider (Responsable) -->
+                <button v-if="devis.statut === 'brouillon'" 
+                        class="btn btn-success" @click="validerDevis" :disabled="isProcessing">
+                  <i class="ti ti-shield-check me-1"></i> 
+                  {{ needsValidation ? 'Valider le Devis' : 'Confirmer le Devis' }}
+                </button>
+
+                <!-- Si Validé : On peut envoyer au client -->
+                <button v-if="devis.statut === 'valide'" 
                         class="btn btn-primary" @click="envoyerDevis" :disabled="isProcessing">
                   <i class="ti ti-send me-1"></i> Envoyer au Client
                 </button>
-                <button v-if="devis.statut === 'brouillon' && needsValidation && isResponsableVentes" 
-                        class="btn btn-success" @click="validerDevis">
-                  <i class="ti ti-shield-check me-1"></i> Valider le Devis
-                </button>
+
+                <!-- Si Envoyé : On attend la réponse du client -->
                 <button v-if="devis.statut === 'envoye'" 
                         class="btn btn-success" @click="accepterDevis">
                   <i class="ti ti-check me-1"></i> Client a Accepté
@@ -31,6 +37,7 @@
                         class="btn btn-danger" @click="rejeterDevis">
                   <i class="ti ti-x me-1"></i> Client a Rejeté
                 </button>
+
                 <button class="btn btn-outline-info" @click="exportToPDF">
                   <i class="ti ti-file-export me-1"></i> Exporter PDF
                 </button>
@@ -271,7 +278,12 @@ export default {
       return 'badge bg-light text-dark';
     },
     async validerDevis() {
-      if (confirm('Voulez-vous valider ce devis ? Cela permettra son envoi au client.')) {
+      const action = this.needsValidation ? 'valider' : 'confirmer';
+      const msg = this.needsValidation 
+        ? 'Voulez-vous valider ce devis ? Cela confirmera les remises exceptionnelles.' 
+        : 'Voulez-vous confirmer ce devis ? Il pourra ensuite être envoyé au client.';
+        
+      if (confirm(msg)) {
         this.isProcessing = true;
         try {
           await axios.post(`/api/devis/${this.devis.id}/valider`, {
@@ -279,7 +291,8 @@ export default {
           });
           this.fetchDevis();
         } catch (error) {
-          alert('Erreur lors de la validation');
+          const errorMsg = error.response?.data || 'Erreur lors de l\'opération';
+          alert(typeof errorMsg === 'string' ? errorMsg : 'Erreur lors de l\'opération. Vérifiez vos permissions.');
         } finally {
           this.isProcessing = false;
         }
