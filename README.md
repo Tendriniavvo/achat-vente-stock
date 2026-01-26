@@ -1,7 +1,4 @@
-# achat-vente-stock
-
-ato
-
+Model
       <div class="row g-3 g-md-4 mt-1">
         <div class="col-12 col-xl-4">
           <div class="card achat-alert-card achat-alert-urgent h-100">

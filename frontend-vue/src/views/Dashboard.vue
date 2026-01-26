@@ -116,7 +116,82 @@
 
       
 
-      <!-- Row 2: Recent Demandes d'Achat -->
+      <!-- Row 2: Gestion des Achats (New Section) -->
+      <div class="row g-3 g-md-4 mt-1 mb-4">
+        <!-- 1. Répartition des Demandes par Statut (Donut Chart) -->
+        <div class="col-12 col-xl-4">
+          <div class="card achat-alert-card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                  <div class="fw-bold fs-5">Demandes par Statut</div>
+                  <div class="text-muted small">Répartition globale</div>
+                </div>
+                <i class="ti ti-chart-donut fs-2 text-primary"></i>
+              </div>
+              <apexchart 
+                type="donut" 
+                height="250" 
+                :options="donutOptions" 
+                :series="donutSeries"
+              ></apexchart>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Top 5 Fournisseurs (Bar Chart) -->
+        <div class="col-12 col-xl-4">
+          <div class="card achat-alert-card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                  <div class="fw-bold fs-5">Top Fournisseurs</div>
+                  <div class="text-muted small">Par volume d'achat (MGA)</div>
+                </div>
+                <i class="ti ti-building-store fs-2 text-success"></i>
+              </div>
+              <apexchart 
+                type="bar" 
+                height="250" 
+                :options="barOptions" 
+                :series="barSeries"
+              ></apexchart>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Délai Moyen d'Approbation (KPI) -->
+        <div class="col-12 col-xl-4">
+          <div class="card achat-alert-card achat-alert-performance h-100 border-0 shadow-sm bg-light-primary">
+            <div class="card-body">
+              <div class="d-flex align-items-start justify-content-between mb-4">
+                <div>
+                  <div class="fw-bold fs-5">Efficacité Approbation</div>
+                  <div class="text-muted small">Délai moyen de traitement</div>
+                </div>
+                <i class="ti ti-clock-play fs-2 text-primary"></i>
+              </div>
+              
+              <div class="text-center py-4">
+                <h1 class="display-4 fw-bold text-primary mb-2">{{ statistiques.delaiMoyenApprobation || '2.4j' }}</h1>
+                <p class="text-muted">Temps moyen entre soumission et validation finale</p>
+              </div>
+
+              <div class="mt-4 pt-2 border-top">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-muted small">Objectif cible</span>
+                  <span class="badge bg-success-subtle text-success rounded-pill">Sous contrôle</span>
+                </div>
+                <div class="progress mt-2" style="height: 6px;">
+                  <div class="progress-bar bg-primary" style="width: 75%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Recent Demandes d'Achat -->
       <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">
           <div class="card w-100">
@@ -246,6 +321,30 @@ export default {
         xaxis: { categories: [] },
         tooltip: { theme: 'light' },
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1, stops: [0, 90, 100] } }
+      },
+      // Options Donut Chart
+      donutSeries: [],
+      donutOptions: {
+        chart: { type: 'donut', fontFamily: 'inherit' },
+        labels: [],
+        colors: ['#FFAE1F', '#13DEB9', '#FA896B', '#5D87FF', '#49BEFF'],
+        plotOptions: {
+          pie: { donut: { size: '70%', labels: { show: true, total: { show: true, label: 'Total' } } } }
+        },
+        dataLabels: { enabled: false },
+        legend: { position: 'bottom' }
+      },
+      // Options Bar Chart
+      barSeries: [],
+      barOptions: {
+        chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'inherit' },
+        plotOptions: { bar: { borderRadius: 4, horizontal: true, barHeight: '50%' } },
+        dataLabels: { enabled: false },
+        xaxis: { categories: [] },
+        colors: ['#13DEB9'],
+        tooltip: {
+          y: { formatter: function (val) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA' }).format(val) } }
+        }
       }
     };
   },
@@ -267,6 +366,22 @@ export default {
       try {
         const res = await axios.get('/api/dashboard/stats');
         this.statistiques = res.data;
+        
+        // Mise à jour Donut Chart (Statut Demandes)
+        if (this.statistiques.demandesParStatut) {
+          this.donutOptions = { ...this.donutOptions, labels: Object.keys(this.statistiques.demandesParStatut) };
+          this.donutSeries = Object.values(this.statistiques.demandesParStatut);
+        }
+
+        // Mise à jour Bar Chart (Top Fournisseurs)
+        if (this.statistiques.topFournisseurs) {
+          this.barOptions = { 
+            ...this.barOptions, 
+            xaxis: { categories: this.statistiques.topFournisseurs.map(f => f.nom) } 
+          };
+          this.barSeries = [{ name: 'Volume Achat', data: this.statistiques.topFournisseurs.map(f => f.volume) }];
+        }
+
       } catch (err) {
         console.error('Erreur chargement stats:', err);
       }
@@ -392,3 +507,23 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.achat-alert-card {
+  transition: transform 0.2s;
+}
+.achat-alert-card:hover {
+  transform: translateY(-5px);
+}
+.bg-light-primary {
+  background-color: #ecf2ff !important;
+}
+.display-4 {
+  font-size: 2.5rem;
+}
+@media (min-width: 1200px) {
+  .display-4 {
+    font-size: 3.5rem;
+  }
+}
+</style>
