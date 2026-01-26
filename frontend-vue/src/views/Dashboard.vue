@@ -280,57 +280,6 @@
           </div>
         </div>
 
-        <!-- 4. Articles Dormants -->
-        <div class="col-12">
-          <div class="card border-0 shadow-sm">
-            <div class="card-body p-0">
-              <div class="p-4 d-flex align-items-center justify-content-between border-bottom">
-                <div>
-                  <h6 class="fw-bold mb-0 text-danger">Articles Dormants</h6>
-                  <p class="text-muted small mb-0">> 30 jours sans mouvement</p>
-                </div>
-                <button class="btn btn-sm btn-outline-danger">Voir tout</button>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                  <thead class="bg-light">
-                    <tr>
-                      <th class="ps-4 border-0">Référence</th>
-                      <th class="border-0">Article</th>
-                      <th class="border-0">Quantité</th>
-                      <th class="border-0">Valeur Immobilisée</th>
-                      <th class="border-0">Inactivité</th>
-                      <th class="border-0">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="art in statistiques.articlesDormants" :key="art.reference">
-                      <td class="ps-4"><span class="badge bg-light-danger text-danger">{{ art.reference }}</span></td>
-                      <td class="fw-semibold">{{ art.nom }}</td>
-                      <td>{{ art.quantite }}</td>
-                      <td class="fw-bold text-danger">{{ formatCurrency(art.valeur) }}</td>
-                      <td>
-                        <div class="d-flex align-items-center">
-                          <span class="text-warning me-2">{{ art.joursInactivite }}j</span>
-                          <div class="progress flex-grow-1" style="height: 4px; min-width: 50px;">
-                            <div class="progress-bar bg-warning" :style="{width: (art.joursInactivite/90*100) + '%'}"></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <button class="btn btn-sm btn-light-primary"><i class="ti ti-arrow-right"></i></button>
-                      </td>
-                    </tr>
-                    <tr v-if="!statistiques.articlesDormants || statistiques.articlesDormants.length === 0">
-                      <td colspan="6" class="text-center py-4 text-muted">Aucun article dormant détecté</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
 
 
