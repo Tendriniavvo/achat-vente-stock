@@ -23,6 +23,7 @@
                 <option value="brouillon">Brouillon</option>
                 <option value="en attente">En attente (Approbateur)</option>
                 <option value="attente_finance">En attente (Finance)</option>
+                <option value="disponible_en_stock">Disponible en stock</option>
                 <option value="approuvé">Approuvé</option>
                 <option value="rejeté">Rejeté</option>
                 <option value="annulé">Annulé</option>
@@ -357,6 +358,8 @@ export default {
           return 'badge bg-warning';
         case 'attente_finance':
           return 'badge bg-primary';
+        case 'disponible_en_stock':
+          return 'badge bg-success';
         case 'attente_admin':
           return 'badge bg-indigo';
         case 'fonds_confirmés':
@@ -419,6 +422,8 @@ export default {
         
         if (newStatus === 'attente_finance') {
           message = 'Approbation N1 réussie. En attente de la Finance.';
+        } else if (newStatus === 'disponible_en_stock') {
+          message = 'Approbation N1 réussie. L\'article est disponible en stock !';
         } else if (newStatus === 'attente_admin') {
           message = 'Approbation N2 réussie. En attente de l\'Administration.';
         } else if (newStatus === 'approuvé' || newStatus === 'approuve') {

@@ -143,6 +143,7 @@ public class ReceptionService {
             mouvement.setUtilisateur(user);
             mouvement.setDateMouvement(LocalDateTime.now());
             mouvement.setMotif("Réception BC " + bc.getReference());
+            mouvement.setStatut("VALIDE");
 
             // Définir le coût basé sur le prix unitaire du BC
             if (matchingBcLine.isPresent()) {
@@ -161,13 +162,13 @@ public class ReceptionService {
                         return s;
                     });
             stock.setQuantite(stock.getQuantite() + quantiteRecue);
-            
+
             // Correction : Définir l'emplacement dans la table stocks si fourni
             if (emplacementId != null) {
                 Emplacement emp = emplacementRepository.findById(emplacementId).orElse(null);
                 stock.setEmplacement(emp);
             }
-            
+
             stockRepository.save(stock);
         }
 
