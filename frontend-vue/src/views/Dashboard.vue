@@ -212,6 +212,7 @@
 <script>
 import MainLayout from '../layouts/MainLayout.vue';
 import VueApexCharts from "vue3-apexcharts";
+import axios from 'axios';
 
 export default {
   name: 'Dashboard',
@@ -254,39 +255,32 @@ export default {
   methods: {
     async loadData() {
       try {
-        const resDemandes = await fetch('/api/demandes-achat');
-        if (resDemandes.ok) {
-          const data = await resDemandes.json();
-          this.recentesDemandes = data.slice(0, 5);
-        }
+        const res = await axios.get('/api/demandes-achat');
+        this.recentesDemandes = res.data.slice(0, 5);
       } catch (err) {
         console.error('Erreur chargement demandes:', err);
       }
     },
     async loadStats() {
       try {
-        const res = await fetch('/api/dashboard/stats');
-        if (res.ok) {
-          this.statistiques = await res.json();
-        }
+        const res = await axios.get('/api/dashboard/stats');
+        this.statistiques = res.data;
       } catch (err) {
         console.error('Erreur chargement stats:', err);
       }
     },
     async loadPerformance() {
       try {
-        const res = await fetch('/api/dashboard/performance');
-        if (res.ok) {
-          const data = await res.json();
-          this.chartSeries = [
-            { name: "Ventes", data: data.sales.map(d => d.amount) },
-            { name: "Achats", data: data.purchases.map(d => d.amount) }
-          ];
-          this.chartOptions = {
-            ...this.chartOptions,
-            xaxis: { categories: data.sales.map(d => d.month) }
-          };
-        }
+        const res = await axios.get('/api/dashboard/performance');
+        const data = res.data;
+        this.chartSeries = [
+          { name: "Ventes", data: data.sales.map(d => d.amount) },
+          { name: "Achats", data: data.purchases.map(d => d.amount) }
+        ];
+        this.chartOptions = {
+          ...this.chartOptions,
+          xaxis: { categories: data.sales.map(d => d.month) }
+        };
       } catch (err) {
         console.error('Erreur chargement performance:', err);
       }
@@ -325,20 +319,14 @@ export default {
     async verifierFonds(id) {
       if (!confirm('Voulez-vous vérifier la disponibilité des fonds ?')) return;
       try {
-        const response = await fetch(`/api/demandes-achat/${id}/verifier-fonds`, {
-          method: 'POST'
-        });
-        if (response.ok) {
-          alert('Disponibilité des fonds confirmée');
-          this.loadData();
-        } else {
-          const errorMsg = await response.text();
-          alert('Erreur: ' + (errorMsg || 'Fonds insuffisants'));
-          this.loadData();
-        }
+        await axios.post(`/api/demandes-achat/${id}/verifier-fonds`);
+        alert('Disponibilité des fonds confirmée');
+        this.loadData();
       } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur de connexion au serveur');
+        const errorMsg = error.response?.data || 'Fonds insuffisants';
+        alert('Erreur: ' + errorMsg);
+        this.loadData();
       }
     },
     canApprove(demande) {
@@ -365,33 +353,28 @@ export default {
         }
         const authData = JSON.parse(userStr);
         const user = authData.user || authData;
-        const response = await fetch(`/api/demandes-achat/${id}/approuver`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ validateurId: user.id })
+        const response = await axios.post(`/api/demandes-achat/${id}/approuver`, {
+          validateurId: user.id
         });
-        if (response.ok) {
-          const updatedDemande = await response.json();
-          const newStatus = updatedDemande.statut;
-          let message = 'Demande approuvée avec succès';
-          
-          if (newStatus === 'attente_finance') {
-            message = 'Approbation N1 réussie. En attente de la Finance.';
-          } else if (newStatus === 'attente_admin') {
-            message = 'Approbation N2 réussie. En attente de l\'Administration.';
-          } else if (newStatus === 'approuvé' || newStatus === 'approuve') {
-            message = 'Demande approuvée définitivement.';
-          }
-          
-          alert(message);
-          this.loadData();
-        } else {
-          const errorMsg = await response.text();
-          alert('Erreur lors de l\'approbation : ' + errorMsg);
+        
+        const updatedDemande = response.data;
+        const newStatus = updatedDemande.statut;
+        let message = 'Demande approuvée avec succès';
+        
+        if (newStatus === 'attente_finance') {
+          message = 'Approbation N1 réussie. En attente de la Finance.';
+        } else if (newStatus === 'attente_admin') {
+          message = 'Approbation N2 réussie. En attente de l\'Administration.';
+        } else if (newStatus === 'approuvé' || newStatus === 'approuve') {
+          message = 'Demande approuvée définitivement.';
         }
+        
+        alert(message);
+        this.loadData();
       } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur de connexion au serveur');
+        const errorMsg = error.response?.data || 'Erreur de connexion au serveur';
+        alert('Erreur lors de l\'approbation : ' + errorMsg);
       }
     },
     getStatutClass(statut) {

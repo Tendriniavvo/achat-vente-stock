@@ -139,6 +139,7 @@
 
 <script>
 import MainLayout from '../../layouts/MainLayout.vue';
+import axios from 'axios';
 
 export default {
   name: 'Articles',
@@ -187,25 +188,19 @@ export default {
     async loadArticles() {
       this.isLoading = true;
       try {
-        const response = await fetch('/api/articles');
-        if (response.ok) {
-          this.articles = await response.json();
-        } else {
-          this.errorMessage = 'Erreur lors du chargement des articles';
-        }
+        const response = await axios.get('/api/articles');
+        this.articles = response.data;
       } catch (error) {
         console.error('Erreur:', error);
-        this.errorMessage = 'Erreur de connexion au serveur';
+        this.errorMessage = 'Erreur lors du chargement des articles';
       } finally {
         this.isLoading = false;
       }
     },
     async loadCategories() {
       try {
-        const response = await fetch('/api/categories-article');
-        if (response.ok) {
-          this.categories = await response.json();
-        }
+        const response = await axios.get('/api/categories-article');
+        this.categories = response.data;
       } catch (error) {
         console.error('Erreur chargement catégories:', error);
       }
@@ -217,19 +212,13 @@ export default {
       if (!confirm(`Voulez-vous vraiment ${action} cet article ?`)) return;
 
       try {
-        const response = await fetch(`/api/articles/${article.id}/toggle-status?utilisateurId=${this.currentUser.id}`, {
-          method: 'PATCH'
+        await axios.patch(`/api/articles/${article.id}/toggle-status`, null, {
+          params: { utilisateurId: this.currentUser.id }
         });
-        
-        if (response.ok) {
-          article.actif = !article.actif;
-          // Notification de succès
-        } else {
-          alert('Erreur lors de la modification du statut');
-        }
+        article.actif = !article.actif;
       } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur de connexion');
+        alert('Erreur lors de la modification du statut');
       }
     },
     formatCurrency(value) {

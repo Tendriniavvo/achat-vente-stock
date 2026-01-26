@@ -447,19 +447,12 @@ export default {
       }
 
       try {
-        const response = await fetch(`/api/demandes-achat/${this.demande.id}/soumettre`, {
-          method: 'POST'
-        });
-
-        if (response.ok) {
-          alert('Demande soumise avec succès');
-          this.loadDemande();
-        } else {
-          alert('Erreur lors de la soumission');
-        }
+        await axios.post(`/api/demandes-achat/${this.demande.id}/soumettre`);
+        alert('Demande soumise avec succès');
+        this.loadDemande();
       } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur de connexion au serveur');
+        alert('Erreur lors de la soumission');
       }
     },
     async verifierFonds() {

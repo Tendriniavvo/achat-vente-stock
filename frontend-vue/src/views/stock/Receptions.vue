@@ -110,6 +110,7 @@
 
 <script>
 import MainLayout from '@/layouts/MainLayout.vue';
+import axios from 'axios';
 
 export default {
   name: 'Receptions',
@@ -132,14 +133,12 @@ export default {
     async loadBonsAwaitingReception() {
       this.isLoadingBC = true;
       try {
-        const response = await fetch('/api/bons-commande-fournisseur');
-        if (response.ok) {
-          const allBC = await response.json();
-          // Filtrer les BC envoyés ou en réception partielle
-          this.bonsAwaitingReception = allBC.filter(bc => 
-            ['envoye', 'reception_partielle'].includes(bc.statut.toLowerCase())
-          );
-        }
+        const response = await axios.get('/api/bons-commande-fournisseur');
+        const allBC = response.data;
+        // Filtrer les BC envoyés ou en réception partielle
+        this.bonsAwaitingReception = allBC.filter(bc => 
+          ['envoye', 'reception_partielle'].includes(bc.statut.toLowerCase())
+        );
       } catch (error) {
         console.error('Erreur chargement BC:', error);
       } finally {
@@ -149,10 +148,8 @@ export default {
     async loadReceptions() {
       this.isLoadingBR = true;
       try {
-        const response = await fetch('/api/receptions');
-        if (response.ok) {
-          this.receptions = await response.json();
-        }
+        const response = await axios.get('/api/receptions');
+        this.receptions = response.data;
       } catch (error) {
         console.error('Erreur chargement BR:', error);
       } finally {

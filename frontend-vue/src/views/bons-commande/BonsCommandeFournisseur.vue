@@ -77,6 +77,7 @@
 
 <script>
 import MainLayout from '../../layouts/MainLayout.vue';
+import axios from 'axios';
 
 export default {
   name: 'BonsCommandeFournisseur',
@@ -97,15 +98,11 @@ export default {
     async loadBonsCommande() {
       this.isLoading = true;
       try {
-        const response = await fetch('/api/bons-commande-fournisseur');
-        if (response.ok) {
-          this.bonsCommande = await response.json();
-        } else {
-          this.errorMessage = 'Erreur lors du chargement des bons de commande';
-        }
+        const response = await axios.get('/api/bons-commande-fournisseur');
+        this.bonsCommande = response.data;
       } catch (error) {
         console.error('Erreur:', error);
-        this.errorMessage = 'Erreur de connexion au serveur';
+        this.errorMessage = 'Erreur lors du chargement des bons de commande';
       } finally {
         this.isLoading = false;
       }
