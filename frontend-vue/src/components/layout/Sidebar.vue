@@ -41,15 +41,7 @@
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
                   </div>
-                  <span class="hide-menu">Demandes d'Achat</span>
-                </router-link>
-              </li>
-              <li v-if="hasPermission('/achats/create')" class="sidebar-item">
-                <router-link to="/achats/create" class="sidebar-link">
-                  <div class="round-16 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-circle"></i>
-                  </div>
-                  <span class="hide-menu">Nouvelle Demande</span>
+                  <span class="hide-menu">Demandes</span>
                 </router-link>
               </li>
               <li v-if="hasPermission('/commandes-achat')" class="sidebar-item">
@@ -57,7 +49,7 @@
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
                   </div>
-                  <span class="hide-menu">Commandes d'Achat</span>
+                  <span class="hide-menu">Commandes</span>
                 </router-link>
               </li>
             </ul>
@@ -74,15 +66,7 @@
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
                   </div>
-                  <span class="hide-menu">Devis Clients</span>
-                </router-link>
-              </li>
-              <li v-if="hasPermission('/devis/create')" class="sidebar-item">
-                <router-link to="/devis/create" class="sidebar-link">
-                  <div class="round-16 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-circle"></i>
-                  </div>
-                  <span class="hide-menu">Nouveau Devis</span>
+                  <span class="hide-menu">Devis</span>
                 </router-link>
               </li>
               <li v-if="hasPermission('/commandes-client')" class="sidebar-item">
@@ -90,7 +74,7 @@
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
                   </div>
-                  <span class="hide-menu">Commandes Client</span>
+                  <span class="hide-menu">Commandes</span>
                 </router-link>
               </li>
               <li v-if="hasPermission('/livraisons')" class="sidebar-item">
@@ -106,7 +90,7 @@
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
                   </div>
-                  <span class="hide-menu">Factures Clients</span>
+                  <span class="hide-menu">Factures</span>
                 </router-link>
               </li>
               <li v-if="hasPermission('/encaissements') || hasRole('Finance')" class="sidebar-item">
@@ -242,14 +226,7 @@
               </li>
             </ul>
           </li>
-          
-          <li v-if="hasPermission('/inventaire')" class="sidebar-item">
-            <router-link class="sidebar-link" to="/inventaire" aria-expanded="false">
-              <span><i class="ti ti-clipboard-list"></i></span>
-              <span class="hide-menu">Inventaire</span>
-            </router-link>
-          </li>
-          
+
           <li class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
             <span class="hide-menu">Données</span>
