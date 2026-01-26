@@ -133,8 +133,7 @@ public class MouvementStockService {
                 "Validation mouvement id=" + mouvement.getId()
                         + ", type=" + mouvement.getType()
                         + ", deltaQuantite=" + deltaQuantite
-                        + ", deltaValeur=" + deltaValeur
-        );
+                        + ", deltaValeur=" + deltaValeur);
         journalAuditRepository.save(audit);
 
         return saved;
@@ -156,8 +155,7 @@ public class MouvementStockService {
                     mouvement.getDepot(),
                     emplacement,
                     ligne.getQuantite(),
-                    ligne.getCoutUnitaire()
-            ));
+                    ligne.getCoutUnitaire()));
             appliquerVariationLot(ligne.getLot(), ligne.getQuantite());
         }
         return deltaValeur;
@@ -178,8 +176,7 @@ public class MouvementStockService {
                     mouvement.getDepot(),
                     emplacement,
                     -ligne.getQuantite(),
-                    ligne.getCoutUnitaire()
-            ));
+                    ligne.getCoutUnitaire()));
             appliquerVariationLot(ligne.getLot(), -ligne.getQuantite());
         }
         return deltaValeur;
@@ -202,10 +199,12 @@ public class MouvementStockService {
             Emplacement emplacementSource = resolveAndValidateEmplacement(mouvement, ligne);
             controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), true);
 
-            deltaValeur = deltaValeur.add(appliquerVariationStock(ligne, mouvement.getDepot(), emplacementSource, -ligne.getQuantite(), ligne.getCoutUnitaire()));
+            deltaValeur = deltaValeur.add(appliquerVariationStock(ligne, mouvement.getDepot(), emplacementSource,
+                    -ligne.getQuantite(), ligne.getCoutUnitaire()));
 
             Emplacement emplacementDest = mouvement.getEmplacementDestination();
-            deltaValeur = deltaValeur.add(appliquerVariationStock(ligne, mouvement.getDepotDestination(), emplacementDest, ligne.getQuantite(), ligne.getCoutUnitaire()));
+            deltaValeur = deltaValeur.add(appliquerVariationStock(ligne, mouvement.getDepotDestination(),
+                    emplacementDest, ligne.getQuantite(), ligne.getCoutUnitaire()));
         }
         return deltaValeur;
     }
@@ -226,8 +225,7 @@ public class MouvementStockService {
                     mouvement.getDepot(),
                     emplacement,
                     ligne.getQuantite(),
-                    ligne.getCoutUnitaire()
-            ));
+                    ligne.getCoutUnitaire()));
             appliquerVariationLot(ligne.getLot(), ligne.getQuantite());
         }
         return deltaValeur;
@@ -246,8 +244,7 @@ public class MouvementStockService {
             com.example.backend_spring.models.Depot depot,
             com.example.backend_spring.models.Emplacement emplacement,
             int variationQuantite,
-            BigDecimal coutUnitaire
-    ) {
+            BigDecimal coutUnitaire) {
         if (ligne.getArticle() == null) {
             throw new IllegalArgumentException("Article obligatoire dans la ligne");
         }
