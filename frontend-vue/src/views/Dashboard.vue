@@ -1,216 +1,63 @@
 <template>
   <MainLayout>
-    <!--  Row 1 -->
-    <div class="row">
-      <div class="col-lg-12">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title fw-semibold mb-4">Bienvenue sur le Dashboard</h5>
-            <p>Système de Gestion Achat-Vente-Stock</p>
-            <p v-if="loading" class="mb-0">Chargement...</p>
-            <p v-else-if="error" class="mb-0 text-danger">{{ error }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!--  Row 2 -->
-    <div class="row">
-      <div class="col-lg-3 col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex align-items-center">
-              <div class="me-3">
-                <span class="round-40 bg-light-primary rounded-circle d-flex align-items-center justify-content-center">
-                  <i class="ti ti-shopping-cart text-primary fs-6"></i>
-                </span>
-              </div>
-              <div>
-                <p class="text-dark mb-0 fs-3">Valeur stock</p>
-                <h5 class="fw-semibold mb-0">{{ displayValeurStock }}</h5>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-lg-3 col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex align-items-center">
-              <div class="me-3">
-                <span class="round-40 bg-light-success rounded-circle d-flex align-items-center justify-content-center">
-                  <i class="ti ti-coin text-success fs-6"></i>
-                </span>
-              </div>
-              <div>
-                <p class="text-dark mb-0 fs-3">Commandes en cours</p>
-                <h5 class="fw-semibold mb-0">{{ kpis?.nombreCommandesEnCours ?? '-' }}</h5>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-lg-3 col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex align-items-center">
-              <div class="me-3">
-                <span class="round-40 bg-light-warning rounded-circle d-flex align-items-center justify-content-center">
-                  <i class="ti ti-package text-warning fs-6"></i>
-                </span>
-              </div>
-              <div>
-                <p class="text-dark mb-0 fs-3">Taux rotation</p>
-                <h5 class="fw-semibold mb-0">{{ displayRotation }}</h5>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-lg-3 col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex align-items-center">
-              <div class="me-3">
-                <span class="round-40 bg-light-danger rounded-circle d-flex align-items-center justify-content-center">
-                  <i class="ti ti-users text-danger fs-6"></i>
-                </span>
-              </div>
-              <div>
-                <p class="text-dark mb-0 fs-3">Factures (attente/payées)</p>
-                <h5 class="fw-semibold mb-0">{{ displayFactures }}</h5>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="achat-section rounded-4 p-4 p-md-5 mt-2">
-      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-        <div class="achat-section-title">
-          <div class="d-flex align-items-center gap-3">
-            <div class="achat-section-icon" aria-hidden="true">
-              <i class="ti ti-shopping-cart"></i>
-            </div>
-            <div>
-              <div class="achat-section-heading">MODULE ACHATS</div>
-              <div class="achat-section-subheading">Gestion des approvisionnements et fournisseurs</div>
-            </div>
-          </div>
-        </div>
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <div class="btn-group" role="group" aria-label="Filtre période achats">
-            <button type="button" class="btn btn-sm" :class="periode === 'jour' ? 'btn-primary' : 'btn-outline-primary'" @click="periode = 'jour'">Aujourd'hui</button>
-            <button type="button" class="btn btn-sm" :class="periode === 'semaine' ? 'btn-primary' : 'btn-outline-primary'" @click="periode = 'semaine'">Semaine</button>
-            <button type="button" class="btn btn-sm" :class="periode === 'mois' ? 'btn-primary' : 'btn-outline-primary'" @click="periode = 'mois'">Mois</button>
-            <button type="button" class="btn btn-sm" :class="periode === 'annee' ? 'btn-primary' : 'btn-outline-primary'" @click="periode = 'annee'">Année</button>
-          </div>
-          <button type="button" class="btn btn-sm btn-light achat-refresh" @click="refreshAchats" :disabled="refreshing" :aria-label="refreshing ? 'Actualisation en cours' : 'Actualiser'">
-            <span class="d-inline-flex align-items-center gap-2">
-              <i class="ti" :class="refreshing ? 'ti-loader-2 achat-spin' : 'ti-refresh'"></i>
-              <span>Refresh</span>
-            </span>
-          </button>
-          <div class="achat-updated text-muted">MAJ: {{ lastUpdatedLabel }}</div>
-        </div>
-      </div>
-
-      <div class="row g-3 g-md-4 mt-3">
-        <div class="col-12 col-md-6 col-xl-3">
-          <div class="achat-kpi-card achat-hover cursor-pointer" tabindex="0" role="button" aria-label="Voir les demandes d'achat en attente" @click="onCardClick('da_attente')" @keydown.enter="onCardClick('da_attente')">
-            <div class="achat-kpi-left" style="border-left-color:#f97316">
-              <div class="achat-kpi-icon" style="background:rgba(249,115,22,0.12);color:#f97316">
-                <i class="ti ti-file-text"></i>
-                <span v-if="(achatKpis?.demandesAttente?.valeur ?? 0) > 0" class="achat-kpi-dot"></span>
-              </div>
-            </div>
-            <div class="achat-kpi-content">
-              <div class="d-flex align-items-start justify-content-between gap-2">
-                <div class="achat-kpi-label">Demandes d'achat en attente</div>
-                <span v-if="(achatKpis?.demandesAttente?.joursMax ?? 0) > 5" class="badge text-bg-warning">Urgent</span>
-              </div>
-              <div class="achat-kpi-value">{{ achatKpis?.demandesAttente?.valeur ?? 0 }}</div>
-              <div class="d-flex align-items-center justify-content-between gap-2">
-                <div class="achat-kpi-desc">{{ achatKpis?.demandesAttente?.tendance ?? '-' }}</div>
-                <div class="achat-kpi-trend text-warning">
-                  <i class="ti ti-arrow-up-right"></i>
+    <div class="container-fluid">
+      <!-- KPI Row -->
+      <div class="row mb-4">
+        <div v-if="hasRole('Administrateur') || hasRole('Acheteur') || hasRole('Utilisateur')" class="col-md-3">
+          <div class="card border-start border-primary border-4">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Demandes d'Achat</p>
+                  <h4 class="mb-0">{{ statistiques.totalDemandesAchat }}</h4>
+                </div>
+                <div class="ms-auto text-primary">
+                  <i class="ti ti-shopping-cart fs-7"></i>
                 </div>
               </div>
-              <div class="achat-kpi-hint">Cliquer pour voir détails</div>
             </div>
           </div>
         </div>
-
-        <div class="col-12 col-md-6 col-xl-3">
-          <div class="achat-kpi-card achat-hover cursor-pointer" tabindex="0" role="button" aria-label="Voir les bons de commande" @click="onCardClick('bc_mois')" @keydown.enter="onCardClick('bc_mois')">
-            <div class="achat-kpi-left" style="border-left-color:#3b82f6">
-              <div class="achat-kpi-icon" style="background:rgba(59,130,246,0.12);color:#3b82f6">
-                <i class="ti ti-shopping-bag"></i>
-              </div>
-            </div>
-            <div class="achat-kpi-content">
-              <div class="achat-kpi-label">Bons de commande ce mois</div>
-              <div class="achat-kpi-value">{{ achatKpis?.bcMois?.valeur ?? 0 }}</div>
-              <div class="d-flex align-items-center justify-content-between gap-2">
-                <div class="achat-kpi-desc">{{ achatKpis?.bcMois?.montant ?? '-' }}</div>
-                <div class="achat-kpi-trend text-success">
-                  <i class="ti ti-trending-up"></i>
-                  <span class="achat-kpi-trend-text">{{ achatKpis?.bcMois?.comparaison ?? '-' }}</span>
+        <div v-if="hasRole('Administrateur') || hasRole('Comptable') || hasRole('Commercial')" class="col-md-3">
+          <div class="card border-start border-success border-4">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Ventes Totales</p>
+                  <h4 class="mb-0">{{ formatCurrency(statistiques.montantTotalVentes) }}</h4>
+                </div>
+                <div class="ms-auto text-success">
+                  <i class="ti ti-currency-dollar fs-7"></i>
                 </div>
               </div>
-              <div class="achat-kpi-hint">Cliquer pour voir détails</div>
             </div>
           </div>
         </div>
-
-        <div class="col-12 col-md-6 col-xl-3">
-          <div class="achat-kpi-card achat-hover cursor-pointer" tabindex="0" role="button" aria-label="Voir les réceptions en attente" @click="onCardClick('receptions_attente')" @keydown.enter="onCardClick('receptions_attente')">
-            <div class="achat-kpi-left" style="border-left-color:#8b5cf6">
-              <div class="achat-kpi-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6">
-                <i class="ti ti-package"></i>
-                <span v-if="(achatKpis?.receptionsAttente?.retards ?? 0) > 0" class="achat-kpi-badge">{{ achatKpis?.receptionsAttente?.retards ?? 0 }}</span>
-              </div>
-            </div>
-            <div class="achat-kpi-content">
-              <div class="achat-kpi-label">Réceptions en attente</div>
-              <div class="achat-kpi-value">{{ achatKpis?.receptionsAttente?.valeur ?? 0 }}</div>
-              <div class="d-flex align-items-center justify-content-between gap-2">
-                <div class="achat-kpi-desc">{{ achatKpis?.receptionsAttente?.description ?? '-' }}</div>
-                <div class="achat-kpi-trend" :class="(achatKpis?.receptionsAttente?.retards ?? 0) > 0 ? 'text-danger' : 'text-muted'">
-                  <i class="ti" :class="(achatKpis?.receptionsAttente?.retards ?? 0) > 0 ? 'ti-alert-triangle' : 'ti-check'"></i>
+        <div v-if="hasRole('Administrateur') || hasRole('Magasinier')" class="col-md-3">
+          <div class="card border-start border-warning border-4">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Alertes Stock</p>
+                  <h4 class="mb-0 text-warning">{{ statistiques.stockAlertsCount }}</h4>
+                </div>
+                <div class="ms-auto text-warning">
+                  <i class="ti ti-alert-triangle fs-7"></i>
                 </div>
               </div>
-              <div class="achat-kpi-hint">Cliquer pour voir détails</div>
             </div>
           </div>
         </div>
-
-        <div class="col-12 col-md-6 col-xl-3">
-          <div class="achat-kpi-card achat-hover cursor-pointer" tabindex="0" role="button" aria-label="Voir le taux de conformité" @click="onCardClick('conformite')" @keydown.enter="onCardClick('conformite')">
-            <div class="achat-kpi-left" :style="{ borderLeftColor: conformiteColor }">
-              <div class="achat-kpi-icon" :style="{ background: conformiteBg, color: conformiteColor }">
-                <i class="ti ti-shield-check"></i>
-              </div>
-            </div>
-            <div class="achat-kpi-content">
-              <div class="d-flex align-items-start justify-content-between gap-2">
-                <div class="achat-kpi-label">Taux de conformité</div>
-                <span class="badge" :class="conformiteBadgeClass">{{ achatKpis?.conformite?.valeur ?? 0 }}%</span>
-              </div>
-              <div class="d-flex align-items-center gap-3">
-                <div class="achat-gauge" :style="{ '--pct': achatKpis?.conformite?.valeur ?? 0, '--gauge': conformiteColor }" aria-label="Gauge conformité" role="img">
-                  <div class="achat-gauge-inner">
-                    <div class="achat-gauge-value">{{ achatKpis?.conformite?.valeur ?? 0 }}%</div>
-                    <div class="achat-gauge-sub">Conforme</div>
-                  </div>
+        <div v-if="hasRole('Administrateur') || hasRole('Comptable')" class="col-md-3">
+          <div class="card border-start border-info border-4">
+            <div class="card-body">
+              <div class="d-flex align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Budget Dispo.</p>
+                  <h4 class="mb-0">{{ formatCurrency(statistiques.totalBudgetDisponible) }}</h4>
                 </div>
-                <div class="flex-grow-1">
-                  <div class="achat-kpi-desc">{{ achatKpis?.conformite?.tendance ?? '-' }}</div>
-                  <div class="achat-kpi-hint">Cliquer pour voir détails</div>
+                <div class="ms-auto text-info">
+                  <i class="ti ti-wallet fs-7"></i>
                 </div>
               </div>
             </div>
@@ -218,969 +65,345 @@
         </div>
       </div>
 
-      <div class="row g-3 g-md-4 mt-1">
-        <div class="col-12 col-md-6 col-xl-4">
-          <div class="card achat-card h-100">
+      <!--  Row 1: Performance Chart -->
+      <div class="row">
+        <div class="col-lg-8 d-flex align-items-stretch">
+          <div class="card w-100">
             <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between gap-2">
-                <div>
-                  <div class="fw-semibold">Demandes d'achat par statut</div>
-                  <div class="text-muted small">Répartition actuelle</div>
-                </div>
-                <span v-if="(achatCharts?.daStatut?.soumise ?? 0) > 5" class="badge text-bg-warning">{{ achatCharts?.daStatut?.soumise ?? 0 }} en attente</span>
-              </div>
-              <div class="d-flex flex-column align-items-center mt-3">
-                <div class="achat-donut" aria-label="Donut demandes achat" role="img">
-                  <div class="achat-donut-center">
-                    <div class="achat-donut-total">{{ achatDaTotal }}</div>
-                    <div class="text-muted small">Total</div>
-                  </div>
-                </div>
-                <div class="achat-legend mt-3 w-100">
-                  <div class="achat-legend-row" v-for="item in achatDaItems" :key="item.label">
-                    <span class="achat-dot" :style="{ background: item.color }" aria-hidden="true"></span>
-                    <span class="flex-grow-1">{{ item.label }}</span>
-                    <span class="fw-semibold">{{ item.value }}</span>
-                  </div>
-                </div>
-                <div v-if="(achatCharts?.daStatut?.soumise ?? 0) > 5" class="alert alert-warning w-100 mt-3 mb-0" role="status">
-                  <strong>Attention</strong> : {{ achatCharts?.daStatut?.soumise ?? 0 }} DA en attente de validation
-                </div>
-              </div>
+              <h5 class="card-title fw-semibold mb-4">Performance Globale (Achats vs Ventes)</h5>
+              <apexchart 
+                type="area" 
+                height="350" 
+                :options="chartOptions" 
+                :series="chartSeries"
+              ></apexchart>
             </div>
           </div>
         </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-          <div class="card achat-card h-100">
+        <div class="col-lg-4 d-flex align-items-stretch">
+          <div class="card w-100">
             <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between gap-2">
-                <div>
-                  <div class="fw-semibold">Évolution des commandes</div>
-                  <div class="text-muted small">6 derniers mois</div>
-                </div>
-                <span class="badge text-bg-light">Moyenne: {{ achatCharts?.commandes?.moyenne ?? '-' }}</span>
-              </div>
-              <div class="achat-area mt-3" aria-label="Zone évolution commandes" role="img">
-                <div class="achat-area-grid">
-                  <div class="achat-area-bar" v-for="m in (achatCharts?.commandes?.mois ?? [])" :key="m.label" :style="{ '--h': m.nb, '--h2': m.montantK }">
-                    <div class="achat-area-tooltip">
-                      <div class="fw-semibold">{{ m.label }}</div>
-                      <div class="small text-muted">{{ m.nb }} commandes</div>
-                      <div class="small text-muted">€ {{ m.montantK }}K</div>
-                    </div>
-                    <div class="achat-area-fill"></div>
-                    <div class="achat-area-fill2"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="text-muted small mt-2">Survoler une barre pour le détail</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-xl-4">
-          <div class="card achat-card h-100">
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between gap-2">
-                <div>
-                  <div class="fw-semibold">Conformité réceptions</div>
-                  <div class="text-muted small">Qualité & écarts</div>
-                </div>
-                <span class="badge" :class="conformiteBadgeClass">{{ achatCharts?.conformite?.gauge ?? 0 }}%</span>
-              </div>
-              <div class="d-flex flex-column align-items-center mt-3">
-                <div class="achat-gauge achat-gauge--semi" :style="{ '--pct': achatCharts?.conformite?.gauge ?? 0, '--gauge': conformiteColor }" aria-label="Gauge semi-circulaire" role="img">
-                  <div class="achat-gauge-inner">
-                    <div class="achat-gauge-value">{{ achatCharts?.conformite?.gauge ?? 0 }}%</div>
-                    <div class="achat-gauge-sub">Conforme</div>
-                  </div>
-                </div>
-                <div class="w-100 mt-3">
-                  <div class="achat-mini-bars">
-                    <div class="achat-mini-bar" v-for="b in (achatCharts?.conformite?.bars ?? [])" :key="b.label">
-                      <div class="d-flex align-items-center justify-content-between">
-                        <span class="small">{{ b.label }}</span>
-                        <span class="small fw-semibold">{{ b.value }}%</span>
-                      </div>
-                      <div class="progress" role="progressbar" :aria-valuenow="b.value" aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar" :style="{ width: b.value + '%', background: b.color }"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div v-if="(achatCharts?.conformite?.gauge ?? 0) < 80" class="alert alert-danger w-100 mt-3 mb-0" role="status">
-                  <strong>Alerte</strong> : conformité inférieure à 80%
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-xl-8">
-          <div class="card achat-card h-100">
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between gap-2">
-                <div>
-                  <div class="fw-semibold">Top 5 fournisseurs</div>
-                  <div class="text-muted small">Montants & volume de commandes</div>
-                </div>
-                <span class="badge text-bg-light">{{ periodeLabel }}</span>
-              </div>
-              <div class="mt-3 achat-suppliers">
-                <div class="achat-supplier-row" v-for="(s, idx) in (achatCharts?.topFournisseurs ?? [])" :key="s.nom">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="achat-avatar" :style="{ background: s.avatarColor }" aria-hidden="true">{{ s.initiales }}</div>
-                    <div class="flex-grow-1">
-                      <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <div class="fw-semibold">{{ s.nom }}</div>
-                        <span v-if="idx === 0" class="badge text-bg-primary">Top performer</span>
-                      </div>
-                      <div class="text-muted small">{{ s.nbCommandes }} commandes</div>
-                      <div class="progress mt-2" role="progressbar" :aria-valuenow="s.pct" aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar achat-supplier-bar" :style="{ width: s.pct + '%' }"></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="fw-semibold">€ {{ s.montantK }}K</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-          <div class="card achat-card h-100">
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between gap-2">
-                <div>
-                  <div class="fw-semibold">Délais de livraison</div>
-                  <div class="text-muted small">En avance / À temps / En retard</div>
-                </div>
-                <div class="achat-kpi-big">{{ achatCharts?.delais?.kpiOnTime ?? 0 }}%</div>
-              </div>
-              <div class="mt-3">
-                <div class="achat-stacked" v-for="row in (achatCharts?.delais?.rows ?? [])" :key="row.label">
-                  <div class="small text-muted mb-1">{{ row.label }}</div>
-                  <div class="achat-stacked-bar" role="img" aria-label="Barre empilée délais">
-                    <div class="achat-stacked-seg" :style="{ width: row.avance + '%', background: '#10b981' }">{{ row.avance }}%</div>
-                    <div class="achat-stacked-seg" :style="{ width: row.atemps + '%', background: '#3b82f6' }">{{ row.atemps }}%</div>
-                    <div class="achat-stacked-seg" :style="{ width: row.retard + '%', background: '#ef4444' }">{{ row.retard }}%</div>
-                  </div>
-                </div>
-                <div class="text-muted small mt-2">87% de livraisons à temps</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-md-6 col-xl-4">
-          <div class="card achat-card h-100">
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between gap-2">
-                <div>
-                  <div class="fw-semibold">Pipeline achats</div>
-                  <div class="text-muted small">Entonnoir du processus</div>
-                </div>
-              </div>
-              <div class="achat-funnel mt-3" aria-label="Entonnoir pipeline achats" role="img">
-                <div class="achat-funnel-step" v-for="(st, i) in (achatCharts?.pipeline ?? [])" :key="st.label" :style="{ '--w': st.pct, '--c': st.color }">
-                  <div class="d-flex align-items-center justify-content-between">
-                    <div class="small fw-semibold">{{ i + 1 }}. {{ st.label }}</div>
-                    <div class="small">{{ st.value }}</div>
-                  </div>
-                  <div class="achat-funnel-bar"></div>
-                </div>
-              </div>
-              <div class="text-muted small mt-2">Conversion globale: {{ (achatCharts?.pipeline?.[(achatCharts?.pipeline?.length ?? 1) - 1]?.pct ?? 0) }}%</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="row g-3 g-md-4 mt-1">
-        <div class="col-12 col-xl-4">
-          <div class="card achat-alert-card achat-alert-urgent h-100">
-            <div class="card-body text-white">
-              <div class="d-flex align-items-start justify-content-between">
-                <div>
-                  <div class="fw-bold fs-5">Actions urgentes</div>
-                  <div class="opacity-75">À traiter rapidement</div>
-                </div>
-                <i class="ti ti-alert-triangle fs-2" aria-hidden="true"></i>
-              </div>
-              <div class="mt-3 achat-alert-list">
-                <div class="achat-alert-item" v-for="it in (achatActions?.urgentes ?? [])" :key="it.label" role="button" tabindex="0" @click="onActionClick(it.key)" @keydown.enter="onActionClick(it.key)">
-                  <div class="d-flex align-items-center justify-content-between gap-2">
-                    <div class="d-flex align-items-center gap-2">
-                      <input class="form-check-input" type="checkbox" :aria-label="'Marquer ' + it.label" />
-                      <span>{{ it.label }}</span>
-                    </div>
-                    <span class="badge" :class="it.badgeClass">{{ it.badge }}</span>
-                  </div>
-                </div>
-              </div>
-              <button type="button" class="btn btn-light w-100 mt-3" @click="onActionClick('traiter')">Traiter maintenant</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-xl-4">
-          <div class="card achat-alert-card achat-alert-activity h-100">
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between">
-                <div>
-                  <div class="fw-bold fs-5">Activité du jour</div>
-                  <div class="text-muted">Planning & exécution</div>
-                </div>
-                <i class="ti ti-chart-bar fs-2 text-primary" aria-hidden="true"></i>
-              </div>
-              <div class="mt-3">
-                <div class="mb-3" v-for="a in (achatActions?.activite ?? [])" :key="a.label">
-                  <div class="d-flex align-items-center justify-content-between">
-                    <div class="fw-semibold">{{ a.label }}</div>
-                    <div class="text-muted small">{{ a.done }}/{{ a.total }}</div>
-                  </div>
-                  <div class="progress" role="progressbar" :aria-valuenow="a.done" aria-valuemin="0" :aria-valuemax="a.total">
-                    <div class="progress-bar" :style="{ width: (a.done / a.total * 100) + '%', background: a.color }"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="achat-activity-mini" aria-label="Mini activité horaire" role="img">
-                <div class="achat-activity-bar" v-for="(h, idx) in (achatActions?.horaire ?? [])" :key="idx" :style="{ height: h + '%' }"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-xl-4">
-          <div class="card achat-alert-card achat-alert-performance h-100">
-            <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between">
-                <div>
-                  <div class="fw-bold fs-5">Performance globale</div>
-                  <div class="text-muted">Comparaison vs objectifs</div>
-                </div>
-                <i class="ti ti-trending-up fs-2 text-success" aria-hidden="true"></i>
-              </div>
-              <div class="row g-3 mt-1">
-                <div class="col-6" v-for="m in (achatActions?.performance ?? [])" :key="m.label">
-                  <div class="achat-metric">
-                    <div class="d-flex align-items-center gap-2">
-                      <span class="achat-metric-icon" :style="{ background: m.bg, color: m.color }" aria-hidden="true">
-                        <i class="ti" :class="m.icon"></i>
+              <h5 class="card-title fw-semibold mb-4">Alertes de Stock</h5>
+              <div class="list-group list-group-flush">
+                <div v-for="alert in statistiques.stockAlerts" :key="alert.id" class="list-group-item px-0">
+                  <div class="d-flex align-items-center">
+                    <div class="me-3">
+                      <span class="badge bg-light-warning text-warning p-2">
+                        <i class="ti ti-package fs-5"></i>
                       </span>
-                      <div class="fw-semibold">{{ m.value }}</div>
                     </div>
-                    <div class="text-muted small">{{ m.label }}</div>
-                    <div class="small" :class="m.deltaClass">{{ m.delta }}</div>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1 fw-semibold">{{ alert.article?.nom }}</h6>
+                      <p class="mb-0 text-muted fs-2">Dépôt: {{ alert.depot?.nom }}</p>
+                    </div>
+                    <div class="text-end">
+                      <span class="text-danger fw-bold">{{ alert.quantite }}</span>
+                      <p class="mb-0 text-muted fs-2">Min: {{ alert.article?.stockMin }}</p>
+                    </div>
                   </div>
                 </div>
+                <div v-if="!statistiques.stockAlerts || statistiques.stockAlerts.length === 0" class="text-center py-4">
+                  <p class="text-muted">Aucune alerte de stock</p>
+                </div>
               </div>
+              <button v-if="statistiques.stockAlertsCount > 5" class="btn btn-outline-primary w-100 mt-3 btn-sm">
+                Voir toutes les alertes
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="achat-insights rounded-4 p-4 p-md-5 mt-4">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-          <div class="d-flex align-items-center gap-3">
-            <div class="achat-insights-icon" aria-hidden="true">
-              <i class="ti ti-bulb"></i>
-            </div>
-            <div>
-              <div class="fw-bold fs-5 text-white">Insights et recommandations</div>
-              <div class="text-white-50">Synthèse actionnable (données de démonstration)</div>
-            </div>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-light" @click="onActionClick('rapport')">Générer rapport complet</button>
-            <button type="button" class="btn btn-outline-light" @click="onActionClick('export')">Exporter données</button>
-          </div>
-        </div>
-        <div class="row g-4 mt-2">
-          <div class="col-12 col-lg-6">
-            <div class="achat-insights-box">
-              <div class="fw-semibold text-white">Points d'attention</div>
-              <div class="mt-2 achat-insights-list">
-                <div class="achat-insight" v-for="p in (achatInsights?.attention ?? [])" :key="p">
-                  <i class="ti ti-alert-circle text-warning" aria-hidden="true"></i>
-                  <span class="text-white">{{ p }}</span>
+      <!-- Row 2: Recent Demandes d'Achat -->
+      <div class="row">
+        <div class="col-lg-12 d-flex align-items-stretch">
+          <div class="card w-100">
+            <div class="card-body">
+              <div class="d-sm-flex d-block align-items-center justify-content-between mb-9">
+                <div class="mb-3 mb-sm-0">
+                  <h5 class="card-title fw-semibold">Aperçu des Demandes d'Achat</h5>
                 </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table text-nowrap mb-0 align-middle">
+                  <thead class="text-dark fs-4">
+                    <tr>
+                      <th class="border-bottom-0">
+                        <h6 class="fw-semibold mb-0">Réf</h6>
+                      </th>
+                      <th class="border-bottom-0">
+                        <h6 class="fw-semibold mb-0">Demandeur</h6>
+                      </th>
+                      <th class="border-bottom-0">
+                        <h6 class="fw-semibold mb-0">Total</h6>
+                      </th>
+                      <th class="border-bottom-0">
+                        <h6 class="fw-semibold mb-0">Statut</h6>
+                      </th>
+                      <th class="border-bottom-0">
+                        <h6 class="fw-semibold mb-0">Date</h6>
+                      </th>
+                      <th class="border-bottom-0">
+                        <h6 class="fw-semibold mb-0">Actions</h6>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="demande in recentesDemandes" :key="demande.id">
+                      <td class="border-bottom-0">
+                        <h6 class="fw-semibold mb-0">{{ demande.reference }}</h6>
+                      </td>
+                      <td class="border-bottom-0">
+                        <p class="mb-0 fw-normal">{{ demande.demandeur?.prenom }} {{ demande.demandeur?.nom }}</p>
+                      </td>
+                      <td class="border-bottom-0">
+                        <p class="mb-0 fw-bold text-primary">{{ formatCurrency(calculerTotal(demande)) }}</p>
+                      </td>
+                      <td class="border-bottom-0">
+                        <div class="d-flex align-items-center gap-2">
+                          <span :class="getStatutClass(demande.statut)">{{ demande.statut }}</span>
+                        </div>
+                      </td>
+                      <td class="border-bottom-0">
+                        <p class="mb-0 fw-normal">{{ formatDate(demande.dateCreation) }}</p>
+                      </td>
+                      <td class="border-bottom-0">
+                        <div class="d-flex gap-1">
+                          <button 
+                            class="btn btn-sm btn-light-primary" 
+                            title="Détails"
+                            @click="$router.push(`/achats/${demande.id}`)"
+                          >
+                            <i class="ti ti-eye"></i>
+                          </button>
+                          <button 
+                            v-if="canVerifyFonds(demande)"
+                            class="btn btn-sm btn-info" 
+                            title="Vérifier les fonds"
+                            @click="verifierFonds(demande.id)"
+                          >
+                            <i class="ti ti-coin"></i>
+                          </button>
+                          <button 
+                            v-if="canApprove(demande)"
+                            class="btn btn-sm btn-success" 
+                            title="Approuver"
+                            @click="approuver(demande.id)"
+                          >
+                            <i class="ti ti-check"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-if="recentesDemandes.length === 0">
+                      <td colspan="4" class="text-center py-4">Aucune demande récente</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-          <div class="col-12 col-lg-6">
-            <div class="achat-insights-box">
-              <div class="fw-semibold text-white">Recommandations</div>
-              <div class="mt-2 achat-insights-list">
-                <div class="achat-insight" v-for="r in (achatInsights?.reco ?? [])" :key="r">
-                  <i class="ti ti-check text-success" aria-hidden="true"></i>
-                  <span class="text-white">{{ r }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="d-flex align-items-center justify-content-end mt-3">
-          <div class="text-white-50 small">Dernière mise à jour : {{ lastUpdatedLabel }}</div>
         </div>
       </div>
     </div>
   </MainLayout>
 </template>
 
-<script setup>
-import MainLayout from '@/layouts/MainLayout.vue';
-import axios from 'axios';
-import { computed, onMounted, ref, watch } from 'vue';
+<script>
+import MainLayout from '../layouts/MainLayout.vue';
+import VueApexCharts from "vue3-apexcharts";
 
-const loading = ref(true);
-const error = ref(null);
-const kpis = ref(null);
+export default {
+  name: 'Dashboard',
+  components: {
+    MainLayout,
+    apexchart: VueApexCharts,
+  },
+  data() {
+    return {
+      recentesDemandes: [],
+      statistiques: {
+        totalDemandesAchat: 0,
+        demandesEnAttente: 0,
+        totalVentes: 0,
+        montantTotalVentes: 0,
+        stockAlertsCount: 0,
+        stockAlerts: [],
+        totalBudgetDisponible: 0
+      },
+      chartSeries: [
+        { name: "Ventes", data: [] },
+        { name: "Achats", data: [] }
+      ],
+      chartOptions: {
+        chart: { height: 350, type: 'area', toolbar: { show: false }, fontFamily: 'inherit' },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 2 },
+        colors: ['#5D87FF', '#49BEFF'],
+        xaxis: { categories: [] },
+        tooltip: { theme: 'light' },
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1, stops: [0, 90, 100] } }
+      }
+    };
+  },
+  mounted() {
+    this.loadData();
+    this.loadStats();
+    this.loadPerformance();
+  },
+  methods: {
+    async loadData() {
+      try {
+        const resDemandes = await fetch('/api/demandes-achat');
+        if (resDemandes.ok) {
+          const data = await resDemandes.json();
+          this.recentesDemandes = data.slice(0, 5);
+        }
+      } catch (err) {
+        console.error('Erreur chargement demandes:', err);
+      }
+    },
+    async loadStats() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        if (res.ok) {
+          this.statistiques = await res.json();
+        }
+      } catch (err) {
+        console.error('Erreur chargement stats:', err);
+      }
+    },
+    async loadPerformance() {
+      try {
+        const res = await fetch('/api/dashboard/performance');
+        if (res.ok) {
+          const data = await res.json();
+          this.chartSeries = [
+            { name: "Ventes", data: data.sales.map(d => d.amount) },
+            { name: "Achats", data: data.purchases.map(d => d.amount) }
+          ];
+          this.chartOptions = {
+            ...this.chartOptions,
+            xaxis: { categories: data.sales.map(d => d.month) }
+          };
+        }
+      } catch (err) {
+        console.error('Erreur chargement performance:', err);
+      }
+    },
+    formatDate(dateString) {
+      if (!dateString) return '';
+      return new Date(dateString).toLocaleDateString('fr-FR');
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA', minimumFractionDigits: 0 }).format(value);
+    },
+    calculerTotal(demande) {
+      if (!demande.lignes || !Array.isArray(demande.lignes)) return 0;
+      return demande.lignes.reduce((total, ligne) => {
+        const prix = ligne.prixEstime || 0;
+        const qte = ligne.quantite || 0;
+        return total + (prix * qte);
+      }, 0);
+    },
+    hasRole(roleNom) {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return false;
+      const authData = JSON.parse(userStr);
+      const user = authData.user || authData;
+      if (!user.roles) return false;
+      return user.roles.some(r => r.nom.toUpperCase() === roleNom.toUpperCase());
+    },
+    canVerifyFonds(demande) {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return false;
+      const authData = JSON.parse(userStr);
+      const user = authData.user || authData;
+      const statut = demande.statut?.toLowerCase();
+      return (statut === 'attente_finance') && (this.hasRole('Comptable') || this.hasRole('Administrateur'));
+    },
+    async verifierFonds(id) {
+      if (!confirm('Voulez-vous vérifier la disponibilité des fonds ?')) return;
+      try {
+        const response = await fetch(`/api/demandes-achat/${id}/verifier-fonds`, {
+          method: 'POST'
+        });
+        if (response.ok) {
+          alert('Disponibilité des fonds confirmée');
+          this.loadData();
+        } else {
+          const errorMsg = await response.text();
+          alert('Erreur: ' + (errorMsg || 'Fonds insuffisants'));
+          this.loadData();
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur de connexion au serveur');
+      }
+    },
+    canApprove(demande) {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return false;
+      const authData = JSON.parse(userStr);
+      const user = authData.user || authData;
 
-const displayValeurStock = computed(() => {
-  const val = kpis.value?.valeurTotaleStock;
-  if (val === null || val === undefined) return '-';
-  const n = Number(val);
-  if (Number.isNaN(n)) return String(val);
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-});
+      if (demande.demandeur && demande.demandeur.id === user.id) return false;
 
-const displayRotation = computed(() => {
-  const val = kpis.value?.tauxRotationStocks;
-  if (val === null || val === undefined) return '-';
-  const n = Number(val);
-  if (Number.isNaN(n)) return String(val);
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-});
-
-const displayFactures = computed(() => {
-  const attente = kpis.value?.facturesEnAttente;
-  const payees = kpis.value?.facturesPayees;
-  if (attente === null || attente === undefined || payees === null || payees === undefined) return '-';
-  return `${attente}/${payees}`;
-});
-
-const periode = ref('mois');
-const refreshing = ref(false);
-const lastUpdated = ref(new Date());
-
-const achatsLoading = ref(false);
-const achatsError = ref(null);
-const achatsDashboard = ref(null);
-
-const achatKpis = computed(() => achatsDashboard.value?.achatKpis ?? null);
-const achatCharts = computed(() => achatsDashboard.value?.achatCharts ?? null);
-const achatActions = computed(() => achatsDashboard.value?.achatActions ?? null);
-const achatInsights = computed(() => achatsDashboard.value?.achatInsights ?? null);
-
-const achatDaTotal = computed(() => {
-  const da = achatCharts.value?.daStatut;
-  if (!da) return 0;
-  return (da.brouillon ?? 0) + (da.soumise ?? 0) + (da.validee ?? 0) + (da.rejetee ?? 0);
-});
-
-const achatDaItems = computed(() => {
-  const da = achatCharts.value?.daStatut;
-  if (!da) return [];
-  return [
-    { label: 'Brouillon', value: da.brouillon ?? 0, color: '#94a3b8' },
-    { label: 'Soumise', value: da.soumise ?? 0, color: '#fbbf24' },
-    { label: 'Validée', value: da.validee ?? 0, color: '#10b981' },
-    { label: 'Rejetée', value: da.rejetee ?? 0, color: '#ef4444' },
-  ];
-});
-
-const conformiteColor = computed(() => {
-  const v = achatKpis.value?.conformite?.valeur ?? 0;
-  if (v > 80) return '#10b981';
-  if (v >= 60) return '#f97316';
-  return '#ef4444';
-});
-
-const conformiteBg = computed(() => {
-  const c = conformiteColor.value;
-  const rgb = c === '#10b981' ? '16,185,129' : c === '#f97316' ? '249,115,22' : '239,68,68';
-  return `rgba(${rgb},0.12)`;
-});
-
-const conformiteBadgeClass = computed(() => {
-  const v = achatKpis.value?.conformite?.valeur ?? 0;
-  if (v > 80) return 'text-bg-success';
-  if (v >= 60) return 'text-bg-warning';
-  return 'text-bg-danger';
-});
-
-const periodeLabel = computed(() => {
-  if (periode.value === 'jour') return "Aujourd'hui";
-  if (periode.value === 'semaine') return 'Cette semaine';
-  if (periode.value === 'mois') return 'Ce mois';
-  return 'Cette année';
-});
-
-const lastUpdatedLabel = computed(() => {
-  return lastUpdated.value.toLocaleString();
-});
-
-const loadAchats = async () => {
-  achatsError.value = null;
-  try {
-    achatsLoading.value = true;
-    const { data } = await axios.get('/api/dashboard/achats', { params: { periode: periode.value } });
-    achatsDashboard.value = data;
-    lastUpdated.value = new Date();
-  } catch (e) {
-    achatsError.value = "Impossible de charger le module Achats";
-  } finally {
-    achatsLoading.value = false;
+      const statut = demande.statut?.toLowerCase();
+      if (statut === 'en attente') return this.hasRole('Acheteur') || this.hasRole('Administrateur');
+      if (statut === 'fonds_confirmés' || statut === 'fonds_confirmes') return this.hasRole('Comptable') || this.hasRole('Administrateur');
+      if (statut === 'attente_admin') return this.hasRole('Administrateur');
+      return false;
+    },
+    async approuver(id) {
+      if (!confirm('Voulez-vous approuver cette demande d\'achat ?')) return;
+      try {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+          alert('Utilisateur non connecté');
+          return;
+        }
+        const authData = JSON.parse(userStr);
+        const user = authData.user || authData;
+        const response = await fetch(`/api/demandes-achat/${id}/approuver`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ validateurId: user.id })
+        });
+        if (response.ok) {
+          const updatedDemande = await response.json();
+          const newStatus = updatedDemande.statut;
+          let message = 'Demande approuvée avec succès';
+          
+          if (newStatus === 'attente_finance') {
+            message = 'Approbation N1 réussie. En attente de la Finance.';
+          } else if (newStatus === 'attente_admin') {
+            message = 'Approbation N2 réussie. En attente de l\'Administration.';
+          } else if (newStatus === 'approuvé' || newStatus === 'approuve') {
+            message = 'Demande approuvée définitivement.';
+          }
+          
+          alert(message);
+          this.loadData();
+        } else {
+          const errorMsg = await response.text();
+          alert('Erreur lors de l\'approbation : ' + errorMsg);
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur de connexion au serveur');
+      }
+    },
+    getStatutClass(statut) {
+      const s = statut?.toLowerCase();
+      if (s === 'approuvé' || s === 'approuve' || s === 'validee' || s === 'validée') return 'badge bg-success rounded-3 fw-semibold';
+      if (s === 'en attente' || s === 'soumise') return 'badge bg-warning rounded-3 fw-semibold';
+      if (s === 'attente_finance') return 'badge bg-primary rounded-3 fw-semibold';
+      if (s === 'attente_admin') return 'badge bg-indigo rounded-3 fw-semibold';
+      if (s === 'rejeté' || s === 'rejete' || s === 'rejetee') return 'badge bg-danger rounded-3 fw-semibold';
+      if (s === 'transformé' || s === 'transforme') return 'badge bg-primary rounded-3 fw-semibold';
+      return 'badge bg-secondary rounded-3 fw-semibold';
+    }
   }
 };
-
-const refreshAchats = async () => {
-  try {
-    refreshing.value = true;
-    await loadAchats();
-  } finally {
-    refreshing.value = false;
-  }
-};
-
-const onCardClick = (key) => {
-  console.log('Dashboard achats card click:', key);
-};
-
-const onActionClick = (key) => {
-  console.log('Dashboard achats action click:', key);
-};
-
-onMounted(async () => {
-  try {
-    const { data } = await axios.get('/api/dashboard/kpis');
-    kpis.value = data;
-    await loadAchats();
-  } catch (e) {
-    error.value = "Impossible de charger les KPIs";
-  } finally {
-    loading.value = false;
-  }
-});
-
-watch(periode, async () => {
-  await loadAchats();
-});
 </script>
-
-<style scoped>
-.round-40 {
-  width: 40px;
-  height: 40px;
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-.achat-section {
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.04));
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-}
-
-.achat-section-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #1d4ed8;
-  background: rgba(59, 130, 246, 0.12);
-  font-size: 20px;
-}
-
-.achat-section-heading {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
-.achat-section-subheading {
-  color: rgba(42, 53, 71, 0.7);
-}
-
-.achat-updated {
-  font-size: 12px;
-}
-
-.achat-refresh {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.achat-spin {
-  animation: spin 0.9s linear infinite;
-}
-
-.achat-kpi-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  display: flex;
-  min-height: 130px;
-}
-
-.achat-kpi-left {
-  width: 10px;
-  border-left: 4px solid transparent;
-}
-
-.achat-kpi-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  font-size: 20px;
-}
-
-.achat-kpi-dot {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: #ef4444;
-  border: 2px solid #fff;
-}
-
-.achat-kpi-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: #ef4444;
-  color: #fff;
-  font-size: 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  border: 2px solid #fff;
-}
-
-.achat-kpi-content {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-grow: 1;
-}
-
-.achat-kpi-label {
-  font-size: 13px;
-  color: rgba(42, 53, 71, 0.75);
-  font-weight: 700;
-}
-
-.achat-kpi-value {
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1.1;
-  color: #111827;
-}
-
-.achat-kpi-desc {
-  font-size: 13px;
-  color: rgba(42, 53, 71, 0.75);
-}
-
-.achat-kpi-trend {
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.achat-kpi-trend-text {
-  font-size: 12px;
-}
-
-.achat-kpi-hint {
-  font-size: 12px;
-  color: rgba(42, 53, 71, 0.6);
-}
-
-.achat-hover {
-  transition: transform 180ms ease, box-shadow 180ms ease;
-}
-
-.achat-hover:hover,
-.achat-hover:focus {
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.12);
-  outline: none;
-}
-
-.achat-card {
-  border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-}
-
-.achat-donut {
-  width: 220px;
-  height: 220px;
-  border-radius: 999px;
-  background: conic-gradient(#10b981 0 56%, #fbbf24 56% 74%, #94a3b8 74% 92%, #ef4444 92% 100%);
-  position: relative;
-}
-
-.achat-donut-center {
-  position: absolute;
-  inset: 34px;
-  background: #fff;
-  border-radius: 999px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
-}
-
-.achat-donut-total {
-  font-size: 28px;
-  font-weight: 800;
-}
-
-.achat-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.achat-legend-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.achat-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-}
-
-.achat-area {
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.12), rgba(16, 185, 129, 0.05));
-  padding: 12px;
-  overflow: hidden;
-}
-
-.achat-area-grid {
-  height: 220px;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
-  align-items: end;
-}
-
-.achat-area-bar {
-  position: relative;
-  height: 100%;
-}
-
-.achat-area-fill {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: calc(var(--h) * 1.8px);
-  border-radius: 10px;
-  background: rgba(59, 130, 246, 0.55);
-}
-
-.achat-area-fill2 {
-  position: absolute;
-  bottom: 0;
-  left: 6px;
-  right: 6px;
-  height: calc(var(--h2) * 0.55px);
-  border-radius: 10px;
-  background: rgba(16, 185, 129, 0.55);
-}
-
-.achat-area-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translate(-50%, -10px);
-  width: 120px;
-  padding: 10px;
-  border-radius: 12px;
-  background: rgba(17, 24, 39, 0.92);
-  color: #fff;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 150ms ease;
-}
-
-.achat-area-bar:hover .achat-area-tooltip {
-  opacity: 1;
-}
-
-.achat-mini-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.achat-kpi-big {
-  font-size: 28px;
-  font-weight: 800;
-  color: #111827;
-}
-
-.achat-stacked-bar {
-  display: flex;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.achat-stacked-seg {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: #fff;
-  font-weight: 700;
-  padding: 6px 0;
-}
-
-.achat-funnel {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.achat-funnel-step {
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  background: rgba(255, 255, 255, 0.6);
-  padding: 10px;
-}
-
-.achat-funnel-bar {
-  height: 10px;
-  border-radius: 999px;
-  width: calc(var(--w) * 1%);
-  background: var(--c);
-  margin-top: 8px;
-}
-
-.achat-suppliers {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.achat-supplier-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  background: rgba(255, 255, 255, 0.6);
-}
-
-.achat-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 800;
-}
-
-.achat-supplier-bar {
-  background: linear-gradient(90deg, #8b5cf6, #ec4899);
-}
-
-.achat-alert-card {
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.09);
-  overflow: hidden;
-}
-
-.achat-alert-urgent {
-  background: linear-gradient(135deg, #ef4444, #f97316);
-}
-
-.achat-alert-activity {
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.02));
-}
-
-.achat-alert-performance {
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
-}
-
-.achat-alert-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.achat-alert-item {
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.achat-activity-mini {
-  height: 60px;
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.achat-activity-bar {
-  width: 100%;
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.8), rgba(59, 130, 246, 0.25));
-}
-
-.achat-metric {
-  padding: 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  background: rgba(255, 255, 255, 0.6);
-}
-
-.achat-metric-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.achat-insights {
-  background: linear-gradient(135deg, #1e3a8a, #6d28d9);
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.18);
-}
-
-.achat-insights-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.14);
-  font-size: 20px;
-}
-
-.achat-insights-box {
-  border-radius: 16px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.achat-insights-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.achat-insight {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.achat-gauge {
-  --pct: 0;
-  --gauge: #10b981;
-  width: 96px;
-  height: 96px;
-  border-radius: 999px;
-  background: conic-gradient(var(--gauge) calc(var(--pct) * 1%), rgba(0,0,0,0.08) 0);
-  position: relative;
-  flex: 0 0 auto;
-}
-
-.achat-gauge--semi {
-  width: 220px;
-  height: 110px;
-  border-radius: 220px 220px 0 0;
-  overflow: hidden;
-}
-
-.achat-gauge--semi::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: conic-gradient(from 180deg, var(--gauge) calc(var(--pct) * 1%), rgba(0,0,0,0.08) 0);
-}
-
-.achat-gauge--semi .achat-gauge-inner {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  width: 180px;
-  height: 90px;
-  border-radius: 180px 180px 0 0;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
-}
-
-.achat-gauge-inner {
-  position: absolute;
-  inset: 10px;
-  background: #fff;
-  border-radius: 999px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
-}
-
-.achat-gauge-value {
-  font-weight: 800;
-}
-
-.achat-gauge-sub {
-  font-size: 12px;
-  color: rgba(42, 53, 71, 0.7);
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-</style>
