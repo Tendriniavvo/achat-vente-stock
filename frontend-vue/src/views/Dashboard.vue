@@ -160,30 +160,35 @@
           </div>
         </div>
 
-        <!-- 3. Délai Moyen d'Approbation (KPI) -->
+        <!-- 3. Efficacité Approbation (KPI Réel) -->
         <div class="col-12 col-xl-4">
           <div class="card achat-alert-card achat-alert-performance h-100 border-0 shadow-sm bg-light-primary">
             <div class="card-body">
               <div class="d-flex align-items-start justify-content-between mb-4">
                 <div>
                   <div class="fw-bold fs-5">Efficacité Approbation</div>
-                  <div class="text-muted small">Délai moyen de traitement</div>
+                  <div class="text-muted small">Délai moyen réel (Base de données)</div>
                 </div>
                 <i class="ti ti-clock-play fs-2 text-primary"></i>
               </div>
               
               <div class="text-center py-4">
-                <h1 class="display-4 fw-bold text-primary mb-2">{{ statistiques.delaiMoyenApprobation || '2.4j' }}</h1>
+                <h1 class="display-4 fw-bold text-primary mb-2">{{ statistiques.delaiMoyenApprobation || '0.0 jours' }}</h1>
                 <p class="text-muted">Temps moyen entre soumission et validation finale</p>
               </div>
 
               <div class="mt-4 pt-2 border-top">
                 <div class="d-flex justify-content-between align-items-center">
                   <span class="text-muted small">Objectif cible</span>
-                  <span class="badge bg-success-subtle text-success rounded-pill">Sous contrôle</span>
+                  <span class="badge rounded-pill" 
+                    :class="`bg-${statistiques.efficaciteColor || 'success'}-subtle text-${statistiques.efficaciteColor || 'success'}`">
+                    {{ statistiques.efficaciteStatus || 'Sous contrôle' }}
+                  </span>
                 </div>
                 <div class="progress mt-2" style="height: 6px;">
-                  <div class="progress-bar bg-primary" style="width: 75%"></div>
+                  <div class="progress-bar" 
+                    :class="`bg-${statistiques.efficaciteColor || 'primary'}`"
+                    :style="{ width: (statistiques.efficaciteProgress || 0) + '%' }"></div>
                 </div>
               </div>
             </div>
@@ -191,7 +196,136 @@
         </div>
       </div>
 
-      <!-- Row 3: Recent Demandes d'Achat -->
+      <!-- Section: Gestion du Stock (Nouvelle) -->
+      <div class="row g-3 g-md-4 mt-1 mb-4">
+        <div class="col-12">
+          <h5 class="fw-semibold mb-3 d-flex align-items-center">
+            <i class="ti ti-package me-2 text-primary"></i> Gestion du Stock
+          </h5>
+        </div>
+        
+        <!-- 1. Valeur Totale du Stock -->
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="p-3 bg-light-primary rounded-3">
+                  <i class="ti ti-database-dollar fs-6 text-primary"></i>
+                </div>
+                <div class="text-end">
+                  <span class="text-muted small">Valeur Totale</span>
+                  <div class="d-flex align-items-center justify-content-end text-success small">
+                    <i class="ti ti-trending-up me-1"></i>
+                    <span>{{ statistiques.stockTrend || '+5.2%' }}</span>
+                  </div>
+                </div>
+              </div>
+              <h3 class="fw-bold mb-1">{{ formatCurrency(statistiques.valeurTotaleStock || 0) }}</h3>
+              <p class="text-muted small mb-0">Somme valorisée du stock</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Rotation des Stocks -->
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="p-3 rounded-3" :class="`bg-light-${statistiques.rotationStatus || 'success'}`">
+                  <i class="ti ti-refresh fs-6" :class="`text-${statistiques.rotationStatus || 'success'}`"></i>
+                </div>
+                <div class="text-end">
+                  <span class="text-muted small">Rotation</span>
+                  <span :class="`badge bg-${statistiques.rotationStatus || 'success'}-subtle text-${statistiques.rotationStatus || 'success'} rounded-pill ms-2`">
+                    {{ getRotationLabel(statistiques.rotationStatus) }}
+                  </span>
+                </div>
+              </div>
+              <div class="d-flex align-items-baseline">
+                <h3 class="fw-bold mb-1">{{ statistiques.rotationStock || '0.0' }}</h3>
+                <span class="ms-2 text-muted small">fois par an</span>
+              </div>
+              <div class="mt-2">
+                <div class="progress" style="height: 4px;">
+                  <div class="progress-bar" 
+                    :class="`bg-${statistiques.rotationStatus || 'success'}`" 
+                    :style="{ width: getRotationProgress(statistiques.rotationStock) + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Répartition du Stock par Dépôt (Horizontal Stacked Bar) -->
+        <div class="col-12 col-xl-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0">Répartition par Dépôt (MGA)</h6>
+                <i class="ti ti-building-warehouse text-muted"></i>
+              </div>
+              <apexchart 
+                type="bar" 
+                height="150" 
+                :options="stockDepotOptions" 
+                :series="stockDepotSeries"
+              ></apexchart>
+              <div class="mt-3 d-flex flex-wrap gap-3 justify-content-center small text-muted">
+                <div v-for="(depot, idx) in stockDepotLabels" :key="idx" class="d-flex align-items-center">
+                  <span class="d-inline-block rounded-circle me-1" :style="{width: '8px', height: '8px', backgroundColor: stockDepotColors[idx]}"></span>
+                  {{ depot }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Consommation Budgétaire (Gauge Charts) -->
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                  <h6 class="fw-bold mb-0">Consommation Budgétaire par Département</h6>
+                  <p class="text-muted small mb-0">% du budget annuel consommé</p>
+                </div>
+                <i class="ti ti-chart-pie text-primary fs-6"></i>
+              </div>
+              
+              <div class="row g-4">
+                <div v-for="dept in statistiques.budgetConsommation" :key="dept.departement" class="col-12 col-md-4 col-xl-3">
+                  <div class="text-center p-3 border rounded-3 bg-light-subtle h-100">
+                    <h6 class="fw-semibold mb-3">{{ dept.departement }}</h6>
+                    <apexchart 
+                      type="radialBar" 
+                      height="200" 
+                      :options="getGaugeOptions(dept.pourcentage)" 
+                      :series="[dept.pourcentage]"
+                    ></apexchart>
+                    <div class="mt-2">
+                      <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">Consommé:</span>
+                        <span class="fw-bold">{{ formatCurrency(dept.consomme) }}</span>
+                      </div>
+                      <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Total:</span>
+                        <span class="fw-bold">{{ formatCurrency(dept.initial) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="!statistiques.budgetConsommation || statistiques.budgetConsommation.length === 0" class="col-12 text-center py-4">
+                  <p class="text-muted">Aucune donnée budgétaire disponible</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- Row 4: Recent Demandes d'Achat -->
       <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">
           <div class="card w-100">
@@ -345,6 +479,22 @@ export default {
         tooltip: {
           y: { formatter: function (val) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA' }).format(val) } }
         }
+      },
+      // Options Stock par Dépôt
+      stockDepotSeries: [],
+      stockDepotLabels: [],
+      stockDepotColors: ['#5D87FF', '#13DEB9', '#FFAE1F', '#FA896B', '#49BEFF'],
+      stockDepotOptions: {
+        chart: { type: 'bar', stacked: true, stackType: '100%', toolbar: { show: false }, fontFamily: 'inherit' },
+        plotOptions: { bar: { horizontal: true, barHeight: '35%', borderRadius: 0 } },
+        stroke: { width: 1, colors: ['#fff'] },
+        xaxis: { categories: ['Valeur Stock'], labels: { show: false }, axisBorder: { show: false } },
+        yaxis: { labels: { show: false } },
+        tooltip: {
+          y: { formatter: function (val) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA' }).format(val) } }
+        },
+        fill: { opacity: 1 },
+        legend: { show: false }
       }
     };
   },
@@ -380,6 +530,19 @@ export default {
             xaxis: { categories: this.statistiques.topFournisseurs.map(f => f.nom) } 
           };
           this.barSeries = [{ name: 'Volume Achat', data: this.statistiques.topFournisseurs.map(f => f.volume) }];
+        }
+
+        // Mise à jour Stock par Dépôt
+        if (this.statistiques.repartitionStockDepot) {
+          this.stockDepotLabels = Object.keys(this.statistiques.repartitionStockDepot);
+          this.stockDepotSeries = this.stockDepotLabels.map(depotName => {
+            const categories = this.statistiques.repartitionStockDepot[depotName];
+            const totalDepot = Object.values(categories).reduce((sum, val) => sum + val, 0);
+            return {
+              name: depotName,
+              data: [totalDepot]
+            };
+          });
         }
 
       } catch (err) {
@@ -503,6 +666,42 @@ export default {
       if (s === 'rejeté' || s === 'rejete' || s === 'rejetee') return 'badge bg-danger rounded-3 fw-semibold';
       if (s === 'transformé' || s === 'transforme') return 'badge bg-primary rounded-3 fw-semibold';
       return 'badge bg-secondary rounded-3 fw-semibold';
+    },
+    getRotationLabel(status) {
+      if (status === 'success') return 'Optimal';
+      if (status === 'warning') return 'Moyen';
+      if (status === 'danger') return 'Faible';
+      return 'N/A';
+    },
+    getRotationProgress(value) {
+      if (!value) return 0;
+      const val = parseFloat(value);
+      return Math.min(100, val * 25); // 4.0 = 100%
+    },
+    getGaugeOptions(pourcentage) {
+      let color = '#5D87FF'; // Primary
+      if (pourcentage >= 90) color = '#FA896B'; // Danger
+      else if (pourcentage >= 75) color = '#FFAE1F'; // Warning
+      else color = '#13DEB9'; // Success
+
+      return {
+        chart: { type: 'radialBar', sparkline: { enabled: true } },
+        plotOptions: {
+          radialBar: {
+            startAngle: -90,
+            endAngle: 90,
+            hollow: { size: '70%' },
+            track: { background: "#e7e7e7", strokeWidth: '97%', margin: 5 },
+            dataLabels: {
+              name: { show: false },
+              value: { offsetY: -2, fontSize: '16px', fontWeight: 'bold' }
+            }
+          }
+        },
+        grid: { padding: { top: -10 } },
+        fill: { colors: [color] },
+        labels: ['Consommation'],
+      };
     }
   }
 };
@@ -515,10 +714,28 @@ export default {
 .achat-alert-card:hover {
   transform: translateY(-5px);
 }
-.bg-light-primary {
-  background-color: #ecf2ff !important;
+.bg-light-success {
+  background-color: #e6fffa !important;
 }
-.display-4 {
+.bg-light-warning {
+  background-color: #fef5e5 !important;
+}
+.bg-light-danger {
+  background-color: #fdede8 !important;
+}
+.text-success {
+  color: #13deb9 !important;
+}
+.text-warning {
+  color: #ffae1f !important;
+}
+.text-danger {
+  color: #fa896b !important;
+}
+  .bg-light-primary {
+    background-color: #ecf2ff !important;
+  }
+  .display-4 {
   font-size: 2.5rem;
 }
 @media (min-width: 1200px) {
