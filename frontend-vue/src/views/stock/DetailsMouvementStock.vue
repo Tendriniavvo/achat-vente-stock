@@ -57,6 +57,15 @@
             </div>
 
             <div class="d-flex justify-content-end mb-3">
+              <router-link
+                :to="`/stock/mouvements/${mouvement.id}/edit`"
+                class="btn btn-outline-primary me-2"
+                :class="{ disabled: (mouvement.statut || '').toUpperCase() === 'VALIDE' }"
+                :aria-disabled="(mouvement.statut || '').toUpperCase() === 'VALIDE'"
+                :tabindex="(mouvement.statut || '').toUpperCase() === 'VALIDE' ? -1 : 0"
+              >
+                <i class="ti ti-pencil me-1"></i> Modifier
+              </router-link>
               <button
                 class="btn btn-success"
                 :disabled="(mouvement.statut || '').toUpperCase() === 'VALIDE'"

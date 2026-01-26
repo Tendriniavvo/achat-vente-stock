@@ -112,6 +112,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/stock/mouvements/:id/edit',
+      name: 'stock-mouvements-edit',
+      component: () => import('../views/stock/CreateMouvementStock.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/stock/mouvements/:id',
       name: 'stock-mouvements-details',
       component: () => import('../views/stock/DetailsMouvementStock.vue'),

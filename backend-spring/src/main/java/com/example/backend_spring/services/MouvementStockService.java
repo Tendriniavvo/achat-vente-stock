@@ -154,7 +154,7 @@ public class MouvementStockService {
                 throw new IllegalArgumentException("Coût unitaire obligatoire sur une entrée");
             }
             Emplacement emplacement = resolveAndValidateEmplacement(mouvement, ligne);
-            controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), true);
+            controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), true, false);
             deltaValeur = deltaValeur.add(appliquerVariationStock(
                     ligne,
                     mouvement.getDepot(),
@@ -176,7 +176,7 @@ public class MouvementStockService {
                 throw new IllegalArgumentException("Quantité sortie invalide");
             }
             Emplacement emplacement = resolveAndValidateEmplacement(mouvement, ligne);
-            controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), true);
+            controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), true, false);
             deltaValeur = deltaValeur.add(appliquerVariationStock(
                     ligne,
                     mouvement.getDepot(),
@@ -204,7 +204,7 @@ public class MouvementStockService {
                 throw new IllegalArgumentException("Quantité transfert invalide");
             }
             Emplacement emplacementSource = resolveAndValidateEmplacement(mouvement, ligne);
-            controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), true);
+            controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), true, false);
 
             deltaValeur = deltaValeur.add(appliquerVariationStock(ligne, mouvement.getDepot(), emplacementSource, -ligne.getQuantite(), ligne.getCoutUnitaire()));
 
@@ -224,7 +224,8 @@ public class MouvementStockService {
             }
             Emplacement emplacement = resolveAndValidateEmplacement(mouvement, ligne);
             boolean requireLot = ligne.getQuantite() < 0;
-            controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), requireLot);
+            boolean allowNonConformeOuExpire = ligne.getQuantite() < 0;
+            controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), requireLot, allowNonConformeOuExpire);
             deltaValeur = deltaValeur.add(appliquerVariationStock(
                     ligne,
                     mouvement.getDepot(),
@@ -318,11 +319,14 @@ public class MouvementStockService {
         return nouvelleValeur.subtract(ancienneValeur);
     }
 
-    private void controlerLotEtTraçabilite(Article article, Lot lot, boolean lotObligatoire) {
+    private void controlerLotEtTraçabilite(Article article, Lot lot, boolean lotObligatoire, boolean allowNonConformeOuExpire) {
         if (article != null && article.isTraceableLot() && lotObligatoire && lot == null) {
             throw new IllegalArgumentException("Lot obligatoire pour l'article traçable: " + article.getCode());
         }
         if (lot == null) {
+            return;
+        }
+        if (allowNonConformeOuExpire) {
             return;
         }
         if (!lot.isConforme()) {

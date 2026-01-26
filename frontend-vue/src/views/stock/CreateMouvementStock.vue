@@ -4,7 +4,7 @@
       <div class="card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="card-title fw-semibold mb-0">Nouveau Mouvement de Stock</h5>
+            <h5 class="card-title fw-semibold mb-0">{{ isEditMode ? 'Modifier Mouvement de Stock' : 'Nouveau Mouvement de Stock' }}</h5>
             <router-link to="/stock/mouvements" class="btn btn-secondary">
               <i class="ti ti-arrow-left"></i> Retour
             </router-link>
@@ -157,6 +157,9 @@ export default {
   components: { MainLayout },
   data() {
     return {
+      mouvementId: null,
+      mouvementReference: null,
+      mouvementStatut: null,
       depots: [],
       emplacements: [],
       articles: [],
@@ -177,6 +180,9 @@ export default {
     };
   },
   computed: {
+    isEditMode() {
+      return !!this.$route?.params?.id && String(this.$route.path || '').includes('/edit');
+    },
     emplacementsFiltres() {
       if (!this.form.depotId) return this.emplacements;
       return this.emplacements.filter(e => e.depot?.id === this.form.depotId || e.depotId === this.form.depotId);
@@ -217,9 +223,61 @@ export default {
         this.emplacements = emplRes.data;
         this.articles = articlesRes.data;
         this.lots = lotsRes.data;
+
+        if (this.isEditMode) {
+          await this.loadExistingMouvement();
+        }
       } catch (e) {
         console.error('Erreur chargement données mouvement:', e);
         this.errorMessage = 'Erreur lors du chargement des données (dépôts, emplacements, articles, lots).';
+      }
+    },
+    async loadExistingMouvement() {
+      const id = this.$route?.params?.id;
+      if (!id) return;
+      try {
+        const res = await axios.get(`/api/mouvements-stock/${id}`);
+        const m = res.data;
+        if (!m) {
+          this.errorMessage = 'Mouvement introuvable.';
+          return;
+        }
+
+        this.mouvementId = m.id;
+        this.mouvementReference = m.reference || null;
+        this.mouvementStatut = m.statut || null;
+
+        this.form.type = m.type || '';
+        this.form.depotId = m.depot?.id || '';
+        this.form.emplacementId = m.emplacement?.id || '';
+        this.form.depotDestinationId = m.depotDestination?.id || '';
+        this.form.emplacementDestinationId = m.emplacementDestination?.id || '';
+        this.form.referenceDocument = m.referenceDocument || '';
+        this.form.motif = m.motif || '';
+
+        const loadedLines = (m.lignes && m.lignes.length)
+          ? m.lignes
+          : [{
+              id: null,
+              article: m.article,
+              quantite: m.quantite,
+              coutUnitaire: m.cout,
+              lot: m.lot
+            }];
+
+        this.lignes = loadedLines.map(l => ({
+          id: l.id || null,
+          articleId: l.article?.id || '',
+          quantite: l.quantite || 1,
+          coutUnitaire: l.coutUnitaire ?? null,
+          lotId: l.lot?.id || ''
+        }));
+        if (!this.lignes.length) {
+          this.lignes = [{ id: null, articleId: '', quantite: 1, coutUnitaire: null, lotId: '' }];
+        }
+      } catch (e) {
+        console.error('Erreur chargement mouvement à modifier:', e);
+        this.errorMessage = 'Erreur lors du chargement du mouvement à modifier.';
       }
     },
     buildPayload() {
@@ -228,6 +286,9 @@ export default {
       const user = auth?.user;
 
       const mouvement = {
+        id: this.isEditMode ? this.mouvementId : undefined,
+        reference: this.isEditMode ? this.mouvementReference : undefined,
+        statut: this.isEditMode ? this.mouvementStatut : undefined,
         type: this.form.type,
         referenceDocument: this.form.referenceDocument || null,
         motif: this.form.motif || null,
@@ -237,6 +298,7 @@ export default {
         emplacementDestination: this.form.emplacementDestinationId ? { id: this.form.emplacementDestinationId } : null,
         utilisateur: user?.id ? { id: user.id } : null,
         lignes: this.lignes.map(l => ({
+          id: this.isEditMode ? (l.id || undefined) : undefined,
           article: l.articleId ? { id: l.articleId } : null,
           quantite: l.quantite,
           coutUnitaire: l.coutUnitaire !== null && l.coutUnitaire !== '' ? l.coutUnitaire : null,
@@ -279,14 +341,14 @@ export default {
       try {
         const payload = this.buildPayload();
         const res = await axios.post('/api/mouvements-stock', payload);
-        this.successMessage = 'Mouvement créé avec succès.';
+        this.successMessage = this.isEditMode ? 'Mouvement modifié avec succès.' : 'Mouvement créé avec succès.';
 
         setTimeout(() => {
           this.$router.push(`/stock/mouvements/${res.data.id}`);
         }, 800);
       } catch (e) {
         console.error('Erreur création mouvement:', e);
-        this.errorMessage = 'Erreur lors de la création du mouvement.';
+        this.errorMessage = this.isEditMode ? 'Erreur lors de la modification du mouvement.' : 'Erreur lors de la création du mouvement.';
       } finally {
         this.isSubmitting = false;
       }

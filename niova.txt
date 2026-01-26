@@ -4,4 +4,8 @@ MouvementStockService
 
 
 MouvementStocke(vue)
+CreateMouvementStock.vue
 DetailsMouvementStock.vue
+
+
+router/index.js
