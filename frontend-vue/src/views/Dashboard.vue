@@ -160,32 +160,23 @@
           </div>
         </div>
 
-        <!-- 3. Délai Moyen d'Approbation (KPI) -->
+        <!-- 3. Top 5 Articles les plus vendus (Horizontal Bar Chart) -->
         <div class="col-12 col-xl-4">
-          <div class="card achat-alert-card achat-alert-performance h-100 border-0 shadow-sm bg-light-primary">
+          <div class="card achat-alert-card h-100 border-0 shadow-sm">
             <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between mb-4">
+              <div class="d-flex align-items-start justify-content-between mb-3">
                 <div>
-                  <div class="fw-bold fs-5">Efficacité Approbation</div>
-                  <div class="text-muted small">Délai moyen de traitement</div>
+                  <div class="fw-bold fs-5">Gestion des Ventes</div>
+                  <div class="text-muted small">Top 5 Articles les plus vendus</div>
                 </div>
-                <i class="ti ti-clock-play fs-2 text-primary"></i>
+                <i class="ti ti-shopping-cart fs-2 text-primary"></i>
               </div>
-              
-              <div class="text-center py-4">
-                <h1 class="display-4 fw-bold text-primary mb-2">{{ statistiques.delaiMoyenApprobation || '2.4j' }}</h1>
-                <p class="text-muted">Temps moyen entre soumission et validation finale</p>
-              </div>
-
-              <div class="mt-4 pt-2 border-top">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="text-muted small">Objectif cible</span>
-                  <span class="badge bg-success-subtle text-success rounded-pill">Sous contrôle</span>
-                </div>
-                <div class="progress mt-2" style="height: 6px;">
-                  <div class="progress-bar bg-primary" style="width: 75%"></div>
-                </div>
-              </div>
+              <apexchart 
+                type="bar" 
+                height="250" 
+                :options="topArticlesOptions" 
+                :series="topArticlesSeries"
+              ></apexchart>
             </div>
           </div>
         </div>
@@ -342,9 +333,17 @@ export default {
         dataLabels: { enabled: false },
         xaxis: { categories: [] },
         colors: ['#13DEB9'],
-        tooltip: {
-          y: { formatter: function (val) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA' }).format(val) } }
-        }
+        tooltip: { theme: 'light' }
+      },
+      // Options Top Articles Chart
+      topArticlesSeries: [],
+      topArticlesOptions: {
+        chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'inherit' },
+        plotOptions: { bar: { borderRadius: 4, horizontal: true, barHeight: '50%' } },
+        dataLabels: { enabled: false },
+        xaxis: { categories: [] },
+        colors: ['#5D87FF'],
+        tooltip: { theme: 'light' }
       }
     };
   },
@@ -380,6 +379,20 @@ export default {
             xaxis: { categories: this.statistiques.topFournisseurs.map(f => f.nom) } 
           };
           this.barSeries = [{ name: 'Volume Achat', data: this.statistiques.topFournisseurs.map(f => f.volume) }];
+        }
+
+        // Mise à jour Top Articles (Gestion des Ventes)
+        if (this.statistiques.topArticlesVendus) {
+          this.topArticlesSeries = [{
+            name: 'Quantité vendue',
+            data: this.statistiques.topArticlesVendus.map(a => a.quantite)
+          }];
+          this.topArticlesOptions = {
+            ...this.topArticlesOptions,
+            xaxis: {
+              categories: this.statistiques.topArticlesVendus.map(a => a.nom)
+            }
+          };
         }
 
       } catch (err) {

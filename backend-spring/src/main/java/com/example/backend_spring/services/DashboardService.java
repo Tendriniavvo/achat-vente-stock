@@ -1,11 +1,7 @@
 package com.example.backend_spring.services;
 
-import com.example.backend_spring.models.BonCommandeFournisseur;
-import com.example.backend_spring.models.CommandeClient;
-import com.example.backend_spring.models.Stock;
-import com.example.backend_spring.repositories.BonCommandeFournisseurRepository;
-import com.example.backend_spring.repositories.CommandeClientRepository;
-import com.example.backend_spring.repositories.DemandeAchatRepository;
+import com.example.backend_spring.models.*;
+import com.example.backend_spring.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +17,17 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
+    // Constantes pour la configuration du KPI Efficacité Approbation (si réutilisé plus tard)
+    private static final double OFFSET_JOURS_ADMIN = 1.2; 
+    private static final double SEUIL_SOUS_CONTROLE = 3.0;
+    private static final double FACTEUR_SCORE_EFFICACITE = 10.0;
 
     private final StockService stockService;
     private final DemandeAchatRepository demandeAchatRepository;
     private final CommandeClientRepository commandeClientRepository;
     private final BonCommandeFournisseurRepository bonCommandeFournisseurRepository;
     private final BudgetService budgetService;
+    private final LigneCommandeClientRepository ligneCommandeClientRepository;
 
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
@@ -88,9 +89,25 @@ public class DashboardService {
                 .collect(Collectors.toList());
         stats.put("topFournisseurs", topFournisseurs);
 
-        // 3. Délai Moyen d'Approbation (Simulé ou calculé si dates dispos)
-        // Ici on met une valeur fixe ou un calcul simple pour l'exemple
-        stats.put("delaiMoyenApprobation", "2.4 jours");
+        // 3. Top 5 Articles les plus vendus (Gestion des Ventes)
+        Map<String, Integer> ventesParArticle = ligneCommandeClientRepository.findAll().stream()
+                .filter(l -> l.getArticle() != null)
+                .collect(Collectors.groupingBy(
+                        l -> l.getArticle().getNom(),
+                        Collectors.summingInt(LigneCommandeClient::getQuantite)
+                ));
+
+        List<Map<String, Object>> topArticles = ventesParArticle.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(5)
+                .map(entry -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("nom", entry.getKey());
+                    m.put("quantite", entry.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+        stats.put("topArticlesVendus", topArticles);
 
         return stats;
     }
