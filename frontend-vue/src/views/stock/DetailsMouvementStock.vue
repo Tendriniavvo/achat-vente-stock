@@ -157,7 +157,7 @@ export default {
       this.errorMessage = '';
       try {
         const id = this.$route.params.id;
-        const res = await axios.get(`/api/mouvements-stock/${id}`);
+        const res = await axios.get(`http://localhost:8080/api/mouvements-stock/${id}`);
         this.mouvement = res.data;
       } catch (e) {
         console.error('Erreur chargement mouvement:', e);
@@ -169,7 +169,7 @@ export default {
     async valider() {
       if (!this.mouvement?.id) return;
       try {
-        await axios.post(`/api/mouvements-stock/${this.mouvement.id}/valider`);
+        await axios.post(`http://localhost:8080/api/mouvements-stock/${this.mouvement.id}/valider`);
         this.successMessage = 'Mouvement validé.';
         await this.load();
         setTimeout(() => (this.successMessage = ''), 3000);

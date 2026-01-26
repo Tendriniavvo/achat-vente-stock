@@ -116,7 +116,7 @@ export default {
       this.isLoading = true;
       this.errorMessage = '';
       try {
-        const res = await axios.get('http://localhost:8080/api/mouvements-stock');
+        const res = await axios.get('/api/mouvements-stock');
         this.mouvements = res.data;
       } catch (e) {
         console.error('Erreur chargement mouvements:', e);
@@ -128,13 +128,16 @@ export default {
     async valider(m) {
       if (!m?.id) return;
       try {
-        await axios.post(`http://localhost:8080/api/mouvements-stock/${m.id}/valider`);
+        await axios.post(`/api/mouvements-stock/${m.id}/valider`);
         this.successMessage = `Mouvement ${m.reference || ('#' + m.id)} validé.`;
         await this.load();
         setTimeout(() => (this.successMessage = ''), 3000);
       } catch (e) {
         console.error('Erreur validation mouvement:', e);
-        this.errorMessage = 'Impossible de valider le mouvement (vérifie emplacement, lots, stock disponible).';
+        const msg = e?.response?.headers?.['x-error-message'];
+        this.errorMessage = msg
+          ? `Impossible de valider: ${msg}`
+          : 'Impossible de valider le mouvement (vérifie emplacement, lots, stock disponible).';
       }
     }
   }

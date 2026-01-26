@@ -90,6 +90,10 @@ public class MouvementStockService {
             legacy.setLot(mouvement.getLot());
             legacy.setEmplacement(mouvement.getEmplacement());
             lignes.add(legacy);
+
+            // Important: ne pas remplacer la collection (orphanRemoval=true)
+            // On alimente la collection existante en place.
+            replaceLignesInPlace(mouvement, lignes);
         }
 
         BigDecimal deltaValeur = BigDecimal.ZERO;
@@ -166,7 +170,7 @@ public class MouvementStockService {
     private BigDecimal appliquerSortie(MouvementStock mouvement, List<LigneMouvementStock> lignes) {
         BigDecimal deltaValeur = BigDecimal.ZERO;
         List<LigneMouvementStock> expanded = expandLotsIfNeeded(lignes, true);
-        mouvement.setLignes(expanded);
+        replaceLignesInPlace(mouvement, expanded);
         for (LigneMouvementStock ligne : expanded) {
             if (ligne.getQuantite() <= 0) {
                 throw new IllegalArgumentException("Quantité sortie invalide");
@@ -194,7 +198,7 @@ public class MouvementStockService {
             throw new IllegalArgumentException("Emplacement destination obligatoire pour un transfert");
         }
         List<LigneMouvementStock> expanded = expandLotsIfNeeded(lignes, true);
-        mouvement.setLignes(expanded);
+        replaceLignesInPlace(mouvement, expanded);
         for (LigneMouvementStock ligne : expanded) {
             if (ligne.getQuantite() <= 0) {
                 throw new IllegalArgumentException("Quantité transfert invalide");
@@ -213,7 +217,7 @@ public class MouvementStockService {
     private BigDecimal appliquerAjustement(MouvementStock mouvement, List<LigneMouvementStock> lignes) {
         BigDecimal deltaValeur = BigDecimal.ZERO;
         List<LigneMouvementStock> expanded = expandLotsIfNeeded(lignes, false);
-        mouvement.setLignes(expanded);
+        replaceLignesInPlace(mouvement, expanded);
         for (LigneMouvementStock ligne : expanded) {
             if (ligne.getQuantite() == 0) {
                 continue;
@@ -326,6 +330,23 @@ public class MouvementStockService {
         }
         if (lot.getDateExpiration() != null && lot.getDateExpiration().isBefore(LocalDateTime.now())) {
             throw new IllegalStateException("Lot expiré: " + lot.getNumeroLot());
+        }
+    }
+
+    private void replaceLignesInPlace(MouvementStock mouvement, List<LigneMouvementStock> nouvellesLignes) {
+        if (mouvement.getLignes() == null) {
+            mouvement.setLignes(new ArrayList<>());
+        }
+        mouvement.getLignes().clear();
+        if (nouvellesLignes == null) {
+            return;
+        }
+        for (LigneMouvementStock l : nouvellesLignes) {
+            if (l == null) {
+                continue;
+            }
+            l.setMouvement(mouvement);
+            mouvement.getLignes().add(l);
         }
     }
 
