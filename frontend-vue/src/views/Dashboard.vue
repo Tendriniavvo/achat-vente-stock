@@ -280,6 +280,48 @@
           </div>
         </div>
 
+        <!-- 4. Consommation Budgétaire (Gauge Charts) -->
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                  <h6 class="fw-bold mb-0">Consommation Budgétaire par Département</h6>
+                  <p class="text-muted small mb-0">% du budget annuel consommé</p>
+                </div>
+                <i class="ti ti-chart-pie text-primary fs-6"></i>
+              </div>
+              
+              <div class="row g-4">
+                <div v-for="dept in statistiques.budgetConsommation" :key="dept.departement" class="col-12 col-md-4 col-xl-3">
+                  <div class="text-center p-3 border rounded-3 bg-light-subtle h-100">
+                    <h6 class="fw-semibold mb-3">{{ dept.departement }}</h6>
+                    <apexchart 
+                      type="radialBar" 
+                      height="200" 
+                      :options="getGaugeOptions(dept.pourcentage)" 
+                      :series="[dept.pourcentage]"
+                    ></apexchart>
+                    <div class="mt-2">
+                      <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">Consommé:</span>
+                        <span class="fw-bold">{{ formatCurrency(dept.consomme) }}</span>
+                      </div>
+                      <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Total:</span>
+                        <span class="fw-bold">{{ formatCurrency(dept.initial) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="!statistiques.budgetConsommation || statistiques.budgetConsommation.length === 0" class="col-12 text-center py-4">
+                  <p class="text-muted">Aucune donnée budgétaire disponible</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
 
 
@@ -635,6 +677,31 @@ export default {
       if (!value) return 0;
       const val = parseFloat(value);
       return Math.min(100, val * 25); // 4.0 = 100%
+    },
+    getGaugeOptions(pourcentage) {
+      let color = '#5D87FF'; // Primary
+      if (pourcentage >= 90) color = '#FA896B'; // Danger
+      else if (pourcentage >= 75) color = '#FFAE1F'; // Warning
+      else color = '#13DEB9'; // Success
+
+      return {
+        chart: { type: 'radialBar', sparkline: { enabled: true } },
+        plotOptions: {
+          radialBar: {
+            startAngle: -90,
+            endAngle: 90,
+            hollow: { size: '70%' },
+            track: { background: "#e7e7e7", strokeWidth: '97%', margin: 5 },
+            dataLabels: {
+              name: { show: false },
+              value: { offsetY: -2, fontSize: '16px', fontWeight: 'bold' }
+            }
+          }
+        },
+        grid: { padding: { top: -10 } },
+        fill: { colors: [color] },
+        labels: ['Consommation'],
+      };
     }
   }
 };

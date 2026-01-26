@@ -129,10 +129,28 @@ public class DashboardService {
         stats.put("articlesDormants", articlesDormants);
 
         // KPI Budgets
-        BigDecimal totalBudget = budgetService.getAllBudgets().stream()
+        List<Budget> allBudgets = budgetService.getAllBudgets();
+        BigDecimal totalBudget = allBudgets.stream()
                 .map(b -> b.getMontantDisponible() != null ? b.getMontantDisponible() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         stats.put("totalBudgetDisponible", totalBudget);
+
+        // 5. Consommation Budgétaire par Département (Gauge Chart)
+        List<Map<String, Object>> budgetConsommation = allBudgets.stream()
+                .filter(b -> b.getDepartement() != null && b.getMontantInitial() != null && b.getMontantInitial().compareTo(BigDecimal.ZERO) > 0)
+                .map(b -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("departement", b.getDepartement().getNom());
+                    m.put("initial", b.getMontantInitial());
+                    m.put("consomme", b.getMontantConsomme());
+                    m.put("disponible", b.getMontantDisponible());
+                    
+                    double pourcentage = b.getMontantConsomme().doubleValue() / b.getMontantInitial().doubleValue() * 100;
+                    m.put("pourcentage", Math.round(pourcentage * 10.0) / 10.0);
+                    return m;
+                })
+                .collect(Collectors.toList());
+        stats.put("budgetConsommation", budgetConsommation);
 
         // Nouveaux KPI Achats pour le dashboard enrichi
         

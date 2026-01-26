@@ -9,7 +9,7 @@ npm install @google/genai
 - Valeur Totale du Stock (KPI) : Somme de quantité * prix_achat pour tous les articles. C'est une donnée cruciale pour la comptabilité et la trésorerie.
 - Répartition du Stock par Dépôt (Stacked Bar Chart) : Visualiser comment le stock est distribué géographiquement (Dépôt Principal vs Dépôt Secondaire).
 - Rotation des Stocks (KPI) : Ratio indiquant la vitesse à laquelle le stock est renouvelé.
-- Liste des "Articles Dormants" (Tableau) : Articles n'ayant eu aucun mouvement depuis plus de 30 ou 60 jours, pour éviter le surstockage inutile.
+
 
 
 
