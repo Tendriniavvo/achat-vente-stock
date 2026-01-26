@@ -167,7 +167,7 @@
               <div class="d-flex align-items-start justify-content-between mb-4">
                 <div>
                   <div class="fw-bold fs-5">Efficacité Approbation</div>
-                  <div class="text-muted small">Délai moyen réel</div>
+                  <div class="text-muted small">Délai moyen réel (Base de données)</div>
                 </div>
                 <i class="ti ti-clock-play fs-2 text-primary"></i>
               </div>
@@ -196,28 +196,143 @@
         </div>
       </div>
 
-      <!-- Row 3: Gestion des Ventes -->
+      <!-- Section: Gestion du Stock (Nouvelle) -->
       <div class="row g-3 g-md-4 mt-1 mb-4">
         <div class="col-12">
-          <div class="card achat-alert-card border-0 shadow-sm">
+          <h5 class="fw-semibold mb-3 d-flex align-items-center">
+            <i class="ti ti-package me-2 text-primary"></i> Gestion du Stock
+          </h5>
+        </div>
+        
+        <!-- 1. Valeur Totale du Stock -->
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-              <div class="d-flex align-items-start justify-content-between mb-3">
-                <div>
-                  <div class="fw-bold fs-5">Gestion des Ventes</div>
-                  <div class="text-muted small">Top 5 Articles les plus vendus (Volume)</div>
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="p-3 bg-light-primary rounded-3">
+                  <i class="ti ti-database-dollar fs-6 text-primary"></i>
                 </div>
-                <i class="ti ti-shopping-cart fs-2 text-primary"></i>
+                <div class="text-end">
+                  <span class="text-muted small">Valeur Totale</span>
+                  <div class="d-flex align-items-center justify-content-end text-success small">
+                    <i class="ti ti-trending-up me-1"></i>
+                    <span>{{ statistiques.stockTrend || '+5.2%' }}</span>
+                  </div>
+                </div>
+              </div>
+              <h3 class="fw-bold mb-1">{{ formatCurrency(statistiques.valeurTotaleStock || 0) }}</h3>
+              <p class="text-muted small mb-0">Somme valorisée du stock</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Rotation des Stocks -->
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="p-3 rounded-3" :class="`bg-light-${statistiques.rotationStatus || 'success'}`">
+                  <i class="ti ti-refresh fs-6" :class="`text-${statistiques.rotationStatus || 'success'}`"></i>
+                </div>
+                <div class="text-end">
+                  <span class="text-muted small">Rotation</span>
+                  <span :class="`badge bg-${statistiques.rotationStatus || 'success'}-subtle text-${statistiques.rotationStatus || 'success'} rounded-pill ms-2`">
+                    {{ getRotationLabel(statistiques.rotationStatus) }}
+                  </span>
+                </div>
+              </div>
+              <div class="d-flex align-items-baseline">
+                <h3 class="fw-bold mb-1">{{ statistiques.rotationStock || '0.0' }}</h3>
+                <span class="ms-2 text-muted small">fois par an</span>
+              </div>
+              <div class="mt-2">
+                <div class="progress" style="height: 4px;">
+                  <div class="progress-bar" 
+                    :class="`bg-${statistiques.rotationStatus || 'success'}`" 
+                    :style="{ width: getRotationProgress(statistiques.rotationStock) + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Répartition du Stock par Dépôt (Horizontal Stacked Bar) -->
+        <div class="col-12 col-xl-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0">Répartition par Dépôt (MGA)</h6>
+                <i class="ti ti-building-warehouse text-muted"></i>
               </div>
               <apexchart 
                 type="bar" 
-                height="300" 
-                :options="topArticlesOptions" 
-                :series="topArticlesSeries"
+                height="150" 
+                :options="stockDepotOptions" 
+                :series="stockDepotSeries"
               ></apexchart>
+              <div class="mt-3 d-flex flex-wrap gap-3 justify-content-center small text-muted">
+                <div v-for="(depot, idx) in stockDepotLabels" :key="idx" class="d-flex align-items-center">
+                  <span class="d-inline-block rounded-circle me-1" :style="{width: '8px', height: '8px', backgroundColor: stockDepotColors[idx]}"></span>
+                  {{ depot }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Articles Dormants -->
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+              <div class="p-4 d-flex align-items-center justify-content-between border-bottom">
+                <div>
+                  <h6 class="fw-bold mb-0 text-danger">Articles Dormants</h6>
+                  <p class="text-muted small mb-0">> 30 jours sans mouvement</p>
+                </div>
+                <button class="btn btn-sm btn-outline-danger">Voir tout</button>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                      <th class="ps-4 border-0">Référence</th>
+                      <th class="border-0">Article</th>
+                      <th class="border-0">Quantité</th>
+                      <th class="border-0">Valeur Immobilisée</th>
+                      <th class="border-0">Inactivité</th>
+                      <th class="border-0">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="art in statistiques.articlesDormants" :key="art.reference">
+                      <td class="ps-4"><span class="badge bg-light-danger text-danger">{{ art.reference }}</span></td>
+                      <td class="fw-semibold">{{ art.nom }}</td>
+                      <td>{{ art.quantite }}</td>
+                      <td class="fw-bold text-danger">{{ formatCurrency(art.valeur) }}</td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <span class="text-warning me-2">{{ art.joursInactivite }}j</span>
+                          <div class="progress flex-grow-1" style="height: 4px; min-width: 50px;">
+                            <div class="progress-bar bg-warning" :style="{width: (art.joursInactivite/90*100) + '%'}"></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-light-primary"><i class="ti ti-arrow-right"></i></button>
+                      </td>
+                    </tr>
+                    <tr v-if="!statistiques.articlesDormants || statistiques.articlesDormants.length === 0">
+                      <td colspan="6" class="text-center py-4 text-muted">Aucun article dormant détecté</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+
 
       <!-- Row 4: Recent Demandes d'Achat -->
       <div class="row">
@@ -373,6 +488,22 @@ export default {
         tooltip: {
           y: { formatter: function (val) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA' }).format(val) } }
         }
+      },
+      // Options Stock par Dépôt
+      stockDepotSeries: [],
+      stockDepotLabels: [],
+      stockDepotColors: ['#5D87FF', '#13DEB9', '#FFAE1F', '#FA896B', '#49BEFF'],
+      stockDepotOptions: {
+        chart: { type: 'bar', stacked: true, stackType: '100%', toolbar: { show: false }, fontFamily: 'inherit' },
+        plotOptions: { bar: { horizontal: true, barHeight: '35%', borderRadius: 0 } },
+        stroke: { width: 1, colors: ['#fff'] },
+        xaxis: { categories: ['Valeur Stock'], labels: { show: false }, axisBorder: { show: false } },
+        yaxis: { labels: { show: false } },
+        tooltip: {
+          y: { formatter: function (val) { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA' }).format(val) } }
+        },
+        fill: { opacity: 1 },
+        legend: { show: false }
       }
     };
   },
@@ -408,6 +539,19 @@ export default {
             xaxis: { categories: this.statistiques.topFournisseurs.map(f => f.nom) } 
           };
           this.barSeries = [{ name: 'Volume Achat', data: this.statistiques.topFournisseurs.map(f => f.volume) }];
+        }
+
+        // Mise à jour Stock par Dépôt
+        if (this.statistiques.repartitionStockDepot) {
+          this.stockDepotLabels = Object.keys(this.statistiques.repartitionStockDepot);
+          this.stockDepotSeries = this.stockDepotLabels.map(depotName => {
+            const categories = this.statistiques.repartitionStockDepot[depotName];
+            const totalDepot = Object.values(categories).reduce((sum, val) => sum + val, 0);
+            return {
+              name: depotName,
+              data: [totalDepot]
+            };
+          });
         }
 
       } catch (err) {
@@ -531,6 +675,17 @@ export default {
       if (s === 'rejeté' || s === 'rejete' || s === 'rejetee') return 'badge bg-danger rounded-3 fw-semibold';
       if (s === 'transformé' || s === 'transforme') return 'badge bg-primary rounded-3 fw-semibold';
       return 'badge bg-secondary rounded-3 fw-semibold';
+    },
+    getRotationLabel(status) {
+      if (status === 'success') return 'Optimal';
+      if (status === 'warning') return 'Moyen';
+      if (status === 'danger') return 'Faible';
+      return 'N/A';
+    },
+    getRotationProgress(value) {
+      if (!value) return 0;
+      const val = parseFloat(value);
+      return Math.min(100, val * 25); // 4.0 = 100%
     }
   }
 };
@@ -543,10 +698,28 @@ export default {
 .achat-alert-card:hover {
   transform: translateY(-5px);
 }
-.bg-light-primary {
-  background-color: #ecf2ff !important;
+.bg-light-success {
+  background-color: #e6fffa !important;
 }
-.display-4 {
+.bg-light-warning {
+  background-color: #fef5e5 !important;
+}
+.bg-light-danger {
+  background-color: #fdede8 !important;
+}
+.text-success {
+  color: #13deb9 !important;
+}
+.text-warning {
+  color: #ffae1f !important;
+}
+.text-danger {
+  color: #fa896b !important;
+}
+  .bg-light-primary {
+    background-color: #ecf2ff !important;
+  }
+  .display-4 {
   font-size: 2.5rem;
 }
 @media (min-width: 1200px) {

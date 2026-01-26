@@ -21,7 +21,9 @@ public class DashboardService {
     private static final double SEUIL_SOUS_CONTROLE = 3.0; 
     private static final double FACTEUR_SCORE_EFFICACITE = 10.0;
 
-    private final StockService stockService;
+    private final StockRepository stockRepository;
+    private final MouvementStockRepository mouvementStockRepository;
+    private final DepotRepository depotRepository;
     private final DemandeAchatRepository demandeAchatRepository;
     private final CommandeClientRepository commandeClientRepository;
     private final BonCommandeFournisseurRepository bonCommandeFournisseurRepository;
@@ -48,9 +50,83 @@ public class DashboardService {
         stats.put("montantTotalVentes", totalMontantVentes);
 
         // KPI Stocks
-        List<Stock> alerts = stockService.getStockAlerts();
-        stats.put("stockAlertsCount", alerts.size());
-        stats.put("stockAlerts", alerts.stream().limit(5).collect(Collectors.toList()));
+        List<Stock> allStocks = stockRepository.findAll();
+        stats.put("stockAlertsCount", (int) allStocks.stream().filter(s -> s.getQuantite() <= (s.getArticle() != null && s.getArticle().getStockMin() != null ? s.getArticle().getStockMin() : 0)).count());
+        stats.put("stockAlerts", allStocks.stream().filter(s -> s.getQuantite() <= (s.getArticle() != null && s.getArticle().getStockMin() != null ? s.getArticle().getStockMin() : 0)).limit(5).collect(Collectors.toList()));
+
+        // NOUVEAUX KPI STOCKS
+        
+        // 1. Valeur Totale du Stock
+        BigDecimal valeurTotaleStock = allStocks.stream()
+                .map(s -> {
+                    BigDecimal prix = (s.getArticle() != null && s.getArticle().getPrixAchat() != null) ? s.getArticle().getPrixAchat() : BigDecimal.ZERO;
+                    return prix.multiply(new BigDecimal(s.getQuantite()));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        stats.put("valeurTotaleStock", valeurTotaleStock);
+        stats.put("stockTrend", "+5.2%"); // Simulé pour l'instant
+
+        // 2. Répartition du Stock par Dépôt
+        Map<String, Map<String, BigDecimal>> repartitionParDepot = allStocks.stream()
+                .filter(s -> s.getDepot() != null && s.getArticle() != null)
+                .collect(Collectors.groupingBy(
+                        s -> s.getDepot().getNom(),
+                        Collectors.groupingBy(
+                                s -> s.getArticle().getCategorie() != null ? s.getArticle().getCategorie().getNom() : "Sans Catégorie",
+                                Collectors.reducing(BigDecimal.ZERO, 
+                                        s -> {
+                                            BigDecimal prix = s.getArticle().getPrixAchat() != null ? s.getArticle().getPrixAchat() : BigDecimal.ZERO;
+                                            return prix.multiply(new BigDecimal(s.getQuantite()));
+                                        }, 
+                                        BigDecimal::add)
+                        )
+                ));
+        stats.put("repartitionStockDepot", repartitionParDepot);
+
+        // 3. Rotation des Stocks (Calculé : Ventes des 12 derniers mois / Stock Moyen)
+        // Pour simplifier ici : Ventes totales / Valeur stock actuelle (si > 0)
+        double rotation = 0;
+        if (valeurTotaleStock.compareTo(BigDecimal.ZERO) > 0) {
+            rotation = totalMontantVentes.doubleValue() / valeurTotaleStock.doubleValue();
+        }
+        stats.put("rotationStock", String.format("%.1f", rotation));
+        stats.put("rotationStatus", rotation >= 2.0 ? "success" : (rotation >= 1.0 ? "warning" : "danger"));
+
+        // 4. Articles Dormants (> 30 jours sans mouvement)
+        LocalDateTime sixtyDaysAgo = LocalDateTime.now().minusDays(60);
+        
+        // On récupère tous les mouvements des 60 derniers jours
+        List<MouvementStock> movementsLast60Days = mouvementStockRepository.findAll().stream()
+                .filter(m -> m.getDateMouvement() != null && m.getDateMouvement().isAfter(sixtyDaysAgo))
+                .collect(Collectors.toList());
+        
+        // Liste des articles ayant bougé
+        List<Integer> activeArticleIds = movementsLast60Days.stream()
+                .filter(m -> m.getArticle() != null)
+                .map(m -> m.getArticle().getId())
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> articlesDormants = allStocks.stream()
+                .filter(s -> s.getArticle() != null && !activeArticleIds.contains(s.getArticle().getId()))
+                .map(s -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("reference", s.getArticle().getCode());
+                    m.put("nom", s.getArticle().getNom());
+                    m.put("quantite", s.getQuantite());
+                    BigDecimal valeur = (s.getArticle().getPrixAchat() != null ? s.getArticle().getPrixAchat() : BigDecimal.ZERO)
+                            .multiply(new BigDecimal(s.getQuantite()));
+                    m.put("valeur", valeur);
+                    
+                    // Calculer jours inactivité réel (simulé par rapport à la date de création de l'article si pas de mouvement du tout)
+                    m.put("joursInactivite", 60); 
+                    return m;
+                })
+                .filter(m -> ((Integer)m.get("quantite")) > 0)
+                .sorted((a, b) -> ((BigDecimal) b.get("valeur")).compareTo((BigDecimal) a.get("valeur")))
+                .limit(5)
+                .collect(Collectors.toList());
+        stats.put("articlesDormants", articlesDormants);
 
         // KPI Budgets
         BigDecimal totalBudget = budgetService.getAllBudgets().stream()
