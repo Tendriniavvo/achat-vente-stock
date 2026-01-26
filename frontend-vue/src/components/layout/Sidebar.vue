@@ -154,7 +154,7 @@
           </li>
           
           <!-- Stock avec dropdown -->
-          <li v-if="hasPermission('/stock/niveaux') || hasPermission('/stock/mouvements') || hasPermission('/stock')" class="sidebar-item">
+          <li v-if="hasPermission('/stock/niveaux') || hasPermission('/stock/mouvements') || hasPermission('/stock') || hasPermission('/stock/lots') || hasPermission('/stock/audits') || hasPermission('/stock/ajustements') || hasPermission('/stock/inventaires')" class="sidebar-item">
             <a class="sidebar-link has-arrow" :class="{ active: isStockRoute() }" href="javascript:void(0)" :aria-expanded="stockMenuOpen" @click="toggleStockMenu">
               <span><i class="ti ti-package"></i></span>
               <span class="hide-menu">Stock</span>
@@ -165,7 +165,7 @@
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
                   </div>
-                  <span class="hide-menu">Niveaux de stock</span>
+                  <span class="hide-menu">Vue d'ensemble</span>
                 </router-link>
               </li>
               <li v-if="hasPermission('/stock/mouvements')" class="sidebar-item">
@@ -173,7 +173,47 @@
                   <div class="round-16 d-flex align-items-center justify-content-center">
                     <i class="ti ti-circle"></i>
                   </div>
-                  <span class="hide-menu">Mouvements de stock</span>
+                  <span class="hide-menu">Mouvements</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/stock/stocks')" class="sidebar-item">
+                <router-link to="/stock/stocks" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Stocks</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/stock/lots')" class="sidebar-item">
+                <router-link to="/stock/lots" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Lots</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/stock/audits')" class="sidebar-item">
+                <router-link to="/stock/audits" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Audit</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/stock/ajustements')" class="sidebar-item">
+                <router-link to="/stock/ajustements" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Ajustements</span>
+                </router-link>
+              </li>
+              <li v-if="hasPermission('/stock/inventaires')" class="sidebar-item">
+                <router-link to="/stock/inventaires" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Inventaires</span>
                 </router-link>
               </li>
               <li v-if="hasPermission('/receptions')" class="sidebar-item">
