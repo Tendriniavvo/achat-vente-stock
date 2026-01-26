@@ -21,6 +21,11 @@ public class StockController {
         return stockService.getAllStocks();
     }
 
+    @GetMapping("/alerts")
+    public List<Stock> getStockAlerts() {
+        return stockService.getStockAlerts();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Stock> getStockById(@PathVariable int id) {
         return stockService.getStockById(id)
