@@ -16,6 +16,17 @@
       </ul>
       <div class="navbar-collapse justify-content-end px-0" id="navbarNav">
         <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-end">
+          <!-- Affichage du rôle et bouton déconnexion à l'extérieur -->
+          <li class="nav-item d-none d-md-flex align-items-center me-3">
+            <span class="badge bg-light-primary text-primary rounded-pill px-3 py-2 me-3">
+              <i class="ti ti-shield me-1"></i> {{ userRoles }}
+            </span>
+            <button @click="$emit('logout')" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2">
+              <i class="ti ti-logout fs-4"></i>
+              <span>Déconnexion</span>
+            </button>
+          </li>
+
           <li class="nav-item dropdown">
             <a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2" data-bs-toggle="dropdown"
               aria-expanded="false">
@@ -33,16 +44,11 @@
                 </a>
                 <div class="dropdown-divider"></div>
                 <div class="px-3 py-2">
-                  <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="d-flex align-items-center gap-2">
                     <i class="ti ti-building fs-6"></i>
                     <p class="mb-0 fs-3"><strong>Dépt:</strong> {{ userDepartement }}</p>
                   </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <i class="ti ti-shield fs-6"></i>
-                    <p class="mb-0 fs-3"><strong>Rôle:</strong> {{ userRoles }}</p>
-                  </div>
                 </div>
-                <a href="#" @click.prevent="$emit('logout')" class="btn btn-outline-primary mx-3 mt-2 d-block">Déconnexion</a>
               </div>
             </div>
           </li>
