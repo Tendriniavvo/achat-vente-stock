@@ -21,6 +21,7 @@ public interface StockRepository extends JpaRepository<Stock, Integer> {
     
     List<Stock> findByArticleId(int articleId);
     Optional<Stock> findByArticleAndDepotAndEmplacement(Article article, Depot depot, Emplacement emplacement);
+    Optional<Stock> findByArticleAndDepotAndEmplacementAndCoutUnitaire(Article article, Depot depot, Emplacement emplacement, java.math.BigDecimal coutUnitaire);
 
     List<Stock> findByDepot(Depot depot);
 }

@@ -178,6 +178,7 @@ CREATE TABLE stocks (
     depot_id INTEGER REFERENCES depots(id),
     emplacement_id INTEGER REFERENCES emplacements(id),
     quantite INTEGER NOT NULL DEFAULT 0,
+    cout_unitaire DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     valeur DECIMAL(10,2) NOT NULL DEFAULT 0.00, -- Valorisation
     date_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

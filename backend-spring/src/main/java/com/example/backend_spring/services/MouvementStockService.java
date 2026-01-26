@@ -258,23 +258,48 @@ public class MouvementStockService {
             throw new IllegalArgumentException("Emplacement obligatoire pour mise à jour stock");
         }
 
-        Stock stock = stockRepository.findByArticleAndDepotAndEmplacement(ligne.getArticle(), depot, emplacement)
+        BigDecimal cuToSearch = coutUnitaire;
+        
+        // Si c'est une sortie et que le coût n'est pas spécifié, on utilise la méthode par défaut (CUMP/FIFO)
+        // Mais ici, comme on a séparé les entrées par coût, on doit probablement itérer sur les stocks disponibles
+        // Pour simplifier selon la demande utilisateur qui se focalise sur l'ENTREE :
+        
+        Stock stock;
+        if (cuToSearch != null) {
+            stock = stockRepository.findByArticleAndDepotAndEmplacementAndCoutUnitaire(ligne.getArticle(), depot, emplacement, cuToSearch)
                 .orElseGet(() -> {
                     Stock s = new Stock();
                     s.setArticle(ligne.getArticle());
                     s.setDepot(depot);
                     s.setEmplacement(emplacement);
                     s.setQuantite(0);
+                    s.setCoutUnitaire(cuToSearch);
                     s.setValeur(BigDecimal.ZERO);
                     return s;
                 });
+        } else {
+            // Si pas de coût spécifié (généralement une sortie), on prend le premier disponible ou on gère une erreur
+            // Pour l'instant, on garde l'ancien comportement de recherche globale si possible, 
+            // ou on prend le premier stock trouvé pour cet article/dépôt/emplacement
+            stock = stockRepository.findByArticleAndDepotAndEmplacement(ligne.getArticle(), depot, emplacement)
+                .orElseGet(() -> {
+                    Stock s = new Stock();
+                    s.setArticle(ligne.getArticle());
+                    s.setDepot(depot);
+                    s.setEmplacement(emplacement);
+                    s.setQuantite(0);
+                    s.setCoutUnitaire(BigDecimal.ZERO);
+                    s.setValeur(BigDecimal.ZERO);
+                    return s;
+                });
+        }
 
         int ancienneQuantite = stock.getQuantite();
         BigDecimal ancienneValeur = stock.getValeur() == null ? BigDecimal.ZERO : stock.getValeur();
 
         int nouvelleQuantite = ancienneQuantite + variationQuantite;
         if (nouvelleQuantite < 0) {
-            throw new IllegalStateException("Stock insuffisant pour l'article " + ligne.getArticle().getCode());
+            throw new IllegalStateException("Stock insuffisant pour l'article " + ligne.getArticle().getCode() + " au coût spécifié");
         }
 
         BigDecimal nouvelleValeur = ancienneValeur;
@@ -287,16 +312,10 @@ public class MouvementStockService {
             if (coutUnitaire != null) {
                 cu = coutUnitaire;
             } else {
-                String methode = ligne.getArticle() == null || ligne.getArticle().getMethodeValorisation() == null
-                        ? "CUMP"
-                        : ligne.getArticle().getMethodeValorisation().trim().toUpperCase();
                 if (ancienneQuantite > 0) {
                     cu = ancienneValeur.divide(BigDecimal.valueOf(ancienneQuantite), 6, RoundingMode.HALF_UP);
                 } else {
                     cu = BigDecimal.ZERO;
-                }
-                if (!"CUMP".equalsIgnoreCase(methode) && !"FIFO".equalsIgnoreCase(methode)) {
-                    methode = "CUMP";
                 }
             }
             nouvelleValeur = ancienneValeur.subtract(cu.multiply(BigDecimal.valueOf(qtySortie)));

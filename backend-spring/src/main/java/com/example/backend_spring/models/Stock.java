@@ -32,6 +32,9 @@ public class Stock {
     @Column(nullable = false)
     private int quantite = 0;
 
+    @Column(name = "cout_unitaire", nullable = false, precision = 10, scale = 2)
+    private BigDecimal coutUnitaire = BigDecimal.ZERO;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valeur = BigDecimal.ZERO;
 

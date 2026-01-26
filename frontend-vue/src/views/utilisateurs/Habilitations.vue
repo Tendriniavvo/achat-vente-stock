@@ -69,6 +69,9 @@ const saving = ref(false);
 // Liste des sections de l'application (basée sur router/index.js)
 const sections = [
   { label: 'Tableau de Bord', path: '/dashboard', module: 'DASHBOARD' },
+  { label: 'Gestion du Stock (Dashboard)', path: '/dashboard/stock', module: 'DASHBOARD' },
+  { label: 'Consommation Budgétaire (Dashboard)', path: '/dashboard/budget', module: 'DASHBOARD' },
+  { label: 'Efficacité Approbation (Dashboard)', path: '/dashboard/achats', module: 'DASHBOARD' },
   { label: 'Gestion des Achats', path: '/achats', module: 'ACHATS' },
   { label: 'Nouvelle Demande d\'Achat', path: '/achats/create', module: 'ACHATS' },
   { label: 'Bons de Commande Fournisseur', path: '/commandes-achat', module: 'ACHATS' },
