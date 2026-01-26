@@ -1,11 +1,7 @@
 package com.example.backend_spring.services;
 
-import com.example.backend_spring.models.BonCommandeFournisseur;
-import com.example.backend_spring.models.CommandeClient;
-import com.example.backend_spring.models.Stock;
-import com.example.backend_spring.repositories.BonCommandeFournisseurRepository;
-import com.example.backend_spring.repositories.CommandeClientRepository;
-import com.example.backend_spring.repositories.DemandeAchatRepository;
+import com.example.backend_spring.models.*;
+import com.example.backend_spring.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +17,16 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
+    // Constantes pour la configuration du KPI Efficacité Approbation
+    private static final double SEUIL_SOUS_CONTROLE = 3.0; 
+    private static final double FACTEUR_SCORE_EFFICACITE = 10.0;
 
     private final StockService stockService;
     private final DemandeAchatRepository demandeAchatRepository;
     private final CommandeClientRepository commandeClientRepository;
     private final BonCommandeFournisseurRepository bonCommandeFournisseurRepository;
     private final BudgetService budgetService;
+    private final LigneCommandeClientRepository ligneCommandeClientRepository;
 
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
@@ -88,9 +88,88 @@ public class DashboardService {
                 .collect(Collectors.toList());
         stats.put("topFournisseurs", topFournisseurs);
 
-        // 3. Délai Moyen d'Approbation (Simulé ou calculé si dates dispos)
-        // Ici on met une valeur fixe ou un calcul simple pour l'exemple
-        stats.put("delaiMoyenApprobation", "2.4 jours");
+        // 3. Top 5 Articles les plus vendus (Gestion des Ventes)
+        Map<String, Integer> ventesParArticle = ligneCommandeClientRepository.findAll().stream()
+                .filter(l -> l.getArticle() != null)
+                .collect(Collectors.groupingBy(
+                        l -> l.getArticle().getNom(),
+                        Collectors.summingInt(LigneCommandeClient::getQuantite)
+                ));
+
+        List<Map<String, Object>> topArticles = ventesParArticle.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(5)
+                .map(entry -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("nom", entry.getKey());
+                    m.put("quantite", entry.getValue());
+                    return m;
+                })
+                .collect(Collectors.toList());
+        stats.put("topArticlesVendus", topArticles);
+
+        // 4. Délai Moyen d'Approbation (Calculé dynamiquement selon l'historique)
+        List<DemandeAchat> approuvees = demandeAchatRepository.findAll().stream()
+                .filter(d -> {
+                    String s = d.getStatut() != null ? d.getStatut().toLowerCase() : "";
+                    return s.equals("approuvé") || s.equals("approuve") || s.equals("validee") || s.equals("validée") ||
+                           s.equals("disponible_en_stock") || s.equals("attente_finance") || s.equals("fonds_confirmes") || s.equals("fonds_confirmés");
+                })
+                .filter(d -> d.getDateCreation() != null && d.getHistoriqueValidations() != null)
+                .collect(Collectors.toList());
+
+        double totalDays = 0;
+        int count = 0;
+
+        for (DemandeAchat da : approuvees) {
+            String hist = da.getHistoriqueValidations();
+            String[] lines = hist.split("\n");
+            LocalDateTime dateValidationFinale = null;
+
+            for (int i = lines.length - 1; i >= 0; i--) {
+                String line = lines[i].trim();
+                if (line.isEmpty()) continue;
+                
+                String lineLower = line.toLowerCase();
+                if (lineLower.contains("passage de") && 
+                   (lineLower.contains("à approuvé") || lineLower.contains("à approuve") || 
+                    lineLower.contains("à validee") || lineLower.contains("à validée") ||
+                    lineLower.contains("à disponible_en_stock") || lineLower.contains("à attente_finance"))) {
+                    try {
+                        int bracketEnd = line.indexOf("]");
+                        int firstColon = line.indexOf(":");
+                        
+                        // Si on a le format avec [Validateur], la date est avant le [
+                        String datePart = "";
+                        if (line.contains("[")) {
+                            datePart = line.substring(0, line.indexOf("[")).trim();
+                        } else if (firstColon > 0) {
+                            // Sinon on prend ce qui est avant le premier :
+                            datePart = line.substring(0, firstColon).trim();
+                        }
+
+                        if (!datePart.isEmpty()) {
+                            dateValidationFinale = LocalDateTime.parse(datePart);
+                            break;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Erreur parsing date historique: " + e.getMessage());
+                    }
+                }
+            }
+
+            if (dateValidationFinale != null) {
+                long diffHours = java.time.Duration.between(da.getDateCreation(), dateValidationFinale).toHours();
+                totalDays += (diffHours / 24.0);
+                count++;
+            }
+        }
+
+        double delaiMoyen = count > 0 ? (totalDays / count) : 0;
+        stats.put("delaiMoyenApprobation", String.format("%.1f jours", delaiMoyen));
+        stats.put("efficaciteStatus", delaiMoyen <= SEUIL_SOUS_CONTROLE ? "Sous contrôle" : "À améliorer");
+        stats.put("efficaciteColor", delaiMoyen <= SEUIL_SOUS_CONTROLE ? "success" : "danger");
+        stats.put("efficaciteProgress", Math.max(0, Math.min(100, 100 - (delaiMoyen * FACTEUR_SCORE_EFFICACITE))));
 
         return stats;
     }

@@ -160,30 +160,35 @@
           </div>
         </div>
 
-        <!-- 3. Délai Moyen d'Approbation (KPI) -->
+        <!-- 3. Efficacité Approbation (KPI Réel) -->
         <div class="col-12 col-xl-4">
           <div class="card achat-alert-card achat-alert-performance h-100 border-0 shadow-sm bg-light-primary">
             <div class="card-body">
               <div class="d-flex align-items-start justify-content-between mb-4">
                 <div>
                   <div class="fw-bold fs-5">Efficacité Approbation</div>
-                  <div class="text-muted small">Délai moyen de traitement</div>
+                  <div class="text-muted small">Délai moyen réel</div>
                 </div>
                 <i class="ti ti-clock-play fs-2 text-primary"></i>
               </div>
               
               <div class="text-center py-4">
-                <h1 class="display-4 fw-bold text-primary mb-2">{{ statistiques.delaiMoyenApprobation || '2.4j' }}</h1>
+                <h1 class="display-4 fw-bold text-primary mb-2">{{ statistiques.delaiMoyenApprobation || '0.0 jours' }}</h1>
                 <p class="text-muted">Temps moyen entre soumission et validation finale</p>
               </div>
 
               <div class="mt-4 pt-2 border-top">
                 <div class="d-flex justify-content-between align-items-center">
                   <span class="text-muted small">Objectif cible</span>
-                  <span class="badge bg-success-subtle text-success rounded-pill">Sous contrôle</span>
+                  <span class="badge rounded-pill" 
+                    :class="`bg-${statistiques.efficaciteColor || 'success'}-subtle text-${statistiques.efficaciteColor || 'success'}`">
+                    {{ statistiques.efficaciteStatus || 'Sous contrôle' }}
+                  </span>
                 </div>
                 <div class="progress mt-2" style="height: 6px;">
-                  <div class="progress-bar bg-primary" style="width: 75%"></div>
+                  <div class="progress-bar" 
+                    :class="`bg-${statistiques.efficaciteColor || 'primary'}`"
+                    :style="{ width: (statistiques.efficaciteProgress || 0) + '%' }"></div>
                 </div>
               </div>
             </div>
@@ -191,7 +196,30 @@
         </div>
       </div>
 
-      <!-- Row 3: Recent Demandes d'Achat -->
+      <!-- Row 3: Gestion des Ventes -->
+      <div class="row g-3 g-md-4 mt-1 mb-4">
+        <div class="col-12">
+          <div class="card achat-alert-card border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                  <div class="fw-bold fs-5">Gestion des Ventes</div>
+                  <div class="text-muted small">Top 5 Articles les plus vendus (Volume)</div>
+                </div>
+                <i class="ti ti-shopping-cart fs-2 text-primary"></i>
+              </div>
+              <apexchart 
+                type="bar" 
+                height="300" 
+                :options="topArticlesOptions" 
+                :series="topArticlesSeries"
+              ></apexchart>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Recent Demandes d'Achat -->
       <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">
           <div class="card w-100">
