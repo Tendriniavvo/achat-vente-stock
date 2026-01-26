@@ -1,5 +1,8 @@
 package com.example.backend_spring.repositories;
 
+import com.example.backend_spring.models.Article;
+import com.example.backend_spring.models.Depot;
+import com.example.backend_spring.models.Emplacement;
 import com.example.backend_spring.models.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,4 +20,7 @@ public interface StockRepository extends JpaRepository<Stock, Integer> {
     Optional<Stock> findByArticleIdAndDepotId(int articleId, int depotId);
     
     List<Stock> findByArticleId(int articleId);
+    Optional<Stock> findByArticleAndDepotAndEmplacement(Article article, Depot depot, Emplacement emplacement);
+
+    List<Stock> findByDepot(Depot depot);
 }

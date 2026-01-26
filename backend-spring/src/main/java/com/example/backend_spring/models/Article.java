@@ -56,6 +56,9 @@ public class Article {
     @Column(name = "traceable_lot")
     private boolean traceableLot = false;
 
+    @Column(name = "stock_strategy", length = 10)
+    private String stockStrategy = "FEFO";
+
     private boolean actif = true;
 
     @Column(columnDefinition = "TEXT")
