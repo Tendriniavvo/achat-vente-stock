@@ -9,7 +9,7 @@
             <div class="card mb-0">
               <div class="card-body">
                 <router-link to="/" class="text-nowrap logo-img text-center d-block py-3 w-100">
-                  <img src="@/assets/images/logos/dark-logo.svg" width="180" alt="" />
+                  <img src="@/assets/images/logos/dark-logo.png" width="180" alt="" />
                 </router-link>
                 <p class="text-center">Votre plateforme de gestion d'achats</p>
                 <div v-if="error" class="alert alert-danger" role="alert">
