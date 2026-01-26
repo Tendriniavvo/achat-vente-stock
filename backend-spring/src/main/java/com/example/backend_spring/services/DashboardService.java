@@ -58,10 +58,7 @@ public class DashboardService {
         
         // 1. Valeur Totale du Stock
         BigDecimal valeurTotaleStock = allStocks.stream()
-                .map(s -> {
-                    BigDecimal prix = (s.getArticle() != null && s.getArticle().getPrixAchat() != null) ? s.getArticle().getPrixAchat() : BigDecimal.ZERO;
-                    return prix.multiply(new BigDecimal(s.getQuantite()));
-                })
+                .map(s -> s.getValeur() != null ? s.getValeur() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         stats.put("valeurTotaleStock", valeurTotaleStock);
         stats.put("stockTrend", "+5.2%"); // Simulé pour l'instant
@@ -74,10 +71,7 @@ public class DashboardService {
                         Collectors.groupingBy(
                                 s -> s.getArticle().getCategorie() != null ? s.getArticle().getCategorie().getNom() : "Sans Catégorie",
                                 Collectors.reducing(BigDecimal.ZERO, 
-                                        s -> {
-                                            BigDecimal prix = s.getArticle().getPrixAchat() != null ? s.getArticle().getPrixAchat() : BigDecimal.ZERO;
-                                            return prix.multiply(new BigDecimal(s.getQuantite()));
-                                        }, 
+                                        s -> s.getValeur() != null ? s.getValeur() : BigDecimal.ZERO, 
                                         BigDecimal::add)
                         )
                 ));
@@ -114,8 +108,7 @@ public class DashboardService {
                     m.put("reference", s.getArticle().getCode());
                     m.put("nom", s.getArticle().getNom());
                     m.put("quantite", s.getQuantite());
-                    BigDecimal valeur = (s.getArticle().getPrixAchat() != null ? s.getArticle().getPrixAchat() : BigDecimal.ZERO)
-                            .multiply(new BigDecimal(s.getQuantite()));
+                    BigDecimal valeur = s.getValeur() != null ? s.getValeur() : BigDecimal.ZERO;
                     m.put("valeur", valeur);
                     
                     // Calculer jours inactivité réel (simulé par rapport à la date de création de l'article si pas de mouvement du tout)

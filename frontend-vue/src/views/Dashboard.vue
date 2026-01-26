@@ -117,7 +117,7 @@
       
 
       <!-- Row 2: Gestion des Achats (New Section) -->
-      <div class="row g-3 g-md-4 mt-1 mb-4">
+      <div v-if="hasPermission('/dashboard/achats')" class="row g-3 g-md-4 mt-1 mb-4">
         <!-- 1. Répartition des Demandes par Statut (Donut Chart) -->
         <div class="col-12 col-xl-4">
           <div class="card achat-alert-card h-100 border-0 shadow-sm">
@@ -197,7 +197,7 @@
       </div>
 
       <!-- Section: Gestion du Stock (Nouvelle) -->
-      <div class="row g-3 g-md-4 mt-1 mb-4">
+      <div v-if="hasPermission('/dashboard/stock')" class="row g-3 g-md-4 mt-1 mb-4">
         <div class="col-12">
           <h5 class="fw-semibold mb-3 d-flex align-items-center">
             <i class="ti ti-package me-2 text-primary"></i> Gestion du Stock
@@ -281,7 +281,7 @@
         </div>
 
         <!-- 4. Consommation Budgétaire (Gauge Charts) -->
-        <div class="col-12">
+        <div v-if="hasPermission('/dashboard/budget')" class="col-12">
           <div class="card border-0 shadow-sm">
             <div class="card-body">
               <div class="d-flex align-items-center justify-content-between mb-4">
@@ -587,6 +587,27 @@ export default {
       const user = authData.user || authData;
       if (!user.roles) return false;
       return user.roles.some(r => r.nom.toUpperCase() === roleNom.toUpperCase());
+    },
+    hasPermission(path) {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return false;
+      const authData = JSON.parse(userStr);
+      const user = authData.user || authData;
+      
+      // Les administrateurs ont toutes les permissions
+      if (user.roles?.some(r => r.id === 1 || r.nom.toUpperCase() === 'ADMINISTRATEUR')) {
+        return true;
+      }
+
+      const permissionsStr = localStorage.getItem('permissions');
+      if (!permissionsStr) return false;
+      const permissions = JSON.parse(permissionsStr);
+      
+      return permissions.some(p => {
+        if (p.path === path) return true;
+        if (p.path !== '/' && path.startsWith(p.path + '/')) return true;
+        return false;
+      });
     },
     canVerifyFonds(demande) {
       const userStr = localStorage.getItem('user');
