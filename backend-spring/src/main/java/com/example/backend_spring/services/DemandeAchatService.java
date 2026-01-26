@@ -4,10 +4,12 @@ import com.example.backend_spring.dto.DemandeAchatDTO;
 import com.example.backend_spring.models.Article;
 import com.example.backend_spring.models.DemandeAchat;
 import com.example.backend_spring.models.LigneDemandeAchat;
+import com.example.backend_spring.models.Stock;
 import com.example.backend_spring.models.Utilisateur;
 import com.example.backend_spring.repositories.ArticleRepository;
 import com.example.backend_spring.repositories.DemandeAchatRepository;
 import com.example.backend_spring.repositories.LigneDemandeAchatRepository;
+import com.example.backend_spring.repositories.StockRepository;
 import com.example.backend_spring.repositories.UtilisateurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class DemandeAchatService {
     private final UtilisateurRepository utilisateurRepository;
     private final ArticleRepository articleRepository;
     private final BudgetService budgetService;
+    private final StockRepository stockRepository;
 
     @Transactional
     public DemandeAchat approuver(int id, int validateurId) {
@@ -62,13 +65,45 @@ public class DemandeAchatService {
                 }
             }
 
-            return updateStatusWithValidateur(id, "attente_finance",
-                    "Approbation validée par " + validateur.getNom() + ". En attente de confirmation des fonds.",
-                    validateur);
+            // Vérification de la disponibilité en stock
+            boolean dispoStock = verifierDisponibiliteStock(demande);
+
+            if (dispoStock) {
+                return updateStatusWithValidateur(id, "disponible_en_stock",
+                        "Approbation validée par " + validateur.getNom() + ". L'article est disponible en stock.",
+                        validateur);
+            } else {
+                return updateStatusWithValidateur(id, "attente_finance",
+                        "Approbation validée par " + validateur.getNom()
+                                + ". Article non disponible en stock. En attente de confirmation des fonds.",
+                        validateur);
+            }
         } else {
             throw new RuntimeException(
                     "Cette demande ne peut pas être approuvée dans son état actuel : " + statutActuel);
         }
+    }
+
+    private boolean verifierDisponibiliteStock(DemandeAchat demande) {
+        if (demande.getLignes() == null || demande.getLignes().isEmpty()) {
+            return false;
+        }
+
+        for (LigneDemandeAchat ligne : demande.getLignes()) {
+            if (ligne.getArticle() == null)
+                continue;
+
+            List<Stock> stocks = stockRepository.findByArticleId(ligne.getArticle().getId());
+            int quantiteTotale = stocks.stream().mapToInt(Stock::getQuantite).sum();
+
+            // Si un seul article de la DA n'est pas disponible en quantité suffisante, on
+            // considère que la DA doit suivre le flux d'achat
+            if (quantiteTotale < ligne.getQuantite()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private boolean hasRole(Utilisateur user, String roleNom) {
