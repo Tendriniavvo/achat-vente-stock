@@ -43,4 +43,20 @@ public class StockController {
         stockService.deleteStock(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/calculer-cout-unitaire")
+    public ResponseEntity<java.math.BigDecimal> calculerCoutUnitaire(
+            @RequestParam int articleId,
+            @RequestParam int depotId,
+            @RequestParam(required = false) Integer emplacementId) {
+        return ResponseEntity.ok(stockService.calculerCoutUnitaire(articleId, depotId, emplacementId));
+    }
+
+    @GetMapping("/details")
+    public ResponseEntity<List<Stock>> getStockDetails(
+            @RequestParam int articleId,
+            @RequestParam int depotId,
+            @RequestParam(required = false) Integer emplacementId) {
+        return ResponseEntity.ok(stockService.getStockDetails(articleId, depotId, emplacementId));
+    }
 }

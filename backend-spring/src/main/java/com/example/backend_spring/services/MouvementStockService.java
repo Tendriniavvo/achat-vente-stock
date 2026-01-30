@@ -260,10 +260,6 @@ public class MouvementStockService {
 
         BigDecimal cuToSearch = coutUnitaire;
         
-        // Si c'est une sortie et que le coût n'est pas spécifié, on utilise la méthode par défaut (CUMP/FIFO)
-        // Mais ici, comme on a séparé les entrées par coût, on doit probablement itérer sur les stocks disponibles
-        // Pour simplifier selon la demande utilisateur qui se focalise sur l'ENTREE :
-        
         Stock stock;
         if (cuToSearch != null) {
             stock = stockRepository.findByArticleAndDepotAndEmplacementAndCoutUnitaire(ligne.getArticle(), depot, emplacement, cuToSearch)
@@ -278,20 +274,35 @@ public class MouvementStockService {
                     return s;
                 });
         } else {
-            // Si pas de coût spécifié (généralement une sortie), on prend le premier disponible ou on gère une erreur
-            // Pour l'instant, on garde l'ancien comportement de recherche globale si possible, 
-            // ou on prend le premier stock trouvé pour cet article/dépôt/emplacement
-            stock = stockRepository.findByArticleAndDepotAndEmplacement(ligne.getArticle(), depot, emplacement)
-                .orElseGet(() -> {
-                    Stock s = new Stock();
-                    s.setArticle(ligne.getArticle());
-                    s.setDepot(depot);
-                    s.setEmplacement(emplacement);
-                    s.setQuantite(0);
-                    s.setCoutUnitaire(BigDecimal.ZERO);
-                    s.setValeur(BigDecimal.ZERO);
-                    return s;
-                });
+            // Si pas de coût spécifié (généralement une sortie), on cherche le stock le plus approprié
+            // ou on lève une erreur si c'est une sortie sans stock disponible
+            if (variationQuantite < 0) {
+                // Recherche des stocks disponibles pour cet article/dépôt/emplacement
+                List<Stock> stocks = stockRepository.findByArticleId(ligne.getArticle().getId()).stream()
+                        .filter(s -> s.getDepot().getId() == depot.getId())
+                        .filter(s -> s.getEmplacement().getId() == emplacement.getId())
+                        .filter(s -> s.getQuantite() > 0)
+                        .toList();
+
+                if (stocks.isEmpty()) {
+                    throw new IllegalStateException("Aucun stock disponible pour l'article " + ligne.getArticle().getCode());
+                }
+                
+                // Par défaut on prend le premier (le calcul automatique en amont devrait normalement fournir un coût)
+                stock = stocks.get(0);
+            } else {
+                stock = stockRepository.findByArticleAndDepotAndEmplacement(ligne.getArticle(), depot, emplacement)
+                    .orElseGet(() -> {
+                        Stock s = new Stock();
+                        s.setArticle(ligne.getArticle());
+                        s.setDepot(depot);
+                        s.setEmplacement(emplacement);
+                        s.setQuantite(0);
+                        s.setCoutUnitaire(BigDecimal.ZERO);
+                        s.setValeur(BigDecimal.ZERO);
+                        return s;
+                    });
+            }
         }
 
         int ancienneQuantite = stock.getQuantite();

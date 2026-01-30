@@ -101,9 +101,9 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(l, idx) in lignes" :key="idx">
+                  <tr v-for="(l, idx) in lignes" :key="idx" :class="{ 'table-info': activeLineIndex === idx && form.type === 'SORTIE' }" @click="activeLineIndex = idx">
                     <td>
-                      <select class="form-select" v-model.number="l.articleId" required>
+                      <select class="form-select" v-model.number="l.articleId" required @change="handleArticleChange(l, idx)">
                         <option value="">Sélectionner</option>
                         <option v-for="a in articles" :key="a.id" :value="a.id">{{ a.code }} - {{ a.nom }}</option>
                       </select>
@@ -131,6 +131,94 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <!-- Détails du Stock Disponible (pour Sortie) -->
+            <div v-if="form.type === 'SORTIE' && stockDetails" class="mt-4 animate-slide-in">
+              <div class="card bg-light-info border-info">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="card-title text-info mb-0">
+                      <i class="ti ti-info-circle me-1"></i>
+                      État du stock : <strong>{{ stockDetails.article?.nom }}</strong> 
+                      ({{ stockDetails.depot?.nom }} - {{ stockDetails.emplacement?.code }})
+                    </h6>
+                    <button type="button" class="btn-close" @click="stockDetails = null"></button>
+                  </div>
+
+                  <!-- Récapitulatif -->
+                  <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                      <div class="p-3 bg-white rounded border">
+                        <small class="text-muted d-block">Quantité Totale</small>
+                        <span class="fs-5 fw-bold text-dark">{{ stockDetails.totalQuantite }}</span>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="p-3 bg-white rounded border">
+                        <small class="text-muted d-block">Valeur Totale</small>
+                        <span class="fs-5 fw-bold text-dark">{{ formatCurrency(stockDetails.totalValeur) }}</span>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="p-3 bg-white rounded border">
+                        <small class="text-muted d-block">Méthode</small>
+                        <span class="badge bg-primary fs-7">{{ stockDetails.methode }}</span>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="p-3 bg-white rounded border">
+                        <small class="text-muted d-block">Dernière MAJ</small>
+                        <span class="text-dark">{{ formatDate(stockDetails.lastMaj) }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Historique des entrées -->
+                  <h6 class="mb-2 fs-3 fw-semibold">Historique détaillé des entrées</h6>
+                  <div class="table-responsive bg-white rounded border mb-4">
+                    <table class="table table-sm table-hover mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Date Entrée/MAJ</th>
+                          <th class="text-end">Prix d'Achat</th>
+                          <th class="text-end">Qté Dispo</th>
+                          <th class="text-end">Valeur</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="s in stockDetails.history" :key="s.id">
+                          <td>{{ formatDate(s.dateMaj) }}</td>
+                          <td class="text-end">{{ formatCurrency(s.coutUnitaire) }}</td>
+                          <td class="text-end">{{ s.quantite }}</td>
+                          <td class="text-end">{{ formatCurrency(s.valeur) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Simulation de consommation -->
+                  <div v-if="stockDetails.simulation && stockDetails.simulation.length > 0" class="alert alert-warning mb-0 border-warning">
+                    <h6 class="alert-heading fw-bold mb-2">
+                      <i class="ti ti-alert-triangle me-1"></i>
+                      Simulation de sortie ({{ stockDetails.methode }})
+                    </h6>
+                    <div class="d-flex flex-wrap gap-2">
+                      <div v-for="(sim, idx) in stockDetails.simulation" :key="idx" class="badge bg-white text-dark border p-2">
+                        <span class="fw-bold">{{ sim.quantite }}</span> unité(s) à 
+                        <span class="text-primary fw-bold">{{ formatCurrency(sim.prix) }}</span>
+                        <span class="text-muted ms-1">({{ formatDate(sim.date) }})</span>
+                      </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-top border-warning-subtle small">
+                      Total simulé : <strong>{{ formatCurrency(stockDetails.totalSimule) }}</strong>
+                    </div>
+                  </div>
+                  <div v-else-if="lignes[activeLineIndex]?.quantite > stockDetails.totalQuantite" class="alert alert-danger mb-0">
+                    Stock insuffisant pour cette sortie.
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="d-flex justify-content-end gap-2 mt-4">
@@ -173,7 +261,9 @@ export default {
       },
       isSubmitting: false,
       errorMessage: '',
-      successMessage: ''
+      successMessage: '',
+      activeLineIndex: null,
+      stockDetails: null // { summary: {}, history: [], simulation: [] }
     };
   },
   computed: {
@@ -186,16 +276,188 @@ export default {
       return this.emplacements.filter(e => e.depot?.id === this.form.depotDestinationId || e.depotId === this.form.depotDestinationId);
     }
   },
+  watch: {
+    'form.type'(newVal) {
+      if (newVal !== 'SORTIE') {
+        this.stockDetails = null;
+      }
+      this.updateAllCouts();
+    },
+    'form.depotId'() {
+      this.updateAllCouts();
+      if (this.activeLineIndex !== null) {
+        this.fetchStockDetails(this.lignes[this.activeLineIndex], this.activeLineIndex);
+      }
+    },
+    'form.emplacementId'() {
+      this.updateAllCouts();
+      if (this.activeLineIndex !== null) {
+        this.fetchStockDetails(this.lignes[this.activeLineIndex], this.activeLineIndex);
+      }
+    },
+    lignes: {
+      deep: true,
+      handler() {
+        if (this.stockDetails && this.activeLineIndex !== null) {
+          this.runSimulation();
+        }
+      }
+    }
+  },
   mounted() {
     this.loadData();
   },
   methods: {
     addLine() {
       this.lignes.push({ articleId: '', quantite: 1, coutUnitaire: null, lotId: '' });
+      this.activeLineIndex = this.lignes.length - 1;
+      this.stockDetails = null;
     },
     removeLine(idx) {
       if (this.lignes.length === 1) return;
       this.lignes.splice(idx, 1);
+      if (this.activeLineIndex === idx) {
+        this.activeLineIndex = null;
+        this.stockDetails = null;
+      } else if (this.activeLineIndex > idx) {
+        this.activeLineIndex--;
+      }
+    },
+    async handleArticleChange(ligne, idx) {
+      if (!ligne.articleId) {
+        ligne.coutUnitaire = null;
+        if (this.activeLineIndex === idx) this.stockDetails = null;
+        return;
+      }
+      
+      this.activeLineIndex = idx;
+
+      // Si c'est une entrée, on peut suggérer le prix d'achat par défaut
+      if (this.form.type === 'ENTREE') {
+        const art = this.articles.find(a => a.id === ligne.articleId);
+        if (art) ligne.coutUnitaire = art.prixAchat;
+        return;
+      }
+
+      // Si c'est une sortie, on affiche les détails du stock
+      if (this.form.type === 'SORTIE') {
+        await this.fetchStockDetails(ligne, idx);
+      }
+
+      // Si c'est une sortie, transfert ou ajustement, on calcule selon la méthode
+      await this.updateCoutUnitaire(ligne);
+    },
+    async fetchStockDetails(ligne, idx) {
+      if (!ligne.articleId || !this.form.depotId || this.form.type !== 'SORTIE') return;
+
+      try {
+        const params = {
+          articleId: ligne.articleId,
+          depotId: this.form.depotId
+        };
+        if (this.form.emplacementId) params.emplacementId = this.form.emplacementId;
+
+        const res = await axios.get('/api/stocks/details', { params });
+        const history = res.data || [];
+        
+        const article = this.articles.find(a => a.id === ligne.articleId);
+        const depot = this.depots.find(d => d.id === this.form.depotId);
+        const emplacement = this.emplacements.find(e => e.id === this.form.emplacementId);
+
+        this.stockDetails = {
+          article,
+          depot,
+          emplacement,
+          history: [...history].sort((a, b) => new Date(a.dateMaj) - new Date(b.dateMaj)), // Par défaut ordre chronologique
+          totalQuantite: history.reduce((sum, s) => sum + s.quantite, 0),
+          totalValeur: history.reduce((sum, s) => sum + s.valeur, 0),
+          methode: article?.methodeValorisation || 'CUMP',
+          lastMaj: history.length > 0 ? Math.max(...history.map(s => new Date(s.dateMaj))) : null,
+          simulation: [],
+          totalSimule: 0
+        };
+
+        this.runSimulation();
+      } catch (e) {
+        console.error('Erreur chargement détails stock:', e);
+      }
+    },
+    runSimulation() {
+      if (!this.stockDetails || this.activeLineIndex === null) return;
+      
+      const targetQty = this.lignes[this.activeLineIndex].quantite || 0;
+      if (targetQty <= 0) {
+        this.stockDetails.simulation = [];
+        this.stockDetails.totalSimule = 0;
+        return;
+      }
+
+      let simulation = [];
+      let remaining = targetQty;
+      let historyCopy = [...this.stockDetails.history];
+
+      // Appliquer le tri selon la méthode
+      if (this.stockDetails.methode === 'FIFO') {
+        historyCopy.sort((a, b) => new Date(a.dateMaj) - new Date(b.dateMaj));
+      } else if (this.stockDetails.methode === 'LIFO') {
+        historyCopy.sort((a, b) => new Date(b.dateMaj) - new Date(a.dateMaj));
+      } else if (this.stockDetails.methode === 'CUMP') {
+        // Pour CUMP, on consomme proportionnellement ou on affiche juste le prix moyen
+        const avgPrice = this.stockDetails.totalQuantite > 0 
+          ? this.stockDetails.totalValeur / this.stockDetails.totalQuantite 
+          : 0;
+        this.stockDetails.simulation = [{
+          quantite: targetQty,
+          prix: avgPrice,
+          date: new Date()
+        }];
+        this.stockDetails.totalSimule = targetQty * avgPrice;
+        return;
+      }
+
+      for (let s of historyCopy) {
+        if (remaining <= 0) break;
+        let take = Math.min(s.quantite, remaining);
+        simulation.push({
+          quantite: take,
+          prix: s.coutUnitaire,
+          date: s.dateMaj
+        });
+        remaining -= take;
+      }
+
+      this.stockDetails.simulation = simulation;
+      this.stockDetails.totalSimule = simulation.reduce((sum, s) => sum + (s.quantite * s.prix), 0);
+    },
+    formatCurrency(val) {
+      if (val === null || val === undefined) return '0 Ar';
+      return new Intl.NumberFormat('fr-MG', { style: 'currency', currency: 'MGA' }).format(val).replace('MGA', 'Ar');
+    },
+    formatDate(date) {
+      if (!date) return '—';
+      return new Date(date).toLocaleString('fr-FR');
+    },
+    async updateCoutUnitaire(ligne) {
+      if (!ligne.articleId || !this.form.depotId || this.form.type === 'ENTREE') return;
+
+      try {
+        const params = {
+          articleId: ligne.articleId,
+          depotId: this.form.depotId
+        };
+        if (this.form.emplacementId) params.emplacementId = this.form.emplacementId;
+
+        const res = await axios.get('/api/stocks/calculer-cout-unitaire', { params });
+        ligne.coutUnitaire = res.data;
+      } catch (e) {
+        console.error('Erreur calcul coût unitaire:', e);
+      }
+    },
+    updateAllCouts() {
+      if (this.form.type === 'ENTREE') return;
+      this.lignes.forEach(l => {
+        if (l.articleId) this.updateCoutUnitaire(l);
+      });
     },
     isTraceableLot(articleId) {
       const a = this.articles.find(x => x.id === articleId);
@@ -306,5 +568,40 @@ export default {
 
 .gap-2 {
   gap: 0.5rem;
+}
+
+.bg-light-info {
+  background-color: #e8f7ff !important;
+}
+
+.border-info {
+  border-color: #5d87ff !important;
+}
+
+.text-info {
+  color: #5d87ff !important;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.table-info {
+  background-color: #e8f7ff !important;
+}
+
+.fs-7 {
+  font-size: 0.8rem;
 }
 </style>
