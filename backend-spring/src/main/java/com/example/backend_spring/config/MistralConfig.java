@@ -1,15 +1,21 @@
 package com.example.backend_spring.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-@ConfigurationProperties(prefix = "mistral")
 public class MistralConfig {
+    
+    @Value("${mistral.api.key}")
     private String apiKey;
+
+    @Value("${mistral.api.url}")
     private String apiUrl;
+
+    @Value("${mistral.model}")
     private String model;
 
     @Bean

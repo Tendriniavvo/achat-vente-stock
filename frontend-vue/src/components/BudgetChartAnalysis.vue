@@ -21,51 +21,62 @@
         <!-- Message d'accueil -->
         <div class="chat-message bot-message">
           <div class="message-content">
-            Bonjour ! Je suis votre assistant intelligent. Cliquez sur le bouton "Analyser avec IA" pour que j'étudie la répartition budgétaire de votre entreprise ou posez-moi vos questions directement ci-dessous.
+            Bonjour ! Je suis votre assistant expert en stratégie financière. J'ai analysé vos données budgétaires et je suis prêt à vous aider à optimiser vos ressources.
+          </div>
+        </div>
+
+        <!-- Suggestions de questions -->
+        <div v-if="chatHistory.length === 0 && !isLoading && !analysisResult" class="px-3 mb-3">
+          <p class="x-small text-muted mb-2 fw-bold text-uppercase">Questions suggérées :</p>
+          <div class="d-flex flex-wrap gap-2">
+            <button @click="askQuestion('Quels départements concentrent la majorité du budget et pourquoi ?')" class="btn btn-outline-primary btn-sm rounded-pill x-small">
+              <i class="ti ti-chart-bar me-1"></i> Concentration budgétaire ?
+            </button>
+            <button @click="askQuestion('La répartition budgétaire actuelle est-elle équilibrée ou déséquilibrée ?')" class="btn btn-outline-primary btn-sm rounded-pill x-small">
+              <i class="ti ti-scale me-1"></i> Équilibre ?
+            </button>
+            <button @click="askQuestion('Quels départements semblent sous-financés au regard de leur rôle opérationnel ?')" class="btn btn-outline-primary btn-sm rounded-pill x-small">
+              <i class="ti ti-trending-down me-1"></i> Sous-financement ?
+            </button>
+            <button @click="askQuestion('Quel est le risque organisationnel d’une forte concentration budgétaire sur la Finance ?')" class="btn btn-outline-primary btn-sm rounded-pill x-small">
+              <i class="ti ti-alert-triangle me-1"></i> Risques Finance ?
+            </button>
           </div>
         </div>
 
         <!-- Messages de discussion -->
         <div v-for="(msg, idx) in chatHistory" :key="'chat-'+idx" 
-             class="chat-message" :class="msg.role === 'user' ? 'user-message' : 'bot-message'">
+             class="chat-message" :class="[msg.role === 'user' ? 'user-message' : 'bot-message', msg.isSection ? 'section-fade-in' : '']"
+             :style="msg.isSection ? { animationDelay: (msg.sectionIndex * 0.15) + 's' } : {}">
+          
+          <div v-if="msg.isSection" class="section-icon">
+            <i :class="getSectionIcon(msg.sectionIndex)"></i>
+          </div>
+
           <div class="message-content shadow-sm">
+            <div v-if="msg.isSection" class="d-flex justify-content-end mb-1">
+              <button @click="copyToClipboard(msg.content, msg.sectionIndex)" class="btn-copy" :title="copyStatus[msg.sectionIndex] ? 'Copié !' : 'Copier'">
+                <i :class="copyStatus[msg.sectionIndex] ? 'ti ti-check text-success' : 'ti ti-copy'"></i>
+              </button>
+            </div>
             <div v-html="renderMarkdown(msg.content)" class="markdown-text"></div>
           </div>
         </div>
 
         <!-- État de chargement -->
-        <div v-if="isLoading" class="chat-message bot-message">
+        <div v-if="isLoading || isLoadingChat" class="chat-message bot-message">
           <div class="message-content">
             <div class="typing-indicator">
               <span></span><span></span><span></span>
             </div>
-            Analyse en cours... J'étudie vos données budgétaires.
+            {{ isLoading ? "Analyse budgétaire en cours..." : "L'assistant réfléchit..." }}
           </div>
         </div>
 
-        <!-- Résultat de l'analyse -->
-        <div v-if="analysisResult" class="analysis-results">
-          <div v-for="(section, index) in parsedSections" :key="index" 
-               class="chat-message bot-message section-fade-in"
-               :style="{ animationDelay: (index * 0.3) + 's' }">
-            <div class="section-icon">
-              <i :class="getSectionIcon(index)"></i>
-            </div>
-            <div class="message-content shadow-sm">
-              <div class="d-flex justify-content-end mb-1">
-                <button @click="copyToClipboard(section, index)" class="btn-copy" :title="copyStatus[index] ? 'Copié !' : 'Copier'">
-                  <i :class="copyStatus[index] ? 'ti ti-check text-success' : 'ti ti-copy'"></i>
-                </button>
-              </div>
-              <div v-html="renderMarkdown(section)" class="markdown-text"></div>
-            </div>
-          </div>
-          
-          <div v-if="isCached" class="text-center my-2">
-            <span class="badge bg-light-info text-info rounded-pill x-small">
-              <i class="ti ti-history me-1"></i> Analyse mise en cache
-            </span>
-          </div>
+        <div v-if="isCached" class="text-center my-2">
+          <span class="badge bg-light-info text-info rounded-pill x-small">
+            <i class="ti ti-history me-1"></i> Analyse mise en cache
+          </span>
         </div>
       </div>
 
@@ -206,19 +217,19 @@ export default {
       this.showAnalysis = true;
       this.isLoading = true;
       this.chatHistory = []; // Reset chat when starting new analysis
+      this.analysisResult = ''; // Still used for internal state but not template display
       
       // Gestion du cache
       if (this.lastDataHash === currentHash && this.cachedAnalysis) {
         setTimeout(() => {
-          this.analysisResult = this.cachedAnalysis;
           this.isCached = true;
           this.isLoading = false;
+          this.pushAnalysisToChat(this.cachedAnalysis);
           this.scrollToBottom();
         }, 800);
         return;
       }
 
-      this.analysisResult = '';
       this.isCached = false;
 
       try {
@@ -228,22 +239,46 @@ export default {
         });
 
         if (response.data.status === 'success') {
-          this.analysisResult = response.data.analysis;
-          this.cachedAnalysis = this.analysisResult;
+          const result = response.data.analysis;
+          this.cachedAnalysis = result;
           this.lastDataHash = currentHash;
+          this.pushAnalysisToChat(result);
         } else {
-          this.analysisResult = "### Erreur\n" + response.data.analysis;
+          this.chatHistory.push({ role: 'assistant', content: "### ⚠️ Erreur\n" + response.data.analysis });
         }
       } catch (err) {
         console.error('Erreur IA Frontend:', err);
         let msg = "Impossible de contacter le service d'analyse IA.";
         if (err.response) msg = err.response.data.analysis || "Erreur serveur (500)";
         else if (err.request) msg = "Le backend ne répond pas. Vérifiez qu'il est lancé sur le port 8080.";
-        this.analysisResult = "### Erreur\n" + msg;
+        this.chatHistory.push({ role: 'assistant', content: "### ❌ Erreur\n" + msg });
       } finally {
         this.isLoading = false;
         this.scrollToBottom();
       }
+    },
+    pushAnalysisToChat(analysisText) {
+      if (!analysisText) return;
+      
+      let sections = [];
+      if (!/\d\.\s\*\*/.test(analysisText)) {
+        sections = [analysisText];
+      } else {
+        sections = analysisText.split(/(?=\d\.\s\*\*)/).filter(p => p.trim().length > 0).map(p => p.trim());
+      }
+
+      sections.forEach((section, index) => {
+        this.chatHistory.push({
+          role: 'assistant',
+          content: section,
+          isSection: true,
+          sectionIndex: index
+        });
+      });
+    },
+    async askQuestion(question) {
+      this.userMessage = question;
+      await this.sendMessage();
     },
     async sendMessage() {
       if (!this.userMessage.trim() || this.isLoadingChat) return;
@@ -258,20 +293,28 @@ export default {
       this.scrollToBottom();
 
       try {
+        console.log("Envoi message chat:", messageText);
         const response = await axios.post(`${this.apiUrl}/chat`, {
           message: messageText,
           budgetData: this.budgetData,
-          history: this.chatHistory.slice(0, -1) // Envoyer l'historique sans le dernier message
+          history: this.chatHistory.slice(0, -1).map(m => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.content
+          }))
         });
 
         if (response.data.status === 'success') {
           this.chatHistory.push({ role: 'assistant', content: response.data.analysis });
         } else {
-          this.chatHistory.push({ role: 'assistant', content: "### Erreur\n" + response.data.analysis });
+          this.chatHistory.push({ role: 'assistant', content: "### ⚠️ Attention\n" + response.data.analysis });
         }
       } catch (err) {
         console.error('Erreur Chat Frontend:', err);
-        this.chatHistory.push({ role: 'assistant', content: "### Erreur\nImpossible de joindre l'assistant IA." });
+        let errorMsg = "L'assistant IA ne répond pas. Vérifiez que le serveur backend est bien lancé sur le port 8080.";
+        if (err.response && err.response.data && err.response.data.analysis) {
+          errorMsg = err.response.data.analysis;
+        }
+        this.chatHistory.push({ role: 'assistant', content: "### ❌ Erreur\n" + errorMsg });
       } finally {
         this.isLoadingChat = false;
         this.scrollToBottom();
@@ -345,8 +388,25 @@ export default {
 }
 
 .assistant-sidebar.active {
-  width: 400px;
+  width: 550px;
   border-right-width: 1px;
+}
+
+/* Ajustement pour les petits écrans */
+@media (max-width: 1200px) {
+  .assistant-sidebar.active {
+    width: 450px;
+  }
+}
+
+@media (max-width: 768px) {
+  .assistant-sidebar.active {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+  }
 }
 
 /* Section Graphique */
@@ -415,6 +475,31 @@ export default {
   border-radius: 0 1.25rem 1.25rem 1.25rem;
   font-size: 0.9rem;
   position: relative;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.markdown-text {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdown-text :deep(p) {
+  margin-bottom: 0.8rem;
+}
+
+.markdown-text :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.markdown-text :deep(ul), .markdown-text :deep(ol) {
+  padding-left: 1.2rem;
+  margin-bottom: 0.8rem;
+}
+
+.markdown-text :deep(li) {
+  margin-bottom: 0.3rem;
 }
 
 .user-message {
@@ -428,6 +513,8 @@ export default {
   border-radius: 1.25rem 1.25rem 0 1.25rem;
   font-size: 0.9rem;
   max-width: 85%;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .user-message .markdown-text :deep(p) {
