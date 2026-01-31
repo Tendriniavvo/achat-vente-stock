@@ -245,6 +245,38 @@ export default {
         this.scrollToBottom();
       }
     },
+    async sendMessage() {
+      if (!this.userMessage.trim() || this.isLoadingChat) return;
+
+      const messageText = this.userMessage.trim();
+      this.userMessage = '';
+      this.showAnalysis = true;
+      
+      // Ajouter le message utilisateur à l'historique local
+      this.chatHistory.push({ role: 'user', content: messageText });
+      this.isLoadingChat = true;
+      this.scrollToBottom();
+
+      try {
+        const response = await axios.post(`${this.apiUrl}/chat`, {
+          message: messageText,
+          budgetData: this.budgetData,
+          history: this.chatHistory.slice(0, -1) // Envoyer l'historique sans le dernier message
+        });
+
+        if (response.data.status === 'success') {
+          this.chatHistory.push({ role: 'assistant', content: response.data.analysis });
+        } else {
+          this.chatHistory.push({ role: 'assistant', content: "### Erreur\n" + response.data.analysis });
+        }
+      } catch (err) {
+        console.error('Erreur Chat Frontend:', err);
+        this.chatHistory.push({ role: 'assistant', content: "### Erreur\nImpossible de joindre l'assistant IA." });
+      } finally {
+        this.isLoadingChat = false;
+        this.scrollToBottom();
+      }
+    },
     closeAnalysis() {
       this.showAnalysis = false;
     },
@@ -383,6 +415,23 @@ export default {
   border-radius: 0 1.25rem 1.25rem 1.25rem;
   font-size: 0.9rem;
   position: relative;
+}
+
+.user-message {
+  justify-content: flex-end;
+}
+
+.user-message .message-content {
+  background: #5d87ff;
+  color: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: 1.25rem 1.25rem 0 1.25rem;
+  font-size: 0.9rem;
+  max-width: 85%;
+}
+
+.user-message .markdown-text :deep(p) {
+  margin-bottom: 0;
 }
 
 .analysis-results .bot-message {
