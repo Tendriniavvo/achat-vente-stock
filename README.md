@@ -1,10 +1,16 @@
+npm install marked
+
+
+
 # achat-vente-stock
 
 npm install @google/generative-ai
 Quel est le montant total de mes achats ?
 
 npm install @google/genai
+npm install marked
 . Gestion du Stock (Inventory)
+
 
 - Valeur Totale du Stock (KPI) : Somme de quantité * prix_achat pour tous les articles. C'est une donnée cruciale pour la comptabilité et la trésorerie.
 - Répartition du Stock par Dépôt (Stacked Bar Chart) : Visualiser comment le stock est distribué géographiquement (Dépôt Principal vs Dépôt Secondaire).

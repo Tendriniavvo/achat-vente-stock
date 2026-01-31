@@ -280,42 +280,63 @@
           </div>
         </div>
 
-        <!-- 4. Consommation Budgétaire (Gauge Charts) -->
+        <!-- 4. Consommation Budgétaire (Répartition & Détails) -->
         <div v-if="hasPermission('/dashboard/budget')" class="col-12">
           <div class="card border-0 shadow-sm">
             <div class="card-body">
               <div class="d-flex align-items-center justify-content-between mb-4">
                 <div>
-                  <h6 class="fw-bold mb-0">Consommation Budgétaire par Département</h6>
-                  <p class="text-muted small mb-0">% du budget annuel consommé</p>
+                  <h5 class="fw-bold mb-0">Consommation Budgétaire par Département</h5>
+                  <p class="text-muted small mb-0">Analyse de l'utilisation des budgets annuels</p>
                 </div>
                 <i class="ti ti-chart-pie text-primary fs-6"></i>
               </div>
               
               <div class="row g-4">
-                <div v-for="dept in statistiques.budgetConsommation" :key="dept.departement" class="col-12 col-md-4 col-xl-3">
-                  <div class="text-center p-3 border rounded-3 bg-light-subtle h-100">
-                    <h6 class="fw-semibold mb-3">{{ dept.departement }}</h6>
-                    <apexchart 
-                      type="radialBar" 
-                      height="200" 
-                      :options="getGaugeOptions(dept.pourcentage)" 
-                      :series="[dept.pourcentage]"
-                    ></apexchart>
-                    <div class="mt-2">
-                      <div class="d-flex justify-content-between small mb-1">
-                        <span class="text-muted">Consommé:</span>
-                        <span class="fw-bold">{{ formatCurrency(dept.consomme) }}</span>
+                <!-- ZONE GAUCHE : Composant d'Analyse IA -->
+                <div class="col-12 col-xl-12">
+                  <BudgetChartAnalysis 
+                    :pieSeries="pieBudgetSeries" 
+                    :pieOptions="pieBudgetOptions"
+                  />
+                </div>
+
+                <!-- ZONE DROITE : Jauges de consommation (Encadrée) -->
+                <div class="col-12 col-xl-12 mt-4">
+                  <div class="p-4 border rounded-4 bg-light-subtle h-100 border-2">
+                    <h6 class="fw-semibold mb-4 text-center">Détail par département</h6>
+                    <div class="row g-3">
+                      <div v-for="(dept, idx) in statistiques.budgetConsommation" :key="idx" class="col-12 col-md-6 col-xxl-4">
+                        <div class="text-center p-3 border rounded-3 bg-white shadow-sm h-100">
+                          <h6 class="fw-semibold mb-2 small">{{ dept.departement }}</h6>
+                          <apexchart 
+                            type="radialBar" 
+                            height="180" 
+                            :options="getGaugeOptions(dept.pourcentage)" 
+                            :series="[dept.pourcentage]"
+                          ></apexchart>
+                          <div class="mt-2 border-top pt-2">
+                            <div class="d-flex justify-content-between x-small mb-1">
+                              <span class="text-muted">Consommé:</span>
+                              <span class="fw-bold text-primary">{{ formatCurrency(dept.consomme) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between x-small">
+                              <span class="text-muted">Total:</span>
+                              <span class="fw-bold">{{ formatCurrency(dept.initial) }}</span>
+                            </div>
+                            <div class="text-center mt-1">
+                              <span class="badge bg-light-primary text-primary rounded-pill x-small">
+                                {{ dept.pourcentage.toFixed(1) }}% utilisé
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div class="d-flex justify-content-between small">
-                        <span class="text-muted">Total:</span>
-                        <span class="fw-bold">{{ formatCurrency(dept.initial) }}</span>
+                      <div v-if="!statistiques.budgetConsommation || statistiques.budgetConsommation.length === 0" class="col-12 text-center py-4">
+                        <p class="text-muted">Aucune donnée budgétaire disponible</p>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div v-if="!statistiques.budgetConsommation || statistiques.budgetConsommation.length === 0" class="col-12 text-center py-4">
-                  <p class="text-muted">Aucune donnée budgétaire disponible</p>
                 </div>
               </div>
             </div>
@@ -424,12 +445,14 @@
 import MainLayout from '../layouts/MainLayout.vue';
 import VueApexCharts from "vue3-apexcharts";
 import axios from 'axios';
+import BudgetChartAnalysis from '../components/BudgetChartAnalysis.vue';
 
 export default {
   name: 'Dashboard',
   components: {
     MainLayout,
     apexchart: VueApexCharts,
+    BudgetChartAnalysis,
   },
   data() {
     return {
@@ -495,6 +518,27 @@ export default {
         },
         fill: { opacity: 1 },
         legend: { show: false }
+      },
+      // Options Pie Chart Budget
+      pieBudgetSeries: [],
+      pieBudgetOptions: {
+        chart: { type: 'pie', fontFamily: 'inherit' },
+        labels: [],
+        colors: ['#5D87FF', '#13DEB9', '#FFAE1F', '#FA896B', '#49BEFF'],
+        legend: { position: 'bottom' },
+        dataLabels: {
+          enabled: true,
+          formatter: function (val) {
+            return val.toFixed(1) + "%"
+          }
+        },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA', minimumFractionDigits: 0 }).format(val)
+            }
+          }
+        }
       }
     };
   },
@@ -543,6 +587,17 @@ export default {
               data: [totalDepot]
             };
           });
+        }
+
+        // Mise à jour Pie Chart Budget (Répartition)
+        if (this.statistiques.budgetConsommation) {
+          const distribution = {};
+          this.statistiques.budgetConsommation.forEach(dept => {
+            const name = dept.departement;
+            distribution[name] = (distribution[name] || 0) + dept.initial;
+          });
+          this.pieBudgetOptions = { ...this.pieBudgetOptions, labels: Object.keys(distribution) };
+          this.pieBudgetSeries = Object.values(distribution);
         }
 
       } catch (err) {
@@ -758,6 +813,12 @@ export default {
   }
   .display-4 {
   font-size: 2.5rem;
+}
+.x-small {
+  font-size: 0.75rem;
+}
+.rounded-4 {
+  border-radius: 1rem !important;
 }
 @media (min-width: 1200px) {
   .display-4 {

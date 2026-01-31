@@ -10,6 +10,7 @@ frontend-vue/node_modules/
 
 
 application.properties
+ backend-spring/src/main/resources/application.properties
 
 logs/
 *.log
