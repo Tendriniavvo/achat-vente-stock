@@ -90,6 +90,7 @@ public class MouvementStockService {
             legacy.setLot(mouvement.getLot());
             legacy.setEmplacement(mouvement.getEmplacement());
             lignes.add(legacy);
+            mouvement.setLignes(lignes);
         }
 
         BigDecimal deltaValeur = BigDecimal.ZERO;
@@ -142,6 +143,10 @@ public class MouvementStockService {
 
     private BigDecimal appliquerEntree(MouvementStock mouvement, List<LigneMouvementStock> lignes) {
         BigDecimal deltaValeur = BigDecimal.ZERO;
+        
+        mouvement.getLignes().clear();
+        mouvement.getLignes().addAll(lignes);
+        
         for (LigneMouvementStock ligne : lignes) {
             if (ligne.getQuantite() <= 0) {
                 throw new IllegalArgumentException("Quantité entrée invalide");
@@ -166,7 +171,11 @@ public class MouvementStockService {
     private BigDecimal appliquerSortie(MouvementStock mouvement, List<LigneMouvementStock> lignes) {
         BigDecimal deltaValeur = BigDecimal.ZERO;
         List<LigneMouvementStock> expanded = expandLotsIfNeeded(lignes, true);
-        mouvement.setLignes(expanded);
+        
+        // Mise à jour sécurisée de la collection pour JPA
+        mouvement.getLignes().clear();
+        mouvement.getLignes().addAll(expanded);
+        
         for (LigneMouvementStock ligne : expanded) {
             if (ligne.getQuantite() <= 0) {
                 throw new IllegalArgumentException("Quantité sortie invalide");
@@ -194,7 +203,10 @@ public class MouvementStockService {
             throw new IllegalArgumentException("Emplacement destination obligatoire pour un transfert");
         }
         List<LigneMouvementStock> expanded = expandLotsIfNeeded(lignes, true);
-        mouvement.setLignes(expanded);
+        
+        mouvement.getLignes().clear();
+        mouvement.getLignes().addAll(expanded);
+        
         for (LigneMouvementStock ligne : expanded) {
             if (ligne.getQuantite() <= 0) {
                 throw new IllegalArgumentException("Quantité transfert invalide");
@@ -213,7 +225,10 @@ public class MouvementStockService {
     private BigDecimal appliquerAjustement(MouvementStock mouvement, List<LigneMouvementStock> lignes) {
         BigDecimal deltaValeur = BigDecimal.ZERO;
         List<LigneMouvementStock> expanded = expandLotsIfNeeded(lignes, false);
-        mouvement.setLignes(expanded);
+        
+        mouvement.getLignes().clear();
+        mouvement.getLignes().addAll(expanded);
+        
         for (LigneMouvementStock ligne : expanded) {
             if (ligne.getQuantite() == 0) {
                 continue;
@@ -258,83 +273,31 @@ public class MouvementStockService {
             throw new IllegalArgumentException("Emplacement obligatoire pour mise à jour stock");
         }
 
-        BigDecimal cuToSearch = coutUnitaire;
-        
-        Stock stock;
-        if (cuToSearch != null) {
-            stock = stockRepository.findByArticleAndDepotAndEmplacementAndCoutUnitaire(ligne.getArticle(), depot, emplacement, cuToSearch)
-                .orElseGet(() -> {
-                    Stock s = new Stock();
-                    s.setArticle(ligne.getArticle());
-                    s.setDepot(depot);
-                    s.setEmplacement(emplacement);
-                    s.setQuantite(0);
-                    s.setCoutUnitaire(cuToSearch);
-                    s.setValeur(BigDecimal.ZERO);
-                    return s;
-                });
-        } else {
-            // Si pas de coût spécifié (généralement une sortie), on cherche le stock le plus approprié
-            // ou on lève une erreur si c'est une sortie sans stock disponible
-            if (variationQuantite < 0) {
-                // Recherche des stocks disponibles pour cet article/dépôt/emplacement
-                List<Stock> stocks = stockRepository.findByArticleId(ligne.getArticle().getId()).stream()
-                        .filter(s -> s.getDepot().getId() == depot.getId())
-                        .filter(s -> s.getEmplacement().getId() == emplacement.getId())
-                        .filter(s -> s.getQuantite() > 0)
-                        .toList();
-
-                if (stocks.isEmpty()) {
-                    throw new IllegalStateException("Aucun stock disponible pour l'article " + ligne.getArticle().getCode());
-                }
-                
-                // Par défaut on prend le premier (le calcul automatique en amont devrait normalement fournir un coût)
-                stock = stocks.get(0);
-            } else {
-                stock = stockRepository.findByArticleAndDepotAndEmplacement(ligne.getArticle(), depot, emplacement)
-                    .orElseGet(() -> {
-                        Stock s = new Stock();
-                        s.setArticle(ligne.getArticle());
-                        s.setDepot(depot);
-                        s.setEmplacement(emplacement);
-                        s.setQuantite(0);
-                        s.setCoutUnitaire(BigDecimal.ZERO);
-                        s.setValeur(BigDecimal.ZERO);
-                        return s;
-                    });
-            }
+        // Si c'est une sortie (variation négative), on doit potentiellement décomposer sur plusieurs entrées
+        if (variationQuantite < 0) {
+            return consommerStock(ligne, depot, emplacement, -variationQuantite);
         }
+
+        // Pour les entrées (variation positive), on cherche l'entrée existante avec ce coût ou on en crée une
+        BigDecimal cuToSearch = coutUnitaire != null ? coutUnitaire : BigDecimal.ZERO;
+        
+        Stock stock = stockRepository.findByArticleAndDepotAndEmplacementAndCoutUnitaire(ligne.getArticle(), depot, emplacement, cuToSearch)
+            .orElseGet(() -> {
+                Stock s = new Stock();
+                s.setArticle(ligne.getArticle());
+                s.setDepot(depot);
+                s.setEmplacement(emplacement);
+                s.setQuantite(0);
+                s.setCoutUnitaire(cuToSearch);
+                s.setValeur(BigDecimal.ZERO);
+                return s;
+            });
 
         int ancienneQuantite = stock.getQuantite();
         BigDecimal ancienneValeur = stock.getValeur() == null ? BigDecimal.ZERO : stock.getValeur();
 
         int nouvelleQuantite = ancienneQuantite + variationQuantite;
-        if (nouvelleQuantite < 0) {
-            throw new IllegalStateException("Stock insuffisant pour l'article " + ligne.getArticle().getCode() + " au coût spécifié");
-        }
-
-        BigDecimal nouvelleValeur = ancienneValeur;
-        if (variationQuantite > 0) {
-            BigDecimal cu = coutUnitaire == null ? BigDecimal.ZERO : coutUnitaire;
-            nouvelleValeur = ancienneValeur.add(cu.multiply(BigDecimal.valueOf(variationQuantite)));
-        } else if (variationQuantite < 0) {
-            int qtySortie = -variationQuantite;
-            BigDecimal cu;
-            if (coutUnitaire != null) {
-                cu = coutUnitaire;
-            } else {
-                if (ancienneQuantite > 0) {
-                    cu = ancienneValeur.divide(BigDecimal.valueOf(ancienneQuantite), 6, RoundingMode.HALF_UP);
-                } else {
-                    cu = BigDecimal.ZERO;
-                }
-            }
-            nouvelleValeur = ancienneValeur.subtract(cu.multiply(BigDecimal.valueOf(qtySortie)));
-        }
-
-        if (nouvelleValeur.compareTo(BigDecimal.ZERO) < 0) {
-            nouvelleValeur = BigDecimal.ZERO;
-        }
+        BigDecimal nouvelleValeur = ancienneValeur.add(cuToSearch.multiply(BigDecimal.valueOf(variationQuantite)));
 
         stock.setQuantite(nouvelleQuantite);
         stock.setValeur(nouvelleValeur);
@@ -342,6 +305,59 @@ public class MouvementStockService {
         stockRepository.save(stock);
 
         return nouvelleValeur.subtract(ancienneValeur);
+    }
+
+    private BigDecimal consommerStock(LigneMouvementStock ligne, com.example.backend_spring.models.Depot depot, com.example.backend_spring.models.Emplacement emplacement, int quantiteASortir) {
+        Article article = ligne.getArticle();
+        List<Stock> stocksDisponibles = stockRepository.findByArticleId(article.getId()).stream()
+                .filter(s -> s.getDepot() != null && s.getDepot().getId() == depot.getId())
+                .filter(s -> {
+                    if (emplacement == null) {
+                        return s.getEmplacement() == null;
+                    } else {
+                        return s.getEmplacement() != null && s.getEmplacement().getId() == emplacement.getId();
+                    }
+                })
+                .filter(s -> s.getQuantite() > 0)
+                .collect(java.util.stream.Collectors.toList());
+
+        if (stocksDisponibles.isEmpty()) {
+            throw new IllegalStateException("Aucun stock disponible pour l'article " + article.getCode() + " au dépôt " + depot.getNom());
+        }
+
+        // Tri selon la méthode de valorisation
+        String methode = article.getMethodeValorisation() != null ? article.getMethodeValorisation().toUpperCase() : "CUMP";
+        if ("FIFO".equals(methode)) {
+            stocksDisponibles.sort(Comparator.comparing(s -> s.getDateMaj() != null ? s.getDateMaj() : LocalDateTime.MIN));
+        } else if ("LIFO".equals(methode)) {
+            stocksDisponibles.sort(Comparator.comparing((Stock s) -> s.getDateMaj() != null ? s.getDateMaj() : LocalDateTime.MIN).reversed());
+        }
+        // Pour CUMP, on peut aussi trier par FIFO par défaut ou prorata (ici FIFO pour simplifier la décomposition)
+
+        int restant = quantiteASortir;
+        BigDecimal valeurSortieTotale = BigDecimal.ZERO;
+
+        for (Stock s : stocksDisponibles) {
+            if (restant <= 0) break;
+
+            int aPrendre = Math.min(s.getQuantite(), restant);
+            BigDecimal valeurSortie = s.getCoutUnitaire().multiply(BigDecimal.valueOf(aPrendre));
+            
+            s.setQuantite(s.getQuantite() - aPrendre);
+            s.setValeur(s.getValeur().subtract(valeurSortie));
+            if (s.getValeur().compareTo(BigDecimal.ZERO) < 0) s.setValeur(BigDecimal.ZERO);
+            s.setDateMaj(LocalDateTime.now());
+            stockRepository.save(s);
+
+            valeurSortieTotale = valeurSortieTotale.add(valeurSortie);
+            restant -= aPrendre;
+        }
+
+        if (restant > 0) {
+            throw new IllegalStateException("Stock insuffisant pour l'article " + article.getCode() + " (manque " + restant + ")");
+        }
+
+        return valeurSortieTotale.negate(); // Retourne la variation de valeur (négative)
     }
 
     private void controlerLotEtTraçabilite(Article article, Lot lot, boolean lotObligatoire) {

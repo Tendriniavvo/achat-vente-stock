@@ -87,8 +87,13 @@ public class StockService {
 
     public List<Stock> getStockDetails(int articleId, int depotId, Integer emplacementId) {
         return stockRepository.findByArticleId(articleId).stream()
-                .filter(s -> s.getDepot().getId() == depotId)
-                .filter(s -> emplacementId == null || s.getEmplacement().getId() == (int) emplacementId)
+                .filter(s -> s.getDepot() != null && s.getDepot().getId() == depotId)
+                .filter(s -> {
+                    if (emplacementId == null) {
+                        return true; // Si pas d'emplacement spécifié, on prend tout le dépôt
+                    }
+                    return s.getEmplacement() != null && s.getEmplacement().getId() == (int) emplacementId;
+                })
                 .filter(s -> s.getQuantite() > 0)
                 .toList();
     }

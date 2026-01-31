@@ -1,6 +1,70 @@
 <template>
   <MainLayout>
     <div class="container-fluid">
+      <!-- KPI Cards -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card shadow-none border-start border-primary border-4 kpi-card">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-light-primary p-3 me-3 text-primary">
+                  <i class="ti ti-packages fs-7"></i>
+                </div>
+                <div>
+                  <h6 class="text-muted mb-1">Total Articles</h6>
+                  <h4 class="fw-bold mb-0">{{ kpis.totalArticles }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-none border-start border-success border-4 kpi-card">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-light-success p-3 me-3 text-success">
+                  <i class="ti ti-stack-2 fs-7"></i>
+                </div>
+                <div>
+                  <h6 class="text-muted mb-1">Quantité Totale</h6>
+                  <h4 class="fw-bold mb-0">{{ kpis.totalQuantite }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-none border-start border-warning border-4 kpi-card">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-light-warning p-3 me-3 text-warning">
+                  <i class="ti ti-coin fs-7"></i>
+                </div>
+                <div>
+                  <h6 class="text-muted mb-1">Valeur Totale</h6>
+                  <h4 class="fw-bold mb-0">{{ formatCurrency(kpis.totalValeur) }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-none border-start border-danger border-4 kpi-card">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-light-danger p-3 me-3 text-danger">
+                  <i class="ti ti-building-warehouse fs-7"></i>
+                </div>
+                <div>
+                  <h6 class="text-muted mb-1">Dépôts Actifs</h6>
+                  <h4 class="fw-bold mb-0">{{ kpis.totalDepots }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-4">
@@ -133,6 +197,17 @@ export default {
     };
   },
   computed: {
+    kpis() {
+      // Calculés à partir de this.rows (données brutes chargées depuis l'API)
+      const validRows = (this.rows || []).filter(s => (s.quantite || 0) > 0);
+      
+      return {
+        totalArticles: new Set(validRows.map(s => s.article?.id)).size,
+        totalQuantite: validRows.reduce((sum, s) => sum + (s.quantite || 0), 0),
+        totalValeur: validRows.reduce((sum, s) => sum + (s.valeur || 0), 0),
+        totalDepots: new Set(validRows.map(s => s.depot?.id)).size
+      };
+    },
     groupedRows() {
       const a = (this.filters.article || '').toLowerCase().trim();
       const d = (this.filters.depot || '').toLowerCase().trim();
@@ -234,6 +309,22 @@ export default {
 .table-responsive {
   margin-top: 1rem;
 }
+
+.kpi-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+}
+
+.bg-light-primary { background-color: rgba(93, 135, 255, 0.1) !important; }
+.bg-light-success { background-color: rgba(19, 222, 185, 0.1) !important; }
+.bg-light-warning { background-color: rgba(255, 174, 31, 0.1) !important; }
+.bg-light-danger { background-color: rgba(250, 137, 107, 0.1) !important; }
+
+.fs-7 { font-size: 1.5rem; }
 
 .cursor-pointer {
   cursor: pointer;
