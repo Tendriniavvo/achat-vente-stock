@@ -37,16 +37,29 @@ public class ReceptionController {
     @PostMapping("/enregistrer")
     public ResponseEntity<?> enregistrerReception(@RequestBody Map<String, Object> payload) {
         try {
-            int bcId = (int) payload.get("bcId");
-            int utilisateurId = (int) payload.get("utilisateurId");
-            int depotId = (int) payload.get("depotId");
+            int bcId = getIntFromPayload(payload, "bcId");
+            int utilisateurId = getIntFromPayload(payload, "utilisateurId");
+            int depotId = getIntFromPayload(payload, "depotId");
             List<Map<String, Object>> items = (List<Map<String, Object>>) payload.get("items");
 
             Reception reception = receptionService.enregistrerReception(bcId, utilisateurId, depotId, items);
             return ResponseEntity.ok(reception);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            e.printStackTrace(); // Pour le debug
+            return ResponseEntity.status(500).body(Map.of("message", e.getMessage() != null ? e.getMessage() : "Erreur interne du serveur"));
         }
+    }
+
+    private int getIntFromPayload(Map<String, Object> payload, String key) {
+        Object value = payload.get(key);
+        if (value instanceof Integer) {
+            return (Integer) value;
+        } else if (value instanceof Double) {
+            return ((Double) value).intValue();
+        } else if (value instanceof String) {
+            return Integer.parseInt((String) value);
+        }
+        throw new IllegalArgumentException("La clé " + key + " est manquante ou invalide");
     }
 
     @DeleteMapping("/{id}")

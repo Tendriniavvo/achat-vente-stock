@@ -52,9 +52,9 @@ public class DevisClientController {
     }
 
     @PostMapping("/{id}/valider")
-    public ResponseEntity<?> validerDevis(@PathVariable int id, @RequestBody Map<String, Integer> payload) {
+    public ResponseEntity<?> validerDevis(@PathVariable int id, @RequestBody Map<String, Object> payload) {
         try {
-            int utilisateurId = payload.get("utilisateurId");
+            int utilisateurId = getIntFromPayload(payload, "utilisateurId");
             DevisClient validated = devisClientService.validerDevis(id, utilisateurId);
             return ResponseEntity.ok(validated);
         } catch (Exception e) {
@@ -66,7 +66,7 @@ public class DevisClientController {
     public ResponseEntity<?> transformerEnCommande(@PathVariable int id,
             @RequestBody Map<String, Object> payload) {
         try {
-            int utilisateurId = (Integer) payload.get("utilisateurId");
+            int utilisateurId = getIntFromPayload(payload, "utilisateurId");
             String dateLivraisonStr = (String) payload.get("dateLivraisonPrevue");
 
             CommandeClient commande = devisClientService.transformerEnCommande(id, utilisateurId, dateLivraisonStr);
@@ -74,6 +74,18 @@ public class DevisClientController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    private int getIntFromPayload(Map<String, Object> payload, String key) {
+        Object value = payload.get(key);
+        if (value instanceof Integer) {
+            return (Integer) value;
+        } else if (value instanceof Double) {
+            return ((Double) value).intValue();
+        } else if (value instanceof String) {
+            return Integer.parseInt((String) value);
+        }
+        throw new IllegalArgumentException("La clé " + key + " est manquante ou invalide");
     }
 
     @PostMapping

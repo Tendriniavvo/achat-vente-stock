@@ -64,7 +64,7 @@ public class MouvementStockService {
             if (mouvement.getLignes().size() == 1) {
                 LigneMouvementStock unique = mouvement.getLignes().get(0);
                 mouvement.setArticle(unique.getArticle());
-                if (unique.getCoutUnitaire() != null) {
+                if (unique.getCoutUnitaire() != null && unique.getCoutUnitaire().compareTo(BigDecimal.ZERO) > 0) {
                     mouvement.setCout(unique.getCoutUnitaire());
                 }
                 mouvement.setLot(unique.getLot());
@@ -78,12 +78,13 @@ public class MouvementStockService {
                     mouvement.setEmplacement(unique.getEmplacement());
                 }
             } else {
-                // Si plusieurs lignes, on vide les champs spécifiques à un article unique
+                // Si plusieurs lignes, on ne vide le coût que si les lignes ont des coûts
+                // différents
+                // ou si on veut vraiment forcer le détail par ligne.
+                // Pour l'instant, on évite de vider brutalement pour garder la trace du coût
+                // global si défini.
                 mouvement.setArticle(null);
-                mouvement.setCout(null);
                 mouvement.setLot(null);
-                // On garde l'emplacement global si toutes les lignes ont le même ou si non
-                // spécifié sur les lignes
             }
         }
     }
@@ -321,12 +322,21 @@ public class MouvementStockService {
         // For les entrées (variation positive), on cherche l'entrée existante avec ce
         // coût ou on en crée une
         if (variationQuantite > 0 && (coutUnitaire == null || coutUnitaire.compareTo(BigDecimal.ZERO) <= 0)) {
-            // Optionnel: on peut essayer de récupérer le prix d'achat de l'article si le
-            // coût est 0
-            if (ligne.getArticle().getPrixAchat() != null
+            // Fallback 1: Essayer de récupérer le coût depuis le mouvement (header)
+            if (ligne.getMouvement() != null && ligne.getMouvement().getCout() != null
+                    && ligne.getMouvement().getCout().compareTo(BigDecimal.ZERO) > 0) {
+                coutUnitaire = ligne.getMouvement().getCout();
+            }
+            // Fallback 2: Essayer de récupérer le prix d'achat de l'article
+            else if (ligne.getArticle().getPrixAchat() != null
                     && ligne.getArticle().getPrixAchat().compareTo(BigDecimal.ZERO) > 0) {
                 coutUnitaire = ligne.getArticle().getPrixAchat();
             }
+        }
+
+        // On s'assure que la ligne a le bon coût unitaire pour la suite (audit, etc.)
+        if (coutUnitaire != null && coutUnitaire.compareTo(BigDecimal.ZERO) > 0) {
+            ligne.setCoutUnitaire(coutUnitaire);
         }
 
         BigDecimal cuToSearch = (coutUnitaire != null && coutUnitaire.compareTo(BigDecimal.ZERO) > 0) ? coutUnitaire
