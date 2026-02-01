@@ -23,6 +23,55 @@ public class MistralAIService {
     @Autowired
     private RestTemplate restTemplate;
 
+    public String callMistral(String systemPrompt, String userMessage, List<Map<String, String>> history) {
+        String apiKey = mistralConfig.getApiKey();
+        String apiUrl = mistralConfig.getApiUrl();
+        String model = mistralConfig.getModel();
+
+        if (apiUrl == null || apiUrl.trim().isEmpty()) {
+            throw new RuntimeException("L'URL de l'API Mistral n'est pas configurée.");
+        }
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", model);
+        
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", systemPrompt));
+        
+        if (history != null) {
+            for (Map<String, String> hist : history) {
+                messages.add(Map.of("role", hist.get("role"), "content", hist.get("content")));
+            }
+        }
+        
+        messages.add(Map.of("role", "user", "content", userMessage));
+        
+        requestBody.put("messages", messages);
+        requestBody.put("max_tokens", 1000);
+        requestBody.put("temperature", 0.5);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
+                if (choices != null && !choices.isEmpty()) {
+                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                    return (String) message.get("content");
+                }
+            }
+            throw new RuntimeException("Réponse vide de l'API Mistral");
+        } catch (Exception e) {
+            logger.error("Erreur lors de l'appel Mistral: {}", e.getMessage());
+            return "Désolé, je rencontre une difficulté technique pour répondre à votre question.";
+        }
+    }
+
     public String analyzerGraphiqueBudget(Map<String, Object> budgetData) {
         String apiKey = mistralConfig.getApiKey();
         String apiUrl = mistralConfig.getApiUrl();

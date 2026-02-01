@@ -16,6 +16,9 @@
         <!-- Slot pour le contenu de la page -->
         <slot />
       </div>
+
+      <!-- Chatbot Global -->
+      <GlobalChatbot />
     </div>
   </div>
 </template>
@@ -25,6 +28,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Sidebar from '@/components/layout/Sidebar.vue';
 import Header from '@/components/layout/Header.vue';
+import GlobalChatbot from '@/components/GlobalChatbot.vue';
 
 const router = useRouter();
 const authData = ref(null);
