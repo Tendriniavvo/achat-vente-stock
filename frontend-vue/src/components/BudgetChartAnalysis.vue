@@ -102,10 +102,20 @@
     </div>
 
     <!-- Section Droite : Graphique (Main Content) -->
-    <div class="chart-section p-4">
+    <div class="chart-section p-4 position-relative">
       <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
         <div class="card-body d-flex flex-column align-items-center justify-content-center">
-          <h5 class="fw-bold mb-4">Répartition du budget total</h5>
+          <div class="d-flex justify-content-between align-items-center w-100 mb-4">
+            <h5 class="fw-bold mb-0">Répartition du budget total</h5>
+            <button 
+              @click="analyzeWithAI" 
+              class="btn btn-ai-gradient px-4 py-2"
+              :disabled="isLoading || pieSeries.length === 0"
+            >
+              <i class="ti ti-sparkles me-2"></i>
+              Analyser avec IA
+            </button>
+          </div>
           
           <div v-if="pieSeries.length > 0" class="w-100 d-flex justify-content-center">
             <apexchart 
@@ -119,17 +129,6 @@
           <div v-else class="text-center py-5">
             <div class="spinner-border text-primary" role="status"></div>
             <p class="text-muted mt-2">Chargement des données...</p>
-          </div>
-
-          <div class="mt-auto pt-4">
-            <button 
-              @click="analyzeWithAI" 
-              class="btn btn-ai-gradient px-4 py-2"
-              :disabled="isLoading || pieSeries.length === 0"
-            >
-              <i class="ti ti-sparkles me-2"></i>
-              Analyser avec IA
-            </button>
           </div>
         </div>
       </div>
@@ -563,21 +562,83 @@ export default {
   }
 }
 
-/* Bouton Gradient */
+/* Bouton Gradient Amélioré */
 .btn-ai-gradient {
-  background: linear-gradient(135deg, #5d87ff 0%, #b06ab3 100%);
+  background: linear-gradient(135deg, #5d87ff 0%, #7c4dff 50%, #b06ab3 100%);
+  background-size: 200% auto;
   color: white;
   border: none;
   border-radius: 12px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  padding: 12px 28px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   box-shadow: 0 4px 15px rgba(93, 135, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-ai-gradient i {
+  transition: transform 0.4s ease;
 }
 
 .btn-ai-gradient:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(93, 135, 255, 0.4);
+  background-position: right center;
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 12px 25px rgba(124, 77, 255, 0.4);
   color: white;
+}
+
+.btn-ai-gradient:hover i {
+  transform: rotate(15deg) scale(1.2);
+}
+
+.btn-ai-gradient:active {
+  transform: translateY(-2px) scale(0.98);
+}
+
+/* Effet de brillance (Shimmer) */
+.btn-ai-gradient::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(45deg);
+  transition: none;
+  animation: shimmer 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% { transform: translate(-100%, -100%) rotate(45deg); }
+  100% { transform: translate(100%, 100%) rotate(45deg); }
+}
+
+.btn-ai-gradient:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.btn-ai-gradient:disabled::after {
+  display: none;
 }
 
 /* Footer */
