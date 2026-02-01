@@ -8,10 +8,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-
 @Repository
 public interface MouvementStockRepository extends JpaRepository<MouvementStock, Integer> {
     Optional<MouvementStock> findByReference(String reference);
+
     List<MouvementStock> findByReferenceDocumentAndType(String referenceDocument, String type);
 
     @Query("select distinct m from MouvementStock m " +

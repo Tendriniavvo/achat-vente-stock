@@ -40,7 +40,8 @@ public class DemandeAchatService {
                 .orElseThrow(() -> new RuntimeException("Validateur non trouvé"));
 
         // Séparation des tâches : le demandeur ne peut pas approuver sa propre DA
-        if (demande.getDemandeur() != null && demande.getDemandeur().getId() == validateurId) {
+        if (demande.getDemandeur() != null && demande.getDemandeur().getId() == validateurId
+                && !hasRole(validateur, "Administrateur")) {
             throw new RuntimeException("Un demandeur ne peut pas approuver sa propre demande d'achat");
         }
 
@@ -110,7 +111,7 @@ public class DemandeAchatService {
         if (user.getRoles() == null)
             return false;
         return user.getRoles().stream()
-                .anyMatch(r -> r.getNom().equalsIgnoreCase(roleNom));
+                .anyMatch(r -> r.getNom().equalsIgnoreCase(roleNom) || r.getNom().equalsIgnoreCase("Administrateur"));
     }
 
     @Transactional

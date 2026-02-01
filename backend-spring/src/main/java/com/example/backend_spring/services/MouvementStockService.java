@@ -52,6 +52,11 @@ public class MouvementStockService {
                 if (ligne.getEmplacement() == null && mouvement.getEmplacement() != null) {
                     ligne.setEmplacement(mouvement.getEmplacement());
                 }
+                // Propagation du coût du header vers la ligne si celle-ci n'en a pas ou est à 0
+                if ((ligne.getCoutUnitaire() == null || ligne.getCoutUnitaire().compareTo(BigDecimal.ZERO) <= 0)
+                        && mouvement.getCout() != null && mouvement.getCout().compareTo(BigDecimal.ZERO) > 0) {
+                    ligne.setCoutUnitaire(mouvement.getCout());
+                }
             }
             mouvement.setQuantite(total);
 
@@ -59,7 +64,9 @@ public class MouvementStockService {
             if (mouvement.getLignes().size() == 1) {
                 LigneMouvementStock unique = mouvement.getLignes().get(0);
                 mouvement.setArticle(unique.getArticle());
-                mouvement.setCout(unique.getCoutUnitaire());
+                if (unique.getCoutUnitaire() != null) {
+                    mouvement.setCout(unique.getCoutUnitaire());
+                }
                 mouvement.setLot(unique.getLot());
 
                 // Si la ligne n'a pas d'emplacement, on lui donne celui du mouvement
@@ -94,7 +101,7 @@ public class MouvementStockService {
 
     @Transactional
     public MouvementStock validerMouvement(int id) {
-        MouvementStock mouvement = mouvementStockRepository.findById(id)
+        MouvementStock mouvement = mouvementStockRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new IllegalArgumentException("MouvementStock introuvable"));
 
         if ("VALIDE".equalsIgnoreCase(mouvement.getStatut())) {
@@ -103,6 +110,9 @@ public class MouvementStockService {
         if ("ANNULE".equalsIgnoreCase(mouvement.getStatut())) {
             throw new IllegalStateException("Impossible de valider un mouvement annulé");
         }
+
+        // On synchronise les données (emplacement, coût) avant de traiter le stock
+        synchronizeHeaderWithLines(mouvement);
 
         List<LigneMouvementStock> lignes = mouvement.getLignes();
         if (lignes == null || lignes.isEmpty()) {
@@ -308,9 +318,19 @@ public class MouvementStockService {
             return consommerStock(ligne, depot, emplacement, -variationQuantite);
         }
 
-        // Pour les entrées (variation positive), on cherche l'entrée existante avec ce
+        // For les entrées (variation positive), on cherche l'entrée existante avec ce
         // coût ou on en crée une
-        BigDecimal cuToSearch = coutUnitaire != null ? coutUnitaire : BigDecimal.ZERO;
+        if (variationQuantite > 0 && (coutUnitaire == null || coutUnitaire.compareTo(BigDecimal.ZERO) <= 0)) {
+            // Optionnel: on peut essayer de récupérer le prix d'achat de l'article si le
+            // coût est 0
+            if (ligne.getArticle().getPrixAchat() != null
+                    && ligne.getArticle().getPrixAchat().compareTo(BigDecimal.ZERO) > 0) {
+                coutUnitaire = ligne.getArticle().getPrixAchat();
+            }
+        }
+
+        BigDecimal cuToSearch = (coutUnitaire != null && coutUnitaire.compareTo(BigDecimal.ZERO) > 0) ? coutUnitaire
+                : BigDecimal.ZERO;
 
         Stock stock = stockRepository
                 .findByArticleAndDepotAndEmplacementAndCoutUnitaire(ligne.getArticle(), depot, emplacement, cuToSearch)

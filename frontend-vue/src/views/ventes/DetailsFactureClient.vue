@@ -130,11 +130,11 @@
                   v-if="facture.statut === 'attente' && (hasRole('Finance') || isAdmin())"
                   class="btn btn-success"
                   @click="validerFacture"
-                  :disabled="isProcessing || isClientCreator"
+                  :disabled="isProcessing || (isClientCreator && !isAdmin())"
                 >
                   <i class="ti ti-check me-1"></i> Valider la Facture
                 </button>
-                <div v-if="isClientCreator && facture.statut === 'attente' && (hasRole('Finance') || isAdmin())" class="alert alert-warning py-2 mb-2 small">
+                <div v-if="isClientCreator && !isAdmin() && facture.statut === 'attente' && (hasRole('Finance') || isAdmin())" class="alert alert-warning py-2 mb-2 small">
                   <i class="ti ti-alert-triangle me-1"></i>
                   Vous ne pouvez pas valider cette facture car vous avez créé ce client (Séparation des tâches).
                 </div>

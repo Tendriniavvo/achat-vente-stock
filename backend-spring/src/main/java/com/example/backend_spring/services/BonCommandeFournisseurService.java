@@ -70,7 +70,8 @@ public class BonCommandeFournisseurService {
                 .orElseThrow(() -> new RuntimeException("Acheteur non trouvé"));
 
         // Contrôle : L'acheteur ne peut pas être le créateur de la DA
-        if (demande.getDemandeur() != null && demande.getDemandeur().getId() == acheteurId) {
+        if (demande.getDemandeur() != null && demande.getDemandeur().getId() == acheteurId
+                && !hasRole(acheteur, "Administrateur")) {
             throw new RuntimeException("Séparation des tâches : L'acheteur ne peut pas être le demandeur de la DA");
         }
 
@@ -354,6 +355,6 @@ public class BonCommandeFournisseurService {
         if (user.getRoles() == null)
             return false;
         return user.getRoles().stream()
-                .anyMatch(r -> r.getNom().equalsIgnoreCase(roleNom));
+                .anyMatch(r -> r.getNom().equalsIgnoreCase(roleNom) || r.getNom().equalsIgnoreCase("Administrateur"));
     }
 }
