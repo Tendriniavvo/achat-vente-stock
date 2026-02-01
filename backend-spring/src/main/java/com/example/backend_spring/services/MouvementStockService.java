@@ -42,25 +42,53 @@ public class MouvementStockService {
         return mouvementStockRepository.findByIdWithDetails(id);
     }
 
+    private void synchronizeHeaderWithLines(MouvementStock mouvement) {
+        if (mouvement.getLignes() != null && !mouvement.getLignes().isEmpty()) {
+            int total = 0;
+            for (LigneMouvementStock ligne : mouvement.getLignes()) {
+                total += ligne.getQuantite();
+                ligne.setMouvement(mouvement);
+                // Propagation de l'emplacement du header vers la ligne si celle-ci n'en a pas
+                if (ligne.getEmplacement() == null && mouvement.getEmplacement() != null) {
+                    ligne.setEmplacement(mouvement.getEmplacement());
+                }
+            }
+            mouvement.setQuantite(total);
+
+            // Si une seule ligne, on synchronise les champs redondants sur le mouvement
+            if (mouvement.getLignes().size() == 1) {
+                LigneMouvementStock unique = mouvement.getLignes().get(0);
+                mouvement.setArticle(unique.getArticle());
+                mouvement.setCout(unique.getCoutUnitaire());
+                mouvement.setLot(unique.getLot());
+
+                // Si la ligne n'a pas d'emplacement, on lui donne celui du mouvement
+                if (unique.getEmplacement() == null) {
+                    unique.setEmplacement(mouvement.getEmplacement());
+                }
+                // Si le mouvement n'a pas d'emplacement, on lui donne celui de la ligne
+                if (mouvement.getEmplacement() == null) {
+                    mouvement.setEmplacement(unique.getEmplacement());
+                }
+            } else {
+                // Si plusieurs lignes, on vide les champs spécifiques à un article unique
+                mouvement.setArticle(null);
+                mouvement.setCout(null);
+                mouvement.setLot(null);
+                // On garde l'emplacement global si toutes les lignes ont le même ou si non
+                // spécifié sur les lignes
+            }
+        }
+    }
+
     @Transactional
     public MouvementStock saveMouvement(MouvementStock mouvement) {
         if (mouvement.getReference() == null || mouvement.getReference().isBlank()) {
             mouvement.setReference(generateReference());
         }
 
-        if (mouvement.getQuantite() == null && mouvement.getLignes() != null && !mouvement.getLignes().isEmpty()) {
-            int total = 0;
-            for (LigneMouvementStock ligne : mouvement.getLignes()) {
-                total += ligne.getQuantite();
-            }
-            mouvement.setQuantite(total);
-        }
+        synchronizeHeaderWithLines(mouvement);
 
-        if (mouvement.getLignes() != null) {
-            for (LigneMouvementStock ligne : mouvement.getLignes()) {
-                ligne.setMouvement(mouvement);
-            }
-        }
         return mouvementStockRepository.save(mouvement);
     }
 
@@ -123,6 +151,7 @@ public class MouvementStockService {
         }
 
         mouvement.setStatut("VALIDE");
+        synchronizeHeaderWithLines(mouvement);
         MouvementStock saved = mouvementStockRepository.save(mouvement);
 
         JournalAudit audit = new JournalAudit();
@@ -134,8 +163,7 @@ public class MouvementStockService {
                 "Validation mouvement id=" + mouvement.getId()
                         + ", type=" + mouvement.getType()
                         + ", deltaQuantite=" + deltaQuantite
-                        + ", deltaValeur=" + deltaValeur
-        );
+                        + ", deltaValeur=" + deltaValeur);
         journalAuditRepository.save(audit);
 
         return saved;
@@ -143,11 +171,14 @@ public class MouvementStockService {
 
     private BigDecimal appliquerEntree(MouvementStock mouvement, List<LigneMouvementStock> lignes) {
         BigDecimal deltaValeur = BigDecimal.ZERO;
-        
+
+        // On fait une copie pour éviter de vider la liste si 'lignes' est la collection
+        // gérée par JPA
+        List<LigneMouvementStock> copy = new ArrayList<>(lignes);
         mouvement.getLignes().clear();
-        mouvement.getLignes().addAll(lignes);
-        
-        for (LigneMouvementStock ligne : lignes) {
+        mouvement.getLignes().addAll(copy);
+
+        for (LigneMouvementStock ligne : copy) {
             if (ligne.getQuantite() <= 0) {
                 throw new IllegalArgumentException("Quantité entrée invalide");
             }
@@ -161,8 +192,7 @@ public class MouvementStockService {
                     mouvement.getDepot(),
                     emplacement,
                     ligne.getQuantite(),
-                    ligne.getCoutUnitaire()
-            ));
+                    ligne.getCoutUnitaire()));
             appliquerVariationLot(ligne.getLot(), ligne.getQuantite());
         }
         return deltaValeur;
@@ -171,11 +201,11 @@ public class MouvementStockService {
     private BigDecimal appliquerSortie(MouvementStock mouvement, List<LigneMouvementStock> lignes) {
         BigDecimal deltaValeur = BigDecimal.ZERO;
         List<LigneMouvementStock> expanded = expandLotsIfNeeded(lignes, true);
-        
+
         // Mise à jour sécurisée de la collection pour JPA
         mouvement.getLignes().clear();
         mouvement.getLignes().addAll(expanded);
-        
+
         for (LigneMouvementStock ligne : expanded) {
             if (ligne.getQuantite() <= 0) {
                 throw new IllegalArgumentException("Quantité sortie invalide");
@@ -187,8 +217,7 @@ public class MouvementStockService {
                     mouvement.getDepot(),
                     emplacement,
                     -ligne.getQuantite(),
-                    ligne.getCoutUnitaire()
-            ));
+                    ligne.getCoutUnitaire()));
             appliquerVariationLot(ligne.getLot(), -ligne.getQuantite());
         }
         return deltaValeur;
@@ -203,10 +232,10 @@ public class MouvementStockService {
             throw new IllegalArgumentException("Emplacement destination obligatoire pour un transfert");
         }
         List<LigneMouvementStock> expanded = expandLotsIfNeeded(lignes, true);
-        
+
         mouvement.getLignes().clear();
         mouvement.getLignes().addAll(expanded);
-        
+
         for (LigneMouvementStock ligne : expanded) {
             if (ligne.getQuantite() <= 0) {
                 throw new IllegalArgumentException("Quantité transfert invalide");
@@ -214,10 +243,12 @@ public class MouvementStockService {
             Emplacement emplacementSource = resolveAndValidateEmplacement(mouvement, ligne);
             controlerLotEtTraçabilite(ligne.getArticle(), ligne.getLot(), true);
 
-            deltaValeur = deltaValeur.add(appliquerVariationStock(ligne, mouvement.getDepot(), emplacementSource, -ligne.getQuantite(), ligne.getCoutUnitaire()));
+            deltaValeur = deltaValeur.add(appliquerVariationStock(ligne, mouvement.getDepot(), emplacementSource,
+                    -ligne.getQuantite(), ligne.getCoutUnitaire()));
 
             Emplacement emplacementDest = mouvement.getEmplacementDestination();
-            deltaValeur = deltaValeur.add(appliquerVariationStock(ligne, mouvement.getDepotDestination(), emplacementDest, ligne.getQuantite(), ligne.getCoutUnitaire()));
+            deltaValeur = deltaValeur.add(appliquerVariationStock(ligne, mouvement.getDepotDestination(),
+                    emplacementDest, ligne.getQuantite(), ligne.getCoutUnitaire()));
         }
         return deltaValeur;
     }
@@ -225,10 +256,10 @@ public class MouvementStockService {
     private BigDecimal appliquerAjustement(MouvementStock mouvement, List<LigneMouvementStock> lignes) {
         BigDecimal deltaValeur = BigDecimal.ZERO;
         List<LigneMouvementStock> expanded = expandLotsIfNeeded(lignes, false);
-        
+
         mouvement.getLignes().clear();
         mouvement.getLignes().addAll(expanded);
-        
+
         for (LigneMouvementStock ligne : expanded) {
             if (ligne.getQuantite() == 0) {
                 continue;
@@ -241,8 +272,7 @@ public class MouvementStockService {
                     mouvement.getDepot(),
                     emplacement,
                     ligne.getQuantite(),
-                    ligne.getCoutUnitaire()
-            ));
+                    ligne.getCoutUnitaire()));
             appliquerVariationLot(ligne.getLot(), ligne.getQuantite());
         }
         return deltaValeur;
@@ -261,8 +291,7 @@ public class MouvementStockService {
             com.example.backend_spring.models.Depot depot,
             com.example.backend_spring.models.Emplacement emplacement,
             int variationQuantite,
-            BigDecimal coutUnitaire
-    ) {
+            BigDecimal coutUnitaire) {
         if (ligne.getArticle() == null) {
             throw new IllegalArgumentException("Article obligatoire dans la ligne");
         }
@@ -273,25 +302,28 @@ public class MouvementStockService {
             throw new IllegalArgumentException("Emplacement obligatoire pour mise à jour stock");
         }
 
-        // Si c'est une sortie (variation négative), on doit potentiellement décomposer sur plusieurs entrées
+        // Si c'est une sortie (variation négative), on doit potentiellement décomposer
+        // sur plusieurs entrées
         if (variationQuantite < 0) {
             return consommerStock(ligne, depot, emplacement, -variationQuantite);
         }
 
-        // Pour les entrées (variation positive), on cherche l'entrée existante avec ce coût ou on en crée une
+        // Pour les entrées (variation positive), on cherche l'entrée existante avec ce
+        // coût ou on en crée une
         BigDecimal cuToSearch = coutUnitaire != null ? coutUnitaire : BigDecimal.ZERO;
-        
-        Stock stock = stockRepository.findByArticleAndDepotAndEmplacementAndCoutUnitaire(ligne.getArticle(), depot, emplacement, cuToSearch)
-            .orElseGet(() -> {
-                Stock s = new Stock();
-                s.setArticle(ligne.getArticle());
-                s.setDepot(depot);
-                s.setEmplacement(emplacement);
-                s.setQuantite(0);
-                s.setCoutUnitaire(cuToSearch);
-                s.setValeur(BigDecimal.ZERO);
-                return s;
-            });
+
+        Stock stock = stockRepository
+                .findByArticleAndDepotAndEmplacementAndCoutUnitaire(ligne.getArticle(), depot, emplacement, cuToSearch)
+                .orElseGet(() -> {
+                    Stock s = new Stock();
+                    s.setArticle(ligne.getArticle());
+                    s.setDepot(depot);
+                    s.setEmplacement(emplacement);
+                    s.setQuantite(0);
+                    s.setCoutUnitaire(cuToSearch);
+                    s.setValeur(BigDecimal.ZERO);
+                    return s;
+                });
 
         int ancienneQuantite = stock.getQuantite();
         BigDecimal ancienneValeur = stock.getValeur() == null ? BigDecimal.ZERO : stock.getValeur();
@@ -307,7 +339,8 @@ public class MouvementStockService {
         return nouvelleValeur.subtract(ancienneValeur);
     }
 
-    private BigDecimal consommerStock(LigneMouvementStock ligne, com.example.backend_spring.models.Depot depot, com.example.backend_spring.models.Emplacement emplacement, int quantiteASortir) {
+    private BigDecimal consommerStock(LigneMouvementStock ligne, com.example.backend_spring.models.Depot depot,
+            com.example.backend_spring.models.Emplacement emplacement, int quantiteASortir) {
         Article article = ligne.getArticle();
         List<Stock> stocksDisponibles = stockRepository.findByArticleId(article.getId()).stream()
                 .filter(s -> s.getDepot() != null && s.getDepot().getId() == depot.getId())
@@ -322,30 +355,37 @@ public class MouvementStockService {
                 .collect(java.util.stream.Collectors.toList());
 
         if (stocksDisponibles.isEmpty()) {
-            throw new IllegalStateException("Aucun stock disponible pour l'article " + article.getCode() + " au dépôt " + depot.getNom());
+            throw new IllegalStateException(
+                    "Aucun stock disponible pour l'article " + article.getCode() + " au dépôt " + depot.getNom());
         }
 
         // Tri selon la méthode de valorisation
-        String methode = article.getMethodeValorisation() != null ? article.getMethodeValorisation().toUpperCase() : "CUMP";
+        String methode = article.getMethodeValorisation() != null ? article.getMethodeValorisation().toUpperCase()
+                : "CUMP";
         if ("FIFO".equals(methode)) {
-            stocksDisponibles.sort(Comparator.comparing(s -> s.getDateMaj() != null ? s.getDateMaj() : LocalDateTime.MIN));
+            stocksDisponibles
+                    .sort(Comparator.comparing(s -> s.getDateMaj() != null ? s.getDateMaj() : LocalDateTime.MIN));
         } else if ("LIFO".equals(methode)) {
-            stocksDisponibles.sort(Comparator.comparing((Stock s) -> s.getDateMaj() != null ? s.getDateMaj() : LocalDateTime.MIN).reversed());
+            stocksDisponibles.sort(Comparator
+                    .comparing((Stock s) -> s.getDateMaj() != null ? s.getDateMaj() : LocalDateTime.MIN).reversed());
         }
-        // Pour CUMP, on peut aussi trier par FIFO par défaut ou prorata (ici FIFO pour simplifier la décomposition)
+        // Pour CUMP, on peut aussi trier par FIFO par défaut ou prorata (ici FIFO pour
+        // simplifier la décomposition)
 
         int restant = quantiteASortir;
         BigDecimal valeurSortieTotale = BigDecimal.ZERO;
 
         for (Stock s : stocksDisponibles) {
-            if (restant <= 0) break;
+            if (restant <= 0)
+                break;
 
             int aPrendre = Math.min(s.getQuantite(), restant);
             BigDecimal valeurSortie = s.getCoutUnitaire().multiply(BigDecimal.valueOf(aPrendre));
-            
+
             s.setQuantite(s.getQuantite() - aPrendre);
             s.setValeur(s.getValeur().subtract(valeurSortie));
-            if (s.getValeur().compareTo(BigDecimal.ZERO) < 0) s.setValeur(BigDecimal.ZERO);
+            if (s.getValeur().compareTo(BigDecimal.ZERO) < 0)
+                s.setValeur(BigDecimal.ZERO);
             s.setDateMaj(LocalDateTime.now());
             stockRepository.save(s);
 
@@ -354,7 +394,8 @@ public class MouvementStockService {
         }
 
         if (restant > 0) {
-            throw new IllegalStateException("Stock insuffisant pour l'article " + article.getCode() + " (manque " + restant + ")");
+            throw new IllegalStateException(
+                    "Stock insuffisant pour l'article " + article.getCode() + " (manque " + restant + ")");
         }
 
         return valeurSortieTotale.negate(); // Retourne la variation de valeur (négative)
