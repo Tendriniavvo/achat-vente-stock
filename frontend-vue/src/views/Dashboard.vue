@@ -342,6 +342,62 @@
             </div>
           </div>
         </div>
+
+        <!-- 5. Analyse des Marges par Article (Nouveau Diagramme) -->
+        <div v-if="hasPermission('/dashboard/margins')" class="col-12 mt-4">
+          <div class="row g-4">
+            <div class="col-12 col-xl-8">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                  <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                      <h5 class="fw-bold mb-0">Analyse des Marges par Article</h5>
+                      <p class="text-muted small mb-0">Comparaison Marge Brute (%) et Prix de Vente (MGA)</p>
+                    </div>
+                    <div class="p-2 bg-light-success rounded-3">
+                      <i class="ti ti-chart-bar fs-6 text-success"></i>
+                    </div>
+                  </div>
+                  <apexchart 
+                    type="bar" 
+                    height="350" 
+                    :options="marginChartOptions" 
+                    :series="marginChartSeries"
+                  ></apexchart>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. Répartition des Méthodes de Valorisation -->
+            <div class="col-12 col-xl-4">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                  <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                      <h5 class="fw-bold mb-0">Méthodes de Valorisation</h5>
+                      <p class="text-muted small mb-0">Répartition par type de calcul</p>
+                    </div>
+                    <div class="p-2 bg-light-info rounded-3">
+                      <i class="ti ti-calculator fs-6 text-info"></i>
+                    </div>
+                  </div>
+                  <apexchart 
+                    type="pie" 
+                    height="300" 
+                    :options="valuationChartOptions" 
+                    :series="valuationChartSeries"
+                  ></apexchart>
+                  <div class="mt-4">
+                    <div v-for="(count, method) in statistiques.repartitionMethodeValorisation" :key="method" class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded-2">
+                      <span class="fw-semibold">{{ method }}</span>
+                      <span class="badge bg-primary rounded-pill">{{ count }} articles</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
 
@@ -539,6 +595,76 @@ export default {
             }
           }
         }
+      },
+      // Options Marges par Article
+      marginChartSeries: [],
+      marginChartOptions: {
+        chart: { type: 'bar', height: 350, toolbar: { show: true }, fontFamily: 'inherit' },
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            columnWidth: '55%',
+            endingShape: 'rounded',
+            dataLabels: { position: 'top' }
+          },
+        },
+        dataLabels: {
+          enabled: true,
+          formatter: function (val, { seriesIndex }) {
+            if (seriesIndex === 0) return val + "%";
+            return new Intl.NumberFormat('fr-FR').format(val);
+          },
+          offsetY: -20,
+          style: { fontSize: '12px', colors: ["#304758"] }
+        },
+        stroke: { show: true, width: 2, colors: ['transparent'] },
+        xaxis: {
+          categories: [],
+          labels: { rotate: -45, trim: true, maxHeight: 120 }
+        },
+        yaxis: [
+          {
+            title: { text: 'Marge Brute (%)' },
+            labels: { formatter: (val) => val + "%" },
+            max: 100
+          },
+          {
+            opposite: true,
+            title: { text: 'Prix de Vente (MGA)' },
+            labels: {
+              formatter: (val) => new Intl.NumberFormat('fr-FR').format(val)
+            }
+          }
+        ],
+        fill: { opacity: 1 },
+        tooltip: {
+          shared: true,
+          intersect: false,
+          y: {
+            formatter: function (val, { seriesIndex }) {
+              if (seriesIndex === 0) return val + "%";
+              return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MGA' }).format(val);
+            }
+          }
+        },
+        colors: ['#13DEB9', '#5D87FF'],
+        legend: { position: 'top' }
+      },
+      // Options Méthodes de Valorisation
+      valuationChartSeries: [],
+      valuationChartOptions: {
+        chart: { type: 'pie', fontFamily: 'inherit' },
+        labels: [],
+        colors: ['#5D87FF', '#13DEB9', '#FFAE1F', '#FA896B', '#49BEFF'],
+        legend: { position: 'bottom' },
+        dataLabels: { enabled: true },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              return val + " articles";
+            }
+          }
+        }
       }
     };
   },
@@ -598,6 +724,35 @@ export default {
           });
           this.pieBudgetOptions = { ...this.pieBudgetOptions, labels: Object.keys(distribution) };
           this.pieBudgetSeries = Object.values(distribution);
+        }
+
+        // Mise à jour Marges par Article
+        if (this.statistiques.articleMargins) {
+          this.marginChartOptions = {
+            ...this.marginChartOptions,
+            xaxis: { 
+              categories: this.statistiques.articleMargins.map(a => `${a.nom} (${a.reference})`) 
+            }
+          };
+          this.marginChartSeries = [
+            {
+              name: 'Marge Brute (%)',
+              data: this.statistiques.articleMargins.map(a => a.margeBrute)
+            },
+            {
+              name: 'Prix de Vente (MGA)',
+              data: this.statistiques.articleMargins.map(a => a.prixVente)
+            }
+          ];
+        }
+
+        // Mise à jour Méthodes de Valorisation
+        if (this.statistiques.repartitionMethodeValorisation) {
+          this.valuationChartOptions = { 
+            ...this.valuationChartOptions, 
+            labels: Object.keys(this.statistiques.repartitionMethodeValorisation) 
+          };
+          this.valuationChartSeries = Object.values(this.statistiques.repartitionMethodeValorisation);
         }
 
       } catch (err) {
