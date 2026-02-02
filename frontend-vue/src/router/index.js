@@ -34,6 +34,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/achats/dashboard',
+      name: 'achats-dashboard',
+      component: () => import('../views/achats/AchatDashboard.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/achats/create',
       name: 'achats-create',
       component: () => import('../views/demandes-achat/CreateDemandeAchat.vue'),
@@ -120,7 +126,13 @@ const router = createRouter({
     {
       path: '/ventes',
       name: 'ventes',
-      component: () => import('../views/Dashboard.vue'), // Temporaire
+      redirect: '/ventes/dashboard',
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/ventes/dashboard',
+      name: 'ventes-dashboard',
+      component: () => import('../views/ventes/VenteDashboard.vue'),
       meta: { requiresAuth: true }
     },
     {

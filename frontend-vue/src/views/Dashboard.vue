@@ -354,8 +354,15 @@
                       <h5 class="fw-bold mb-0">Analyse des Marges par Article</h5>
                       <p class="text-muted small mb-0">Comparaison Marge Brute (%) et Prix de Vente (MGA)</p>
                     </div>
-                    <div class="p-2 bg-light-success rounded-3">
-                      <i class="ti ti-chart-bar fs-6 text-success"></i>
+                    <div class="d-flex gap-2">
+                      <button @click="analyzeMarginsWithAI" class="btn btn-ai-gradient btn-sm px-3 py-2" :disabled="isAnalyzingMargins">
+                        <i v-if="isAnalyzingMargins" class="spinner-border spinner-border-sm me-1"></i>
+                        <i v-else class="ti ti-sparkles me-1"></i>
+                        IA Analyser
+                      </button>
+                      <div class="p-2 bg-light-success rounded-3">
+                        <i class="ti ti-chart-bar fs-6 text-success"></i>
+                      </div>
                     </div>
                   </div>
                   <apexchart 
@@ -494,6 +501,49 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Analyse IA -->
+    <div class="modal fade" id="aiAnalysisModal" tabindex="-1" aria-labelledby="aiAnalysisModalLabel" aria-hidden="true" ref="aiModal">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+          <div class="modal-header ai-modal-header text-white border-0 py-3">
+            <div class="d-flex align-items-center">
+              <div class="p-2 bg-white bg-opacity-25 rounded-3 me-3 shadow-sm">
+                <i class="ti ti-sparkles fs-6"></i>
+              </div>
+              <div>
+                <h5 class="modal-title fw-bold" id="aiAnalysisModalLabel">Analyse Stratégique IA</h5>
+                <p class="mb-0 small opacity-75">Intelligence Artificielle & Expertise Business</p>
+              </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4 custom-scrollbar" style="max-height: 70vh; overflow-y: auto;">
+            <div v-if="aiAnalysisResponse" class="markdown-container">
+              <div class="ai-badge mb-3">
+                <i class="ti ti-sparkles me-1"></i> Analyse générée en temps réel
+              </div>
+              <div class="markdown-text" v-html="renderMarkdown(aiAnalysisResponse)"></div>
+            </div>
+            <div v-else class="text-center py-5">
+              <div class="ai-loader mb-4">
+                <div class="spinner-grow text-primary" role="status"></div>
+                <div class="spinner-grow text-info mx-2" role="status"></div>
+                <div class="spinner-grow text-primary" role="status"></div>
+              </div>
+              <h5 class="fw-bold text-dark">L'IA analyse vos données stratégiques...</h5>
+              <p class="text-muted">Interprétation des marges et des méthodes de valorisation en cours.</p>
+            </div>
+          </div>
+          <div class="modal-footer border-0 p-3 bg-light">
+            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Fermer</button>
+            <button @click="copyAnalysis" class="btn btn-primary px-4">
+              <i class="ti ti-copy me-1"></i> Copier l'analyse
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </MainLayout>
 </template>
 
@@ -502,6 +552,8 @@ import MainLayout from '../layouts/MainLayout.vue';
 import VueApexCharts from "vue3-apexcharts";
 import axios from 'axios';
 import BudgetChartAnalysis from '../components/BudgetChartAnalysis.vue';
+import { marked } from 'marked';
+import { Modal } from 'bootstrap';
 
 export default {
   name: 'Dashboard',
@@ -513,6 +565,9 @@ export default {
   data() {
     return {
       recentesDemandes: [],
+      isAnalyzingMargins: false,
+      aiAnalysisResponse: '',
+      aiModalInstance: null,
       statistiques: {
         totalDemandesAchat: 0,
         demandesEnAttente: 0,
@@ -819,6 +874,41 @@ export default {
         return false;
       });
     },
+
+    async analyzeMarginsWithAI() {
+      this.isAnalyzingMargins = true;
+      this.aiAnalysisResponse = '';
+      
+      // Afficher la modal
+      if (!this.aiModalInstance) {
+        this.aiModalInstance = new Modal(this.$refs.aiModal);
+      }
+      this.aiModalInstance.show();
+
+      try {
+        const response = await axios.post('http://localhost:8080/api/ai/analyze-margins');
+        this.aiAnalysisResponse = response.data.response;
+      } catch (error) {
+        console.error('Erreur lors de l\'analyse IA:', error);
+        this.aiAnalysisResponse = "### Erreur\nDésolé, je n'ai pas pu générer l'analyse pour le moment. Veuillez réessayer plus tard.";
+      } finally {
+        this.isAnalyzingMargins = false;
+      }
+    },
+
+    renderMarkdown(text) {
+      if (!text) return '';
+      return marked.parse(text);
+    },
+
+    async copyAnalysis() {
+      try {
+        await navigator.clipboard.writeText(this.aiAnalysisResponse);
+        alert('Analyse copiée dans le presse-papier !');
+      } catch (err) {
+        console.error('Erreur lors de la copie:', err);
+      }
+    },
     canVerifyFonds(demande) {
       const userStr = localStorage.getItem('user');
       if (!userStr) return false;
@@ -939,6 +1029,127 @@ export default {
 </script>
 
 <style scoped>
+.ai-modal-header {
+  background: linear-gradient(135deg, #5D87FF 0%, #b085ff 100%);
+}
+
+.ai-badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background: #f0f5ff;
+  color: #5D87FF;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #e0e9ff;
+}
+
+.ai-loader .spinner-grow {
+  width: 1rem;
+  height: 1rem;
+  animation-duration: 0.75s;
+}
+
+/* Styles pour l'analyse IA */
+.markdown-container {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #ebf2ff;
+  box-shadow: 0 2px 10px rgba(93, 135, 255, 0.05);
+}
+
+.markdown-text {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: #2a3547;
+}
+
+.markdown-text h1, .markdown-text h2, .markdown-text h3 {
+  color: #5D87FF;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #ebf2ff;
+  padding-bottom: 0.5rem;
+}
+
+.markdown-text h4, .markdown-text h5 {
+  color: #2a3547;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-text p {
+  margin-bottom: 1rem;
+}
+
+.markdown-text ul, .markdown-text ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-text li {
+  margin-bottom: 0.8rem;
+}
+
+.markdown-text strong {
+  color: #2a3547;
+  font-weight: 700;
+  background: linear-gradient(120deg, rgba(93, 135, 255, 0.1) 0%, rgba(93, 135, 255, 0.1) 100%);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.markdown-text blockquote {
+  border-left: 4px solid #5D87FF;
+  padding: 0.5rem 1rem;
+  background-color: #f8faff;
+  color: #5D87FF;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.markdown-text hr {
+  margin: 2rem 0;
+  border-top: 1px solid #ebf2ff;
+  opacity: 1;
+}
+
+/* Custom scrollbar pour la modal */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #5D87FF;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #4570e6;
+}
+
+.btn-ai-gradient {
+  background: linear-gradient(45deg, #5D87FF, #b085ff);
+  border: none;
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(93, 135, 255, 0.2);
+}
+
+.btn-ai-gradient:hover {
+  background: linear-gradient(45deg, #4570e6, #9b66ff);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(93, 135, 255, 0.3);
+  color: white;
+}
+
 .achat-alert-card {
   transition: transform 0.2s;
 }

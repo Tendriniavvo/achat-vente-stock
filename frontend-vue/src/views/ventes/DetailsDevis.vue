@@ -39,7 +39,7 @@
                 </button>
 
                 <button class="btn btn-outline-info" @click="exportToPDF">
-                  <i class="ti ti-file-export me-1"></i> Exporter PDF
+                  <i class="ti ti-file-export me-1"></i> PDF
                 </button>
               </div>
             </div>

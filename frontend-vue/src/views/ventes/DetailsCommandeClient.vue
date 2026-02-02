@@ -237,5 +237,12 @@ export default {
   .no-print {
     display: none !important;
   }
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .container-fluid {
+    padding: 0 !important;
+  }
 }
 </style>

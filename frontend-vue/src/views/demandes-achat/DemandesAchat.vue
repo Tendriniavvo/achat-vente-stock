@@ -5,9 +5,15 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="card-title fw-semibold mb-0">Demandes d'Achat</h5>
-            <router-link to="/achats/create" class="btn btn-primary">
-              <i class="ti ti-plus"></i> Nouvelle Demande
-            </router-link>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-success" @click="exportToExcel" :disabled="isLoading || demandes.length === 0">
+                <i class="ti ti-file-spreadsheet me-1"></i>
+                Excel
+              </button>
+              <router-link to="/achats/create" class="btn btn-primary">
+                <i class="ti ti-plus"></i> Nouvelle Demande
+              </router-link>
+            </div>
           </div>
 
           <!-- Filtre par statut -->
@@ -85,6 +91,13 @@
                       @click="voirDetails(demande.id)"
                     >
                       <i class="ti ti-eye"></i>
+                    </button>
+                    <button 
+                      class="btn btn-sm btn-outline-info me-1" 
+                      title="Exporter PDF"
+                      @click="exportToPDF(demande.id)"
+                    >
+                      <i class="ti ti-file-export"></i>
                     </button>
                     <button 
                       v-if="demande.statut === 'brouillon'"
@@ -490,6 +503,38 @@ export default {
         console.error('Erreur:', error);
         alert('Erreur lors de l\'annulation');
       }
+    },
+    exportToExcel() {
+      // Export simple au format CSV (lisible par Excel)
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Ajout du BOM pour l'encodage UTF-8
+      csvContent += "Reference;Demandeur;Date;Total;Statut;Articles\n";
+      
+      this.demandesFiltrees.forEach(demande => {
+        const row = [
+          demande.reference,
+          `${demande.demandeur?.prenom || ''} ${demande.demandeur?.nom || ''}`,
+          this.formatDate(demande.dateCreation),
+          this.calculerTotal(demande),
+          demande.statut,
+          demande.lignes ? demande.lignes.length : 0
+        ].join(";");
+        csvContent += row + "\n";
+      });
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `demandes_achat_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    exportToPDF(id) {
+      // Navigation vers les détails puis impression
+      this.$router.push(`/achats/${id}`);
+      setTimeout(() => {
+        window.print();
+      }, 500);
     }
   }
 };

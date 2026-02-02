@@ -5,10 +5,16 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="card-title fw-semibold mb-0">Commandes Clients</h5>
-            <button class="btn btn-outline-primary" @click="fetchCommandes" :disabled="isLoading">
-              <i class="ti ti-refresh me-1" :class="{ 'spinner-border spinner-border-sm': isLoading }"></i>
-              Actualiser
-            </button>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-success" @click="exportToExcel" :disabled="isLoading || commandes.length === 0">
+                <i class="ti ti-file-spreadsheet me-1"></i>
+                Excel
+              </button>
+              <button class="btn btn-outline-primary" @click="fetchCommandes" :disabled="isLoading">
+                <i class="ti ti-refresh me-1" :class="{ 'spinner-border spinner-border-sm': isLoading }"></i>
+                Actualiser
+              </button>
+            </div>
           </div>
 
           <div v-if="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -176,6 +182,31 @@ export default {
       setTimeout(() => {
         window.print();
       }, 500);
+    },
+    exportToExcel() {
+      // Export simple au format CSV (lisible par Excel)
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Reference;Client;Devis Source;Date;Montant Total;Statut\n";
+      
+      this.commandes.forEach(cmd => {
+        const row = [
+          cmd.reference,
+          cmd.client?.nom || '',
+          cmd.devis?.reference || 'N/A',
+          this.formatDate(cmd.dateCommande),
+          cmd.montantTotal,
+          cmd.statut
+        ].join(";");
+        csvContent += row + "\n";
+      });
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `liste_commandes_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   }
 };

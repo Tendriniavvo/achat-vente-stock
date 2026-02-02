@@ -36,6 +36,14 @@
               <span class="hide-menu">Achats</span>
             </a>
             <ul class="collapse first-level" :class="{ show: achatsMenuOpen }">
+              <li v-if="hasPermission('/achats/dashboard') || isAdmin()" class="sidebar-item">
+                <router-link to="/achats/dashboard" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Dashboard</span>
+                </router-link>
+              </li>
               <li v-if="hasPermission('/achats')" class="sidebar-item">
                 <router-link to="/achats" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">
@@ -61,6 +69,14 @@
               <span class="hide-menu">Ventes</span>
             </a>
             <ul class="collapse first-level" :class="{ show: ventesMenuOpen }">
+              <li v-if="hasPermission('/ventes/dashboard') || isAdmin()" class="sidebar-item">
+                <router-link to="/ventes/dashboard" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Dashboard</span>
+                </router-link>
+              </li>
               <li v-if="hasPermission('/devis')" class="sidebar-item">
                 <router-link to="/devis" class="sidebar-link">
                   <div class="round-16 d-flex align-items-center justify-content-center">

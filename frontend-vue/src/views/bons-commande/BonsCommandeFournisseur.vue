@@ -5,6 +5,12 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="card-title fw-semibold mb-0">Bons de Commande Fournisseur</h5>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-success" @click="exportToExcel" :disabled="isLoading || bonsCommande.length === 0">
+                <i class="ti ti-file-spreadsheet me-1"></i>
+                Excel
+              </button>
+            </div>
           </div>
 
           <div v-if="errorMessage" class="alert alert-danger" role="alert">
@@ -51,6 +57,9 @@
                     <div class="btn-group">
                       <button class="btn btn-sm btn-outline-primary" @click="voirDetails(bc.id)" title="Détails">
                         <i class="ti ti-eye"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-info" @click="exportToPDF(bc.id)" title="Exporter PDF">
+                        <i class="ti ti-file-export"></i>
                       </button>
                       <button 
                         v-if="bc.statut === 'brouillon'" 
@@ -157,6 +166,38 @@ export default {
     },
     modifier(id) {
       this.$router.push(`/commandes-achat/${id}/edit`);
+    },
+    exportToExcel() {
+      // Export simple au format CSV (lisible par Excel)
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Ajout du BOM pour l'encodage UTF-8
+      csvContent += "Reference;Date;Fournisseur;DA Source;Montant Total;Statut\n";
+      
+      this.bonsCommande.forEach(bc => {
+        const row = [
+          bc.reference,
+          this.formatDate(bc.dateCommande),
+          bc.fournisseur?.nom || 'Non défini',
+          bc.demandeAchat?.reference || '',
+          bc.montantTotal,
+          this.formatStatut(bc.statut)
+        ].join(";");
+        csvContent += row + "\n";
+      });
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `bons_commande_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    exportToPDF(id) {
+      // Navigation vers les détails puis impression
+      this.$router.push(`/commandes-achat/${id}`);
+      setTimeout(() => {
+        window.print();
+      }, 500);
     }
   }
 };

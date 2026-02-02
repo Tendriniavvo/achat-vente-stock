@@ -24,4 +24,10 @@ public class AIController {
         
         return Map.of("response", response);
     }
+
+    @PostMapping("/analyze-margins")
+    public Map<String, String> analyzeMargins() {
+        String response = globalAIService.analyzeMarginsAndValuations();
+        return Map.of("response", response);
+    }
 }

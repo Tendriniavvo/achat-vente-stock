@@ -26,4 +26,14 @@ public class DashboardController {
     public Map<String, Object> getPerformance() {
         return dashboardService.getPerformanceData();
     }
+
+    @GetMapping("/achats")
+    public Map<String, Object> getAchatStats() {
+        return dashboardService.getAchatDashboardStats();
+    }
+
+    @GetMapping("/ventes")
+    public Map<String, Object> getVenteStats() {
+        return dashboardService.getVenteDashboardStats();
+    }
 }

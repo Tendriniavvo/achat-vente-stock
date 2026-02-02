@@ -319,6 +319,225 @@ public class DashboardService {
                 return stats;
         }
 
+        public Map<String, Object> getAchatDashboardStats() {
+                Map<String, Object> stats = new HashMap<>();
+
+                // KPI Achats
+                stats.put("totalDemandesAchat", demandeAchatRepository.count());
+                stats.put("demandesEnAttente", demandeAchatRepository.findAll().stream()
+                                .filter(d -> {
+                                        String s = d.getStatut() != null ? d.getStatut().toLowerCase() : "";
+                                        return s.contains("attente") || s.contains("soumise");
+                                })
+                                .count());
+
+                // KPI Budgets (relevant for purchases)
+                List<Budget> allBudgets = budgetService.getAllBudgets();
+                BigDecimal totalBudget = allBudgets.stream()
+                                .map(b -> b.getMontantDisponible() != null ? b.getMontantDisponible() : BigDecimal.ZERO)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                stats.put("totalBudgetDisponible", totalBudget);
+
+                // Consommation Budgétaire
+                List<Map<String, Object>> budgetConsommation = allBudgets.stream()
+                                .filter(b -> b.getDepartement() != null && b.getMontantInitial() != null
+                                                && b.getMontantInitial().compareTo(BigDecimal.ZERO) > 0)
+                                .map(b -> {
+                                        Map<String, Object> m = new HashMap<>();
+                                        m.put("departement", b.getDepartement().getNom());
+                                        m.put("initial", b.getMontantInitial());
+                                        m.put("consomme", b.getMontantConsomme());
+                                        m.put("disponible", b.getMontantDisponible());
+
+                                        double pourcentage = b.getMontantConsomme().doubleValue()
+                                                        / b.getMontantInitial().doubleValue() * 100;
+                                        m.put("pourcentage", Math.round(pourcentage * 10.0) / 10.0);
+                                        return m;
+                                })
+                                .collect(Collectors.toList());
+                stats.put("budgetConsommation", budgetConsommation);
+
+                // Répartition des Demandes par Statut
+                Map<String, Long> parStatut = demandeAchatRepository.findAll().stream()
+                                .collect(Collectors.groupingBy(
+                                                d -> d.getStatut() != null ? d.getStatut() : "Inconnu",
+                                                Collectors.counting()));
+                stats.put("demandesParStatut", parStatut);
+
+                // Top 5 Fournisseurs
+                Map<String, BigDecimal> parFournisseur = bonCommandeFournisseurRepository.findAll().stream()
+                                .filter(bc -> bc.getFournisseur() != null && bc.getMontantTotal() != null)
+                                .collect(Collectors.groupingBy(
+                                                bc -> bc.getFournisseur().getNom(),
+                                                Collectors.reducing(BigDecimal.ZERO,
+                                                                BonCommandeFournisseur::getMontantTotal,
+                                                                BigDecimal::add)));
+
+                List<Map<String, Object>> topFournisseurs = parFournisseur.entrySet().stream()
+                                .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
+                                .limit(5)
+                                .map(entry -> {
+                                        Map<String, Object> m = new HashMap<>();
+                                        m.put("nom", entry.getKey());
+                                        m.put("volume", entry.getValue());
+                                        return m;
+                                })
+                                .collect(Collectors.toList());
+                stats.put("topFournisseurs", topFournisseurs);
+
+                // Délai Moyen d'Approbation
+                // (Reusing the logic from getDashboardStats but simplified if needed)
+                // I'll copy the existing logic for consistency
+                List<DemandeAchat> approuvees = demandeAchatRepository.findAll().stream()
+                                .filter(d -> {
+                                        String s = d.getStatut() != null ? d.getStatut().toLowerCase() : "";
+                                        return s.equals("approuvé") || s.equals("approuve") || s.equals("validee")
+                                                        || s.equals("validée") ||
+                                                        s.equals("disponible_en_stock") || s.equals("attente_finance")
+                                                        || s.equals("fonds_confirmes") || s.equals("fonds_confirmés");
+                                })
+                                .filter(d -> d.getDateCreation() != null && d.getHistoriqueValidations() != null)
+                                .collect(Collectors.toList());
+
+                double totalDays = 0;
+                int count = 0;
+
+                for (DemandeAchat da : approuvees) {
+                        String hist = da.getHistoriqueValidations();
+                        if (hist == null)
+                                continue;
+                        String[] lines = hist.split("\n");
+                        LocalDateTime dateValidationFinale = null;
+
+                        for (int i = lines.length - 1; i >= 0; i--) {
+                                String line = lines[i].trim();
+                                if (line.isEmpty())
+                                        continue;
+
+                                String lineLower = line.toLowerCase();
+                                if (lineLower.contains("passage de") &&
+                                                (lineLower.contains("à approuvé") || lineLower.contains("à approuve") ||
+                                                                lineLower.contains("à validee")
+                                                                || lineLower.contains("à validée") ||
+                                                                lineLower.contains("à disponible_en_stock")
+                                                                || lineLower.contains("à attente_finance"))) {
+                                        try {
+                                                String datePart = "";
+                                                if (line.contains("[")) {
+                                                        datePart = line.substring(0, line.indexOf("[")).trim();
+                                                } else {
+                                                        int firstColon = line.indexOf(":");
+                                                        if (firstColon > 0)
+                                                                datePart = line.substring(0, firstColon).trim();
+                                                }
+
+                                                if (!datePart.isEmpty()) {
+                                                        dateValidationFinale = LocalDateTime.parse(datePart);
+                                                        break;
+                                                }
+                                        } catch (Exception e) {
+                                        }
+                                }
+                        }
+
+                        if (dateValidationFinale != null) {
+                                long diffHours = java.time.Duration.between(da.getDateCreation(), dateValidationFinale)
+                                                .toHours();
+                                totalDays += (diffHours / 24.0);
+                                count++;
+                        }
+                }
+
+                double delaiMoyen = count > 0 ? (totalDays / count) : 0;
+                stats.put("delaiMoyenApprobation", String.format("%.1f jours", delaiMoyen));
+                stats.put("efficaciteStatus", delaiMoyen <= SEUIL_SOUS_CONTROLE ? "Sous contrôle" : "À améliorer");
+                stats.put("efficaciteColor", delaiMoyen <= SEUIL_SOUS_CONTROLE ? "success" : "danger");
+
+                // Stock Alerts (relevant for purchase planning)
+                List<Stock> allStocks = stockRepository.findAll();
+                stats.put("stockAlertsCount", (int) allStocks.stream()
+                                .filter(s -> s.getQuantite() <= (s.getArticle() != null
+                                                && s.getArticle().getStockMin() != null ? s.getArticle().getStockMin()
+                                                                : 0))
+                                .count());
+                stats.put("stockAlerts", allStocks.stream()
+                                .filter(s -> s.getQuantite() <= (s.getArticle() != null
+                                                && s.getArticle().getStockMin() != null ? s.getArticle().getStockMin()
+                                                                : 0))
+                                .limit(5).collect(Collectors.toList()));
+
+                return stats;
+        }
+
+        public Map<String, Object> getVenteDashboardStats() {
+                Map<String, Object> stats = new HashMap<>();
+
+                // KPI Ventes
+                stats.put("totalVentes", commandeClientRepository.count());
+                BigDecimal totalMontantVentes = commandeClientRepository.findAll().stream()
+                                .map(c -> c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                stats.put("montantTotalVentes", totalMontantVentes);
+
+                // Top 5 Articles les plus vendus
+                Map<String, Integer> ventesParArticle = ligneCommandeClientRepository.findAll().stream()
+                                .filter(l -> l.getArticle() != null)
+                                .collect(Collectors.groupingBy(
+                                                l -> l.getArticle().getNom(),
+                                                Collectors.summingInt(LigneCommandeClient::getQuantite)));
+
+                List<Map<String, Object>> topArticles = ventesParArticle.entrySet().stream()
+                                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                                .limit(5)
+                                .map(entry -> {
+                                        Map<String, Object> m = new HashMap<>();
+                                        m.put("nom", entry.getKey());
+                                        m.put("quantite", entry.getValue());
+                                        return m;
+                                })
+                                .collect(Collectors.toList());
+                stats.put("topArticlesVendus", topArticles);
+
+                // Analyse des Marges par Article
+                List<Map<String, Object>> articleMargins = articleRepository.findAll().stream()
+                                .filter(a -> a.getPrixVente() != null
+                                                && a.getPrixVente().compareTo(BigDecimal.ZERO) > 0)
+                                .map(a -> {
+                                        Map<String, Object> m = new HashMap<>();
+                                        m.put("reference", a.getCode());
+                                        m.put("nom", a.getNom());
+                                        m.put("prixVente", a.getPrixVente());
+
+                                        BigDecimal achat = a.getPrixAchat() != null ? a.getPrixAchat()
+                                                        : BigDecimal.ZERO;
+                                        BigDecimal margeBruteVal = a.getPrixVente().subtract(achat);
+                                        double margePourcentage = (margeBruteVal.doubleValue()
+                                                        / a.getPrixVente().doubleValue())
+                                                        * 100;
+
+                                        m.put("margeBrute", Math.round(margePourcentage * 10.0) / 10.0);
+                                        m.put("methode", a.getMethodeValorisation());
+                                        return m;
+                                })
+                                .sorted((a, b) -> Double.compare((double) b.get("margeBrute"),
+                                                (double) a.get("margeBrute")))
+                                .limit(10)
+                                .collect(Collectors.toList());
+                stats.put("articleMargins", articleMargins);
+
+                // Ventes par mois (6 derniers mois)
+                LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
+                List<CommandeClient> recentSales = commandeClientRepository.findAll().stream()
+                                .filter(c -> c.getDateCommande() != null && c.getDateCommande().isAfter(sixMonthsAgo))
+                                .collect(Collectors.toList());
+
+                stats.put("salesTrend", groupAndSumByMonthGeneric(recentSales,
+                                CommandeClient::getDateCommande,
+                                CommandeClient::getMontantTotal));
+
+                return stats;
+        }
+
         public Map<String, Object> getPerformanceData() {
                 Map<String, Object> data = new HashMap<>();
 

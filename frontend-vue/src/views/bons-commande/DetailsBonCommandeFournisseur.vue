@@ -3,11 +3,16 @@
     <div class="container-fluid">
       <div class="card">
         <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-4 no-print">
             <h5 class="card-title fw-semibold mb-0">Détails Bon de Commande Fournisseur</h5>
-            <router-link to="/commandes-achat" class="btn btn-secondary">
-              <i class="ti ti-arrow-left"></i> Retour
-            </router-link>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-info" @click="exportToPDF">
+                <i class="ti ti-file-export me-1"></i> PDF
+              </button>
+              <router-link to="/commandes-achat" class="btn btn-secondary">
+                <i class="ti ti-arrow-left"></i> Retour
+              </router-link>
+            </div>
           </div>
 
           <div v-if="errorMessage" class="alert alert-danger" role="alert">
@@ -95,7 +100,7 @@
               </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2">
+            <div class="d-flex justify-content-end gap-2 no-print">
               <!-- Acheteur : Modifier/Négocier -->
               <button 
                 v-if="bc.statut === 'brouillon' && (hasRole('Acheteur') || hasRole('Administrateur'))"
@@ -161,7 +166,7 @@
             </div>
 
             <!-- Traçabilité / Journal d'audit -->
-            <div v-if="audits.length > 0" class="card mt-4">
+            <div v-if="audits.length > 0" class="card mt-4 no-print">
               <div class="card-body">
                 <h6 class="card-title mb-3">Traçabilité & Suivi</h6>
                 <div class="table-responsive">
@@ -382,7 +387,25 @@ export default {
     },
     modifier() {
       this.$router.push(`/commandes-achat/${this.bc.id}/edit`);
+    },
+    exportToPDF() {
+      window.print();
     }
   }
 };
 </script>
+
+<style scoped>
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .container-fluid {
+    padding: 0 !important;
+  }
+}
+</style>

@@ -6,6 +6,10 @@
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="card-title fw-semibold mb-0">Gestion des Devis Clients</h5>
             <div class="d-flex gap-2">
+              <button class="btn btn-outline-success" @click="exportToExcel" :disabled="isLoading || devisList.length === 0">
+                <i class="ti ti-file-spreadsheet me-1"></i>
+                Excel
+              </button>
               <button class="btn btn-outline-primary" @click="fetchDevis" :disabled="isLoading">
                 <i class="ti ti-refresh me-1" :class="{ 'spinner-border spinner-border-sm': isLoading }"></i>
                 Actualiser
@@ -77,6 +81,9 @@
                       <router-link :to="'/devis/' + devis.id" class="btn btn-sm btn-light-primary text-primary" title="Voir Détails">
                         <i class="ti ti-eye"></i>
                       </router-link>
+                      <button class="btn btn-sm btn-light-info text-info" @click="exportToPDF(devis.id)" title="Exporter PDF">
+                        <i class="ti ti-file-export"></i>
+                      </button>
                       <button v-if="devis.statut === 'brouillon' && (!devis.remiseExceptionnelle && !devis.notes || isResponsableVentes)" 
                               class="btn btn-sm btn-light-success text-success" 
                               @click="validerDevis(devis.id, devis.remiseExceptionnelle || devis.notes)" 
@@ -193,6 +200,38 @@ export default {
           alert(typeof errorMsg === 'string' ? errorMsg : 'Erreur lors de l\'opération. Vérifiez vos permissions.');
         }
       }
+    },
+    exportToPDF(id) {
+      // Navigation vers les détails puis impression
+      this.$router.push(`/devis/${id}`);
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    },
+    exportToExcel() {
+      // Export simple au format CSV (lisible par Excel)
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Reference;Client;Date;Validite;Montant Total;Statut\n";
+      
+      this.devisList.forEach(devis => {
+        const row = [
+          devis.reference,
+          devis.client?.nom || '',
+          this.formatDate(devis.dateDevis),
+          this.formatDate(devis.dateValidite),
+          devis.montantTotal,
+          devis.statut
+        ].join(";");
+        csvContent += row + "\n";
+      });
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `liste_devis_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   }
 };

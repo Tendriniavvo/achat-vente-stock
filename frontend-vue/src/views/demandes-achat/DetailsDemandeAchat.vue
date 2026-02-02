@@ -3,11 +3,16 @@
     <div class="container-fluid">
       <div class="card">
         <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-4 no-print">
             <h5 class="card-title fw-semibold mb-0">Détails Demande d'Achat</h5>
-            <router-link to="/achats" class="btn btn-secondary">
-              <i class="ti ti-arrow-left"></i> Retour
-            </router-link>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-info" @click="exportToPDF">
+                <i class="ti ti-file-export me-1"></i> PDF
+              </button>
+              <router-link to="/achats" class="btn btn-secondary">
+                <i class="ti ti-arrow-left"></i> Retour
+              </router-link>
+            </div>
           </div>
 
           <div v-if="errorMessage" class="alert alert-danger" role="alert">
@@ -89,7 +94,7 @@
             </div>
 
             <!-- Boutons d'action -->
-            <div class="d-flex justify-content-end gap-2">
+            <div class="d-flex justify-content-end gap-2 no-print">
               <!-- Actions pour le Demandeur -->
               <router-link 
                 v-if="isStatut('brouillon')"
@@ -564,12 +569,27 @@ export default {
         const errorMsg = error.response?.data || error.message;
         alert('Erreur lors de l\'annulation : ' + errorMsg);
       }
+    },
+    exportToPDF() {
+      window.print();
     }
   }
 };
 </script>
 
 <style scoped>
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .container-fluid {
+    padding: 0 !important;
+  }
+}
 .card {
   border: none;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
