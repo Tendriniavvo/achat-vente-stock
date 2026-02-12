@@ -75,9 +75,9 @@ ON CONFLICT DO NOTHING;
 -- 4) Dépôts & emplacements (Option A: indispensables)
 -- ----------------------------------------------------------
 
-INSERT INTO depots (nom, adresse, capacite, actif) VALUES
-('Depot Central', 'Antananarivo', 100000, TRUE),
-('Depot Secondaire', 'Toamasina', 50000, TRUE)
+INSERT INTO depots (nom, code, adresse, capacite, actif) VALUES
+('Depot Central', 'DEP-CENTRAL', 'Antananarivo', 100000, TRUE),
+('Depot Secondaire', 'DEP-SECONDAIRE', 'Toamasina', 50000, TRUE)
 ON CONFLICT DO NOTHING;
 
 -- Emplacements pour Depot Central
@@ -160,8 +160,8 @@ ON CONFLICT DO NOTHING;
 -- ----------------------------------------------------------
 
 -- ENTREE brouillon : +10 Clavier USB vers Depot Central / A-01
-INSERT INTO mouvements_stock (reference, type, statut, date_mouvement, depot_id, emplacement_id, reference_document, utilisateur_id, motif)
-SELECT 'MS-DEMO-ENT-001', 'ENTREE', 'BROUILLON', CURRENT_TIMESTAMP, d.id, e.id, 'DOC-ENT-001', u.id, 'Entrée démo'
+INSERT INTO mouvements_stock (reference, type, quantite, statut, date_mouvement, depot_id, emplacement_id, reference_document, utilisateur_id, motif)
+SELECT 'MS-DEMO-ENT-001', 'ENTREE', 0, 'BROUILLON', CURRENT_TIMESTAMP, d.id, e.id, 'DOC-ENT-001', u.id, 'Entrée démo'
 FROM depots d, emplacements e, utilisateurs u
 WHERE d.nom='Depot Central' AND e.code='A-01' AND u.email='admin@local.test'
 ON CONFLICT DO NOTHING;
@@ -173,8 +173,8 @@ WHERE m.reference='MS-DEMO-ENT-001' AND a.code='ART-STD-001' AND e.code='A-01'
 ON CONFLICT DO NOTHING;
 
 -- SORTIE brouillon : -5 Yaourt (lot OK) depuis Depot Central / A-02
-INSERT INTO mouvements_stock (reference, type, statut, date_mouvement, depot_id, emplacement_id, reference_document, utilisateur_id, motif)
-SELECT 'MS-DEMO-SOR-001', 'SORTIE', 'BROUILLON', CURRENT_TIMESTAMP, d.id, e.id, 'DOC-SOR-001', u.id, 'Sortie démo'
+INSERT INTO mouvements_stock (reference, type, quantite, statut, date_mouvement, depot_id, emplacement_id, reference_document, utilisateur_id, motif)
+SELECT 'MS-DEMO-SOR-001', 'SORTIE', 0, 'BROUILLON', CURRENT_TIMESTAMP, d.id, e.id, 'DOC-SOR-001', u.id, 'Sortie démo'
 FROM depots d, emplacements e, utilisateurs u
 WHERE d.nom='Depot Central' AND e.code='A-02' AND u.email='admin@local.test'
 ON CONFLICT DO NOTHING;
@@ -186,8 +186,8 @@ WHERE m.reference='MS-DEMO-SOR-001' AND a.code='ART-LOT-001' AND l.numero_lot='L
 ON CONFLICT DO NOTHING;
 
 -- TRANSFERT brouillon : déplacer 3 Clavier USB de Depot Central/A-01 vers Depot Secondaire/B-01
-INSERT INTO mouvements_stock (reference, type, statut, date_mouvement, depot_id, emplacement_id, depot_destination_id, emplacement_destination_id, reference_document, utilisateur_id, motif)
-SELECT 'MS-DEMO-TRF-001', 'TRANSFERT', 'BROUILLON', CURRENT_TIMESTAMP,
+INSERT INTO mouvements_stock (reference, type, quantite, statut, date_mouvement, depot_id, emplacement_id, depot_destination_id, emplacement_destination_id, reference_document, utilisateur_id, motif)
+SELECT 'MS-DEMO-TRF-001', 'TRANSFERT', 0, 'BROUILLON', CURRENT_TIMESTAMP,
        ds.id, es.id, dd.id, ed.id, 'DOC-TRF-001', u.id, 'Transfert démo'
 FROM depots ds, depots dd, emplacements es, emplacements ed, utilisateurs u
 WHERE ds.nom='Depot Central' AND es.code='A-01'
@@ -202,8 +202,8 @@ WHERE m.reference='MS-DEMO-TRF-001' AND a.code='ART-STD-001' AND es.code='A-01'
 ON CONFLICT DO NOTHING;
 
 -- Mouvement qui doit échouer à la validation (lot expiré)
-INSERT INTO mouvements_stock (reference, type, statut, date_mouvement, depot_id, emplacement_id, reference_document, utilisateur_id, motif)
-SELECT 'MS-DEMO-FAIL-EXP', 'SORTIE', 'BROUILLON', CURRENT_TIMESTAMP, d.id, e.id, 'DOC-FAIL-001', u.id, 'Doit échouer (lot expiré)'
+INSERT INTO mouvements_stock (reference, type, quantite, statut, date_mouvement, depot_id, emplacement_id, reference_document, utilisateur_id, motif)
+SELECT 'MS-DEMO-FAIL-EXP', 'SORTIE', 0, 'BROUILLON', CURRENT_TIMESTAMP, d.id, e.id, 'DOC-FAIL-001', u.id, 'Doit échouer (lot expiré)'
 FROM depots d, emplacements e, utilisateurs u
 WHERE d.nom='Depot Central' AND e.code='A-02' AND u.email='admin@local.test'
 ON CONFLICT DO NOTHING;
