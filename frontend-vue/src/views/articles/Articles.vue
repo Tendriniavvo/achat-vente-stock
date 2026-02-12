@@ -64,6 +64,7 @@
                   <th>Code</th>
                   <th>Désignation</th>
                   <th>Catégorie</th>
+                  <th class="text-center">Valorisation</th>
                   <th class="text-end">Prix Achat</th>
                   <th class="text-end">Prix Vente</th>
                   <th class="text-center">Stock Min/Max</th>
@@ -87,6 +88,11 @@
                   <td>
                     <span class="badge bg-light-primary text-primary rounded-pill px-3">
                       {{ article.categorie?.nom || 'Sans catégorie' }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <span :class="getValorisationClass(article.methodeValorisation)">
+                      {{ article.methodeValorisation || 'N/A' }}
                     </span>
                   </td>
                   <td class="text-end">{{ formatCurrency(article.prixAchat) }}</td>
@@ -227,6 +233,15 @@ export default {
         currency: 'MGA',
         minimumFractionDigits: 0
       }).format(value || 0);
+    },
+    getValorisationClass(methode) {
+      const base = 'badge rounded-pill px-3 ';
+      switch (methode) {
+        case 'FIFO': return base + 'bg-light-success text-success';
+        case 'LIFO': return base + 'bg-light-warning text-warning';
+        case 'CUMP': return base + 'bg-light-info text-info';
+        default: return base + 'bg-light-secondary text-secondary';
+      }
     }
   }
 };
@@ -235,6 +250,18 @@ export default {
 <style scoped>
 .bg-light-primary {
   background-color: #ecf2ff;
+}
+.bg-light-success {
+  background-color: #e6fffa;
+}
+.bg-light-warning {
+  background-color: #fef5e5;
+}
+.bg-light-info {
+  background-color: #e8f7ff;
+}
+.bg-light-secondary {
+  background-color: #f6f9fc;
 }
 .text-truncate {
   max-width: 200px;
