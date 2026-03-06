@@ -116,6 +116,51 @@ La solution recommandée est de créer une colonne **Date (sans heure)** dans `b
    - si c’est **Date/Heure** -> OK, on va la convertir
    - si c’est **Texte** -> il faut d’abord convertir en Date/Heure.
 
+#### Étape B.0 — Création d’une colonne (si nécessaire)
+
+À faire quand :
+
+- tu as un **timestamp** (Date/Heure) mais tu dois relier à une colonne **Date**
+- Power BI refuse la relation (types incompatibles)
+
+Objectif : créer une nouvelle colonne **Date sans heure** nommée `date_commande_date`.
+
+##### Option 1 (simple) — “Date uniquement”
+
+1. Dans Power Query, sélectionner la colonne `date_commande`.
+2. Onglet `Ajouter une colonne`.
+3. `Colonne de date` -> `Date uniquement`.
+4. Renommer la colonne créée en `date_commande_date`.
+5. Vérifier que le type de `date_commande_date` est **Date**.
+
+##### Option 2 (si le menu n’existe pas) — Colonne personnalisée (M)
+
+1. Dans Power Query, onglet `Ajouter une colonne` -> `Colonne personnalisée`.
+2. Nom de colonne : `date_commande_date`.
+3. Formule (M) :
+
+```powerquery
+= Date.From([date_commande])
+```
+
+4. Valider.
+5. Mettre le type de `date_commande_date` sur **Date** si Power Query ne l’a pas fait automatiquement.
+
+##### Option 3 (alternative) — Nouvelle colonne en DAX (dans le modèle)
+
+`Modélisation` -> `Nouvelle colonne` (table `bons_commande_fournisseur`) :
+
+```DAX
+date_commande_date =
+DATE(
+    YEAR(bons_commande_fournisseur[date_commande]),
+    MONTH(bons_commande_fournisseur[date_commande]),
+    DAY(bons_commande_fournisseur[date_commande])
+)
+```
+
+Puis, dans la vue `Données`, vérifier que `date_commande_date` est bien de type **Date**.
+
 #### Étape B (recommandée) — Créer une colonne “date” via Power Query
 
 1. Dans Power Query (toujours table `bons_commande_fournisseur`).

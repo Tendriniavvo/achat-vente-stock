@@ -105,6 +105,73 @@ ADDCOLUMNS(
 
 Ensuite, si tes colonnes sont des timestamps, crée une colonne “date” (sans l’heure) via Power Query ou DAX, puis relie à `DimDate[Date]`.
 
+### 4.1) Détail (important) : corriger l’erreur de relation `DimDate[Date]` -> `bons_commande_fournisseur[date_commande]`
+
+Si tu crées directement une relation entre :
+
+- `DimDate[Date]` (type **Date**)
+- `bons_commande_fournisseur[date_commande]` (souvent type **Date/Heure**)
+
+Power BI peut refuser la relation ou donner des erreurs.
+
+La solution recommandée est de créer une colonne **date sans heure** côté `bons_commande_fournisseur`, puis de relier `DimDate[Date]` à cette nouvelle colonne.
+
+#### Étape A — Vérifier le type de `date_commande`
+
+1. `Accueil` -> `Transformer les données` (Power Query).
+2. Table : `bons_commande_fournisseur`.
+3. Colonne : `date_commande`.
+4. Vérifier le type :
+   - Si **Date/Heure** : parfait.
+   - Si **Texte** : changer le type en **Date/Heure** (sinon la conversion date-only sera instable).
+
+#### Étape B (recommandée) — Créer `date_commande_date` via Power Query
+
+1. Dans Power Query, sélectionner la colonne `date_commande`.
+2. `Ajouter une colonne` -> `Colonne de date` -> `Date uniquement`.
+3. Renommer la nouvelle colonne en `date_commande_date`.
+4. Vérifier que `date_commande_date` est bien de type **Date**.
+5. `Fermer et appliquer`.
+
+#### Étape C (alternative) — Créer `date_commande_date` en DAX
+
+`Modélisation` -> `Nouvelle colonne` (dans `bons_commande_fournisseur`) :
+
+```DAX
+date_commande_date =
+DATE(
+    YEAR(bons_commande_fournisseur[date_commande]),
+    MONTH(bons_commande_fournisseur[date_commande]),
+    DAY(bons_commande_fournisseur[date_commande])
+)
+```
+
+Ensuite vérifier que le type de cette colonne est **Date**.
+
+#### Étape D — Créer la relation
+
+Dans la vue `Modèle` :
+
+- `DimDate[Date]` (1) -> `bons_commande_fournisseur[date_commande_date]` (*)
+
+Paramètres recommandés :
+
+- Cardinalité : Many-to-one
+- Direction : Single
+
+#### Étape E — Erreur “caractères spéciaux” dans les noms de colonnes
+
+Si Power BI affiche un message du type :
+
+> Pour utiliser des caractères spéciaux dans un nom de colonne, mettez le nom entier entre crochets ( [] )...
+
+Rappel :
+
+- En DAX on écrit `Table[Nom Colonne]`.
+- Si le nom contient un `]`, il faut l’échapper en doublant `]`.
+
+Recommandation : renommer les colonnes dans Power Query en `snake_case` (ex: `date_commande_date`) pour éviter ce genre d’erreurs.
+
 ## 5) Mesures DAX à créer (KPI + totaux)
 
 `Modélisation` -> `Nouvelle mesure`.
