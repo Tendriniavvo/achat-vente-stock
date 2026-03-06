@@ -274,7 +274,7 @@ Tri : `date_creation` décroissant, filtre `Top N = 5`.
 ## 8) Rafraîchissement
 
 - Import : `Actualiser`.
-- Publication (Power BI Service) : publier puis configurer le **gateway** si la DB est locale.
+  - Publication (Power BI Service) : publier puis configurer le **gateway** si la DB est locale.
 
 ## 9) Points à valider (écarts possibles)
 
@@ -282,3 +282,467 @@ Tri : `date_creation` décroissant, filtre `Top N = 5`.
 - **Rotation stock** : nécessite une définition (sorties sur période / stock moyen) et des mouvements (ex: `mouvements_stock` + lignes).
 - **Ventes** : si non alimenté, la série “Ventes” sera vide.
 
+## 10) Design : changer les couleurs / ajouter des Cards KPI (comme le front)
+
+Cette section t’aide à obtenir un rendu proche de `Dashboard.vue`.
+
+### A. Changer les couleurs globales (Thème)
+
+1. Dans Power BI Desktop : onglet `Affichage`.
+2. Cliquer `Thèmes`.
+3. Options :
+   - Choisir un thème existant (rapide)
+   - Ou `Personnaliser le thème actuel`.
+4. Dans `Couleurs des données`, définir une palette proche de ton front (exemples) :
+   - Primaire : `#5D87FF`
+   - Success : `#13DEB9`
+   - Warning : `#FFAE1F`
+   - Danger : `#FA896B`
+   - Info : `#49BEFF`
+5. Valider `Appliquer`.
+
+Astuce : si tu veux un thème réutilisable sur d’autres rapports : `Affichage` -> `Thèmes` -> `Enregistrer le thème actuel`.
+
+### B. Changer la couleur d’un visuel (au cas par cas)
+
+1. Sélectionner le visuel.
+2. Panneau `Visualisations` -> onglet `Format` (icône rouleau de peinture).
+3. Selon le visuel :
+   - `Couleurs des données` : choisir la couleur des séries
+   - `Titre` : couleur/typo
+   - `Arrière-plan` : couleur + transparence
+   - `Effets` / `Ombre` / `Bordure` : look “carte”.
+
+### C. Créer une Card KPI “propre” (fond + bordure + titre)
+
+Power BI propose plusieurs types de cartes. Pour imiter ton front, utilise :
+- **Carte** (simple) ou **Carte (nouvelle)** si disponible.
+
+Étapes :
+
+1. Ajouter un visuel `Carte`.
+2. Glisser la mesure KPI (ex: `KPI - Total Demandes Achat`) dans le champ du visuel.
+3. Avec la carte sélectionnée -> `Format` :
+   - `Titre` -> `Activé` -> mettre un titre (ex: `Demandes d'Achat`)
+   - `Étiquette de données` / `Valeur` :
+     - augmenter la taille (ex: 20-32)
+     - mettre en gras
+   - `Arrière-plan` -> `Activé` :
+     - couleur : blanc (`#FFFFFF`)
+     - transparence : 0%
+   - `Bordure` (ou `Effets` -> `Bordure`) -> `Activé` :
+     - couleur proche de la KPI (ex: primaire `#5D87FF`)
+     - épaisseur (1-3)
+   - `Ombre` -> `Activé` : léger (comme `shadow-sm`).
+
+### D. Ajouter une “icône” sur une card (équivalent des icônes ti)
+
+Les cartes natives n’ont pas toujours une icône à droite comme dans ton Vue.
+Deux méthodes simples :
+
+#### Méthode 1 (simple) : insérer une Image
+
+1. `Insertion` -> `Image`.
+2. Choisir une icône (png/svg converti en png).
+3. Placer l’image à droite de la carte.
+4. Sélectionner la carte + l’image -> `Format` -> `Grouper` (si dispo) ou aligner ensemble.
+
+#### Méthode 2 (pro) : utiliser un visuel “KPI” custom
+
+1. `Insertion` -> `Obtenir plus de visuels`.
+2. Chercher un visuel de type `Card with States` / `Cards`.
+3. Choisir un visuel qui supporte `Icon` + `Category` + `Value`.
+
+### E. Ajouter une nouvelle Card KPI (étape par étape)
+
+Exemple : tu veux une carte `BC du mois`.
+
+1. Créer la mesure :
+
+```DAX
+KPI - BC du mois =
+CALCULATE(
+    COUNTROWS(bons_commande_fournisseur),
+    FILTER(
+        ALL(DimDate),
+        DimDate[Year] = YEAR(TODAY())
+            && DimDate[MonthNum] = MONTH(TODAY())
+    )
+)
+```
+
+Notes :
+- Cette mesure suppose que `bons_commande_fournisseur` est reliée à `DimDate` via une date (ex: `date_commande`).
+- Si ce n’est pas relié, il faut d’abord créer une colonne date (sans heure) et faire la relation.
+
+2. Ajouter un visuel `Carte`.
+3. Mettre `KPI - BC du mois` dans la carte.
+4. Appliquer le même style que les autres (Titre, bordure, ombre, format nombre).
+5. Aligner :
+   - Sélectionner toutes les cartes -> `Format` -> `Aligner` -> `Aligner en haut`
+   - Puis `Distribuer horizontalement`.
+
+### F. Alignement / grille (pour un rendu “front”)
+
+1. `Affichage` -> activer `Lignes de grille` + `Aligner sur la grille`.
+2. Utiliser :
+   - `Format` -> `Aligner`
+   - `Format` -> `Distribuer`.
+3. Conserver la même hauteur/largeur pour toutes les cards KPI.
+
+### G. Couleurs conditionnelles (ex: Alertes Stock en orange)
+
+  Pour une carte “Alertes Stock” :
+
+1. Sélectionner la carte.
+2. `Format` -> `Étiquette de données` (ou `Valeur`).
+3. Chercher `Couleur` -> cliquer `fx`.
+4. Règles exemple :
+   - si `KPI - Alertes Stock` >= 1 -> orange `#FFAE1F`
+   - sinon -> vert `#13DEB9`.
+
+### H. Tutoriel complet : Card KPI “Demandes d’Achat” en violet (et garder l’emplacement)
+
+Objectif : créer exactement une card KPI comme dans ton front :
+
+- **Titre** : `Demandes d'Achat`
+- **Valeur** : nombre total de demandes
+- **Couleur principale** : violet (ex: `#7C3AED` ou `#b085ff`)
+- **Placement** : rester au même endroit (pas bouger quand tu ajustes d’autres visuels)
+
+#### Étape 1 — Créer la mesure DAX
+
+1. Dans Power BI : onglet `Modélisation`.
+2. Cliquer `Nouvelle mesure`.
+3. Coller la mesure suivante :
+
+```DAX
+KPI - Demandes d'Achat =
+COUNTROWS(demandes_achat)
+```
+
+4. Appuyer sur `Entrée`.
+
+#### Étape 2 — Ajouter le visuel Card
+
+1. Aller sur la page `Dashboard`.
+2. Dans `Visualisations`, cliquer sur le visuel **Carte**.
+3. Une carte vide apparaît sur la page.
+4. Dans le panneau `Données`, glisser la mesure `KPI - Demandes d'Achat` dans le champ `Valeur` de la carte.
+
+#### Étape 3 — Mettre le titre “Demandes d'Achat”
+
+1. Sélectionner la carte.
+2. Aller dans `Format` (rouleau de peinture).
+3. Ouvrir `Titre`.
+4. Activer `Titre`.
+5. Dans `Texte du titre`, saisir : `Demandes d'Achat`.
+6. Choisir :
+   - Taille (ex: 12-14)
+   - Couleur : gris foncé ou violet selon ton style.
+
+#### Étape 4 — Choisir le violet (2 façons)
+
+##### Option A (recommandée) : violet sur la valeur + bordure
+
+1. `Format` -> chercher `Étiquette de données` / `Valeur`.
+2. Mettre :
+   - Taille (ex: 24-32)
+   - Gras (si option dispo)
+3. Sur `Couleur`, choisir un violet, par exemple :
+   - Violet net : `#7C3AED`
+   - Violet soft (proche de ton front) : `#b085ff`
+
+Puis ajouter une bordure violette :
+
+1. `Format` -> `Effets` (ou `Général` selon version).
+2. Activer `Bordure`.
+3. Couleur : même violet (`#7C3AED`).
+4. Épaisseur : 2 (ou 3 si tu veux un style “border-start”).
+
+##### Option B : fond violet clair + valeur violette
+
+1. `Format` -> `Arrière-plan`.
+2. Activer `Arrière-plan`.
+3. Couleur : un violet très clair (ex: `#F3E8FF`).
+4. Transparence : 0% à 20%.
+5. Garder la valeur en violet foncé (ex: `#7C3AED`).
+
+#### Étape 5 — Ajouter une ombre (effet “card”)
+
+1. `Format` -> `Effets`.
+2. Activer `Ombre`.
+3. Choisir une ombre légère (petite distance + faible flou) pour imiter Bootstrap `shadow-sm`.
+
+#### Étape 6 — Positionner la card (garder le même emplacement)
+
+1. Activer la grille : `Affichage` -> activer `Lignes de grille`.
+2. Activer : `Aligner sur la grille`.
+3. Déplacer la carte à l’endroit voulu (ligne KPI en haut).
+
+Pour garder le même emplacement et éviter de la bouger par erreur :
+
+1. Une fois placé, cliquer sur la carte.
+2. `Format` -> `Général` -> `Propriétés` (ou `Position`).
+3. Noter (ou fixer) les valeurs :
+   - `X`
+   - `Y`
+   - `Largeur`
+   - `Hauteur`
+
+Si tu as plusieurs cards alignées :
+
+1. Sélectionner toutes les cards (CTRL + clic sur chaque).
+2. Menu `Format` ->
+   - `Aligner` -> `Aligner en haut`
+   - `Distribuer` -> `Distribuer horizontalement`
+
+#### Étape 7 — Verrouiller la card (pour ne plus la déplacer)
+
+Selon la version Power BI :
+
+1. Activer le verrouillage : `Affichage` -> `Verrouiller les objets`.
+2. Une fois actif, tes visuels ne bougent plus tant que tu ne désactives pas.
+
+Alternative : ouvrir le `Volet de sélection` (`Affichage` -> `Volet de sélection`) et verrouiller l’objet si l’option existe.
+
+### I. Table : Aperçu des demandes d’achat (Top 5)
+
+Visuel : **Table**.
+
+- `demandes_achat[reference]`
+- `utilisateurs[prenom]`, `utilisateurs[nom]`
+- `DA - Montant Total`
+- `demandes_achat[statut]`
+- `demandes_achat[date_creation]`
+
+Tri : `date_creation` décroissant, filtre `Top N = 5`.
+
+## 7) Formats (MGA, %)
+
+- Mettre les mesures de montants en **Devise MGA**.
+- Mettre `Budget - % Utilise` et `Article - Marge Brute %` au format **Pourcentage**.
+
+## 8) Rafraîchissement
+
+- Import : `Actualiser`.
+  - Publication (Power BI Service) : publier puis configurer le **gateway** si la DB est locale.
+
+## 9) Points à valider (écarts possibles)
+
+- **Délai moyen d’approbation** : nécessite des champs dates (soumission / validation). Si tu n’as que `date_creation`, tu ne peux pas calculer un “délai réel”.
+- **Rotation stock** : nécessite une définition (sorties sur période / stock moyen) et des mouvements (ex: `mouvements_stock` + lignes).
+- **Ventes** : si non alimenté, la série “Ventes” sera vide.
+
+## 10) Design : changer les couleurs / ajouter des Cards KPI (comme le front)
+
+Cette section t’aide à obtenir un rendu proche de `Dashboard.vue`.
+
+### A. Changer les couleurs globales (Thème)
+
+1. Dans Power BI Desktop : onglet `Affichage`.
+2. Cliquer `Thèmes`.
+3. Options :
+   - Choisir un thème existant (rapide)
+   - Ou `Personnaliser le thème actuel`.
+4. Dans `Couleurs des données`, définir une palette proche de ton front (exemples) :
+   - Primaire : `#5D87FF`
+   - Success : `#13DEB9`
+   - Warning : `#FFAE1F`
+   - Danger : `#FA896B`
+   - Info : `#49BEFF`
+5. Valider `Appliquer`.
+
+Astuce : si tu veux un thème réutilisable sur d’autres rapports : `Affichage` -> `Thèmes` -> `Enregistrer le thème actuel`.
+
+### B. Changer la couleur d’un visuel (au cas par cas)
+
+1. Sélectionner le visuel.
+2. Panneau `Visualisations` -> onglet `Format` (icône rouleau de peinture).
+3. Selon le visuel :
+   - `Couleurs des données` : choisir la couleur des séries
+   - `Titre` : couleur/typo
+   - `Arrière-plan` : couleur + transparence
+   - `Effets` / `Ombre` / `Bordure` : look “carte”.
+
+### C. Créer une Card KPI “propre” (fond + bordure + titre)
+
+Power BI propose plusieurs types de cartes. Pour imiter ton front, utilise :
+- **Carte** (simple) ou **Carte (nouvelle)** si disponible.
+
+Étapes :
+1. Ajouter un visuel `Carte`.
+2. Glisser la mesure KPI (ex: `KPI - Total Demandes Achat`) dans le champ du visuel.
+3. Avec la carte sélectionnée -> `Format` :
+   - `Titre` -> `Activé` -> mettre un titre (ex: `Demandes d'Achat`)
+   - `Étiquette de données` / `Valeur` :
+     - augmenter la taille (ex: 20-32)
+     - mettre en gras
+   - `Arrière-plan` -> `Activé` :
+     - couleur : blanc (`#FFFFFF`)
+     - transparence : 0%
+   - `Bordure` (ou `Effets` -> `Bordure`) -> `Activé` :
+     - couleur proche de la KPI (ex: primaire `#5D87FF`)
+     - épaisseur (1-3)
+   - `Ombre` -> `Activé` : léger (comme `shadow-sm`).
+
+### D. Ajouter une “icône” sur une card (équivalent des icônes ti)
+
+Les cartes natives n’ont pas toujours une icône à droite comme dans ton Vue.
+Deux méthodes simples :
+#### Méthode 1 (simple) : insérer une Image
+
+1. `Insertion` -> `Image`.
+2. Choisir une icône (png/svg converti en png).
+3. Placer l’image à droite de la carte.
+4. Sélectionner la carte + l’image -> `Format` -> `Grouper` (si dispo) ou aligner ensemble.
+
+#### Méthode 2 (pro) : utiliser un visuel “KPI” custom
+
+1. `Insertion` -> `Obtenir plus de visuels`.
+2. Chercher un visuel de type `Card with States` / `Cards`.
+3. Choisir un visuel qui supporte `Icon` + `Category` + `Value`.
+
+### E. Ajouter une nouvelle Card KPI (étape par étape)
+
+Exemple : tu veux une carte `BC du mois`.
+
+1. Créer la mesure :
+```DAX
+KPI - BC du mois =
+CALCULATE(
+    COUNTROWS(bons_commande_fournisseur),
+    FILTER(
+        ALL(DimDate),
+        DimDate[Year] = YEAR(TODAY())
+            && DimDate[MonthNum] = MONTH(TODAY())
+    )
+)
+```
+Notes :
+- Cette mesure suppose que `bons_commande_fournisseur` est reliée à `DimDate` via une date (ex: `date_commande`).
+- Si ce n’est pas relié, il faut d’abord créer une colonne date (sans heure) et faire la relation.
+
+2. Ajouter un visuel `Carte`.
+3. Mettre `KPI - BC du mois` dans la carte.
+4. Appliquer le même style que les autres (Titre, bordure, ombre, format nombre).
+5. Aligner :
+   - Sélectionner toutes les cartes -> `Format` -> `Aligner` -> `Aligner en haut`
+   - Puis `Distribuer horizontalement`.
+
+### F. Alignement / grille (pour un rendu “front”)
+
+1. `Affichage` -> activer `Lignes de grille` + `Aligner sur la grille`.
+2. Utiliser :
+   - `Format` -> `Aligner`
+   - `Format` -> `Distribuer`.
+3. Conserver la même hauteur/largeur pour toutes les cards KPI.
+
+### G. Couleurs conditionnelles (ex: Alertes Stock en orange)
+
+Pour une carte “Alertes Stock” :
+1. Sélectionner la carte.
+2. `Format` -> `Étiquette de données` (ou `Valeur`).
+3. Chercher `Couleur` -> cliquer `fx`.
+4. Règles exemple :
+   - si `KPI - Alertes Stock` >= 1 -> orange `#FFAE1F`
+   - sinon -> vert `#13DEB9`.
+
+### H. Tutoriel complet : Card KPI “Demandes d’Achat” en violet (et garder l’emplacement)
+
+Objectif : créer exactement une card KPI comme dans ton front :
+- **Titre** : `Demandes d'Achat`
+- **Valeur** : nombre total de demandes
+- **Couleur principale** : violet (ex: `#7C3AED` ou `#b085ff`)
+- **Placement** : rester au même endroit (pas bouger quand tu ajustes d’autres visuels)
+
+#### Étape 1 — Créer la mesure DAX
+
+1. Dans Power BI : onglet `Modélisation`.
+2. Cliquer `Nouvelle mesure`.
+3. Coller la mesure suivante :
+```DAX
+KPI - Demandes d'Achat =
+COUNTROWS(demandes_achat)
+```
+
+4. Appuyer sur `Entrée`.
+
+#### Étape 2 — Ajouter le visuel Card
+
+1. Aller sur la page `Dashboard`.
+2. Dans `Visualisations`, cliquer sur le visuel **Carte**.
+3. Une carte vide apparaît sur la page.
+4. Dans le panneau `Données`, glisser la mesure `KPI - Demandes d'Achat` dans le champ `Valeur` de la carte.
+
+#### Étape 3 — Mettre le titre “Demandes d'Achat”
+
+1. Sélectionner la carte.
+2. Aller dans `Format` (rouleau de peinture).
+3. Ouvrir `Titre`.
+4. Activer `Titre`.
+5. Dans `Texte du titre`, saisir : `Demandes d'Achat`.
+6. Choisir :
+   - Taille (ex: 12-14)
+   - Couleur : gris foncé ou violet selon ton style.
+
+#### Étape 4 — Choisir le violet (2 façons)
+
+##### Option A (recommandée) : violet sur la valeur + bordure
+
+1. `Format` -> chercher `Étiquette de données` / `Valeur`.
+2. Mettre :
+   - Taille (ex: 24-32)
+   - Gras (si option dispo)
+3. Sur `Couleur`, choisir un violet, par exemple :
+   - Violet net : `#7C3AED`
+   - Violet soft (proche de ton front) : `#b085ff`
+
+Puis ajouter une bordure violette :
+1. `Format` -> `Effets` (ou `Général` selon version).
+2. Activer `Bordure`.
+3. Couleur : même violet (`#7C3AED`).
+4. Épaisseur : 2 (ou 3 si tu veux un style “border-start”).
+
+##### Option B : fond violet clair + valeur violette
+
+1. `Format` -> `Arrière-plan`.
+2. Activer `Arrière-plan`.
+3. Couleur : un violet très clair (ex: `#F3E8FF`).
+4. Transparence : 0% à 20%.
+5. Garder la valeur en violet foncé (ex: `#7C3AED`).
+
+#### Étape 5 — Ajouter une ombre (effet “card”)
+
+1. `Format` -> `Effets`.
+2. Activer `Ombre`.
+3. Choisir une ombre légère (petite distance + faible flou) pour imiter Bootstrap `shadow-sm`.
+
+#### Étape 6 — Positionner la card (garder le même emplacement)
+
+1. Activer la grille : `Affichage` -> activer `Lignes de grille`.
+2. Activer : `Aligner sur la grille`.
+3. Déplacer la carte à l’endroit voulu (ligne KPI en haut).
+
+Pour garder le même emplacement et éviter de la bouger par erreur :
+1. Une fois placé, cliquer sur la carte.
+2. `Format` -> `Général` -> `Propriétés` (ou `Position`).
+3. Noter (ou fixer) les valeurs :
+   - `X`
+   - `Y`
+   - `Largeur`
+   - `Hauteur`
+
+Si tu as plusieurs cards alignées :
+1. Sélectionner toutes les cards (CTRL + clic sur chaque).
+2. Menu `Format` ->
+   - `Aligner` -> `Aligner en haut`
+   - `Distribuer` -> `Distribuer horizontalement`
+
+#### Étape 7 — Verrouiller la card (pour ne plus la déplacer)
+
+Selon la version Power BI :
+1. Activer le verrouillage : `Affichage` -> `Verrouiller les objets`.
+2. Une fois actif, tes visuels ne bougent plus tant que tu ne désactives pas.
+
+Alternative : ouvrir le `Volet de sélection` (`Affichage` -> `Volet de sélection`) et verrouiller l’objet si l’option existe.
