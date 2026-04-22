@@ -1,6 +1,6 @@
 npm install marked
 
-Question Mr PRINCI AI
+Question Mr PRINCI AI (Integration IA)
 Quels départements concentrent la majorité du budget et pourquoi ?
 
 La répartition budgétaire actuelle est-elle équilibrée ou déséquilibrée ?
@@ -50,13 +50,9 @@ npm install @google/genai
 npm install marked
 . Gestion du Stock (Inventory)
 
-
 - Valeur Totale du Stock (KPI) : Somme de quantité * prix_achat pour tous les articles. C'est une donnée cruciale pour la comptabilité et la trésorerie.
 - Répartition du Stock par Dépôt (Stacked Bar Chart) : Visualiser comment le stock est distribué géographiquement (Dépôt Principal vs Dépôt Secondaire).
 - Rotation des Stocks (KPI) : Ratio indiquant la vitesse à laquelle le stock est renouvelé.
-
-
-
 
 4. Gestion Budgétaire (Budget)
 
