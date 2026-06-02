@@ -141,7 +141,7 @@ data-engineering/
 - [ ] Configurer Docker Compose avec Airflow webserver.
 - [ ] Configurer Docker Compose avec Airflow scheduler.
 - [ ] Configurer la base metadata d'Airflow.
-- [ ] Configurer un service dbt.
+- [x] Configurer un service dbt.
 - [ ] Ajouter éventuellement pgAdmin.
 - [ ] Configurer les volumes :
   - DAGs Airflow
@@ -151,7 +151,7 @@ data-engineering/
 - [x] Tester le démarrage des services.
 - [ ] Vérifier l'accès à Airflow UI.
 - [x] Vérifier la connexion PostgreSQL.
-- [ ] Vérifier que dbt peut accéder à PostgreSQL.
+- [x] Vérifier que dbt peut accéder à PostgreSQL.
 
 ## 6. Apache Airflow
 
@@ -195,10 +195,10 @@ data-engineering/
 
 ## 8. dbt
 
-- [ ] Créer un projet dbt.
-- [ ] Configurer `profiles.yml`.
-- [ ] Déclarer les sources dbt.
-- [ ] Créer les modèles staging :
+- [x] Créer un projet dbt.
+- [x] Configurer `profiles.yml`.
+- [x] Déclarer les sources dbt.
+- [x] Créer les modèles staging :
   - `stg_articles.sql`
   - `stg_stocks.sql`
   - `stg_mouvements_stock.sql`
@@ -235,7 +235,7 @@ data-engineering/
   - `mart_dashboard_budget.sql`
   - `mart_dashboard_ventes.sql`
   - `mart_alertes.sql`
-- [ ] Ajouter les tests dbt :
+- [x] Ajouter les tests dbt :
   - `unique`
   - `not_null`
   - `relationships`
@@ -379,7 +379,7 @@ data-engineering/
 - [ ] Vérifier les dates invalides.
 - [ ] Vérifier les relations cassées.
 - [ ] Vérifier les statuts inconnus.
-- [ ] Ajouter des tests dbt.
+- [x] Ajouter des tests dbt.
 - [ ] Ajouter des alertes data quality dans Airflow.
 - [ ] Bloquer le pipeline si erreur critique.
 - [ ] Journaliser les résultats dans `audit.data_quality_results`.
@@ -438,7 +438,7 @@ data-engineering/
 - [ ] Vérifier les tables `raw`.
 - [ ] Vérifier les tables `staging`.
 - [ ] Vérifier les tables `marts`.
-- [ ] Vérifier les tests dbt.
+- [x] Vérifier les tests dbt.
 - [ ] Vérifier la réception de l'email automatique.
 - [ ] Ouvrir Power BI.
 - [ ] Montrer les dashboards.
@@ -460,9 +460,9 @@ Données opérationnelles
 - [x] Créer la structure `data-engineering/`.
 - [x] Ajouter Docker Compose.
 - [ ] Installer et lancer Airflow.
-- [ ] Créer un premier projet dbt.
-- [ ] Créer un premier pipeline stock/budget.
-- [ ] Créer les premiers modèles dbt :
+- [x] Créer un premier projet dbt.
+- [x] Créer un premier pipeline stock/budget.
+- [x] Créer les premiers modèles dbt :
   - `stg_articles`
   - `stg_stocks`
   - `stg_budgets`
@@ -479,8 +479,8 @@ Données opérationnelles
 - [ ] Airflow lancé.
 - [ ] PostgreSQL connecté.
 - [ ] dbt lancé par Airflow.
-- [ ] `mart_dashboard_stock` créé.
-- [ ] `mart_dashboard_budget` créé.
+- [x] `mart_dashboard_stock` créé.
+- [x] `mart_dashboard_budget` créé.
 - [ ] Email d'alerte stock/budget envoyé.
 - [ ] Power BI connecté aux marts.
 - [ ] Documentation d'installation disponible.

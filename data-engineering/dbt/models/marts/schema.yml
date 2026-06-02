@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: mart_dashboard_stock
+    columns:
+      - name: stock_id
+        tests:
+          - unique
+          - not_null
+      - name: article_id
+        tests:
+          - not_null
+
+  - name: mart_dashboard_budget
+    columns:
+      - name: budget_id
+        tests:
+          - unique
+          - not_null
+      - name: departement_id
+        tests:
+          - not_null
+
+  - name: mart_dashboard_achats
+    columns:
+      - name: demande_achat_id
+        tests:
+          - unique
+          - not_null
+
+  - name: mart_alertes
+    columns:
+      - name: alerte_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['stock', 'budget']
+      - name: severity
+        tests:
+          - accepted_values:
+              values: ['warning', 'critical']
+
+  - name: mart_kpi_global
+

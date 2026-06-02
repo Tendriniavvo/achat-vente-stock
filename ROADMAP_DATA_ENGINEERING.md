@@ -209,6 +209,10 @@ Haute.
 
 ## Étape 6 - Mise en place dbt
 
+Statut : terminé pour la V1.
+
+Livrable associé : `ETAPE_6_DBT_STAGING_MARTS.md`.
+
 ### Objectif
 
 Transformer les données brutes en modèles propres, testés et exploitables.
@@ -520,10 +524,10 @@ Objectif : livrer rapidement une première version complète.
 
 - [x] PostgreSQL analytique prêt.
 - [ ] Airflow lancé.
-- [ ] dbt configuré.
+- [x] dbt configuré.
 - [ ] Pipeline stock/budget fonctionnel.
-- [ ] `mart_dashboard_stock` créé.
-- [ ] `mart_dashboard_budget` créé.
+- [x] `mart_dashboard_stock` créé.
+- [x] `mart_dashboard_budget` créé.
 - [ ] Email automatique stock/budget envoyé.
 - [ ] Power BI connecté aux marts.
 

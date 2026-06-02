@@ -201,3 +201,4 @@ Travaux à réaliser :
 - créer les connexions Airflow PostgreSQL source et analytics ;
 - créer un premier DAG de test.
 
+Note : le premier DAG ETL raw V1 a été ajouté dans `data-engineering/airflow/dags/raw_v1_etl_pipeline.py`.

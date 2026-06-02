@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: stg_articles
+    columns:
+      - name: article_id
+        tests:
+          - unique
+          - not_null
+      - name: article_code
+        tests:
+          - not_null
+
+  - name: stg_stocks
+    columns:
+      - name: stock_id
+        tests:
+          - unique
+          - not_null
+      - name: article_id
+        tests:
+          - not_null
+
+  - name: stg_depots
+    columns:
+      - name: depot_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_departements
+    columns:
+      - name: departement_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_budgets
+    columns:
+      - name: budget_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_demandes_achat
+    columns:
+      - name: demande_achat_id
+        tests:
+          - unique
+          - not_null
+      - name: statut
+        tests:
+          - accepted_values:
+              values: ['brouillon', 'soumise', 'validee', 'rejetee', 'attente_finance']
+
+  - name: stg_lignes_demandes_achat
+    columns:
+      - name: ligne_demande_achat_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_bons_commande_fournisseur
+    columns:
+      - name: bon_commande_fournisseur_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_fournisseurs
+    columns:
+      - name: fournisseur_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_mouvements_stock
+    columns:
+      - name: mouvement_stock_id
+        tests:
+          - unique
+          - not_null

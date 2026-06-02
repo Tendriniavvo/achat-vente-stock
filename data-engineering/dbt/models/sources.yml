@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: raw_articles
+      - name: raw_stocks
+      - name: raw_depots
+      - name: raw_departements
+      - name: raw_budgets
+      - name: raw_demandes_achat
+      - name: raw_lignes_demandes_achat
+      - name: raw_bons_commande_fournisseur
+      - name: raw_fournisseurs
+      - name: raw_mouvements_stock
+
